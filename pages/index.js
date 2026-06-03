@@ -7,7 +7,7 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 export default function ClientPortal({ initialSession }) {
   const [session, setSession] = useState(initialSession);
   const [products, setProducts] = useState([]);
-  const [partnerId, setPartnerId] = useState(initialSession?.partners?.[0]?.id || "");
+  const [partnerId, setPartnerId] = useState("");
   const [code, setCode] = useState("");
   const [partner, setPartner] = useState(null);
   const [quantities, setQuantities] = useState({});
@@ -21,7 +21,6 @@ export default function ClientPortal({ initialSession }) {
       const sessionRes = await fetch("/api/session");
       const sessionData = await sessionRes.json();
       setSession(sessionData);
-      setPartnerId(sessionData.partners?.[0]?.id || "");
     }
     load().catch(() => setMessage("Impossible de charger le catalogue."));
   }, [initialSession]);
@@ -102,7 +101,6 @@ export default function ClientPortal({ initialSession }) {
         <div className="brand-lockup">
           <Image className="brand-logo" src="/logo-atc.jpg" alt="GAEC à travers champs" width={80} height={75} priority />
           <div>
-          <p className="eyebrow">Ferme ATC</p>
           <h1>Portail commandes pro</h1>
           </div>
         </div>
@@ -113,7 +111,7 @@ export default function ClientPortal({ initialSession }) {
         <div>
           <span className="badge">{session.delivery.label}</span>
           <h2>Livraison prévue le {formatDate(session.delivery.deliveryDate)}</h2>
-          <p>Commande attendue au plus tard {session.delivery.cutoffLabel}. Fuseau horaire: Paris.</p>
+          <p>Commande attendue au plus tard {session.delivery.cutoffLabel}.</p>
         </div>
       </section>
 
@@ -121,16 +119,22 @@ export default function ClientPortal({ initialSession }) {
         <form className="panel login-panel" onSubmit={login}>
           <h2>Connexion partenaire</h2>
           <label>
-            Partenaire
-            <select value={partnerId} onChange={(event) => setPartnerId(event.target.value)}>
-              {session.partners.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
+            Identifiant
+            <input
+              value={partnerId}
+              onChange={(event) => setPartnerId(event.target.value)}
+              placeholder="Identifiant"
+              autoComplete="username"
+            />
           </label>
           <label>
-            Code d&apos;accès
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Code fourni" />
+            Code
+            <input
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Code"
+              autoComplete="current-password"
+            />
           </label>
           <button className="primary" type="submit">Se connecter</button>
           {message && <p className="notice">{message}</p>}
@@ -208,16 +212,12 @@ export default function ClientPortal({ initialSession }) {
 }
 
 export async function getServerSideProps() {
-  const { getPartners, getPriceLists } = require("@/lib/db");
   const { getNextDelivery } = require("@/lib/schedule");
-  const [partners, priceLists] = await Promise.all([getPartners(), getPriceLists()]);
 
   return {
     props: {
       initialSession: {
-        delivery: getNextDelivery(),
-        partners: partners.filter((partner) => partner.active).map(({ id, name }) => ({ id, name })),
-        priceLists
+        delivery: getNextDelivery()
       }
     }
   };

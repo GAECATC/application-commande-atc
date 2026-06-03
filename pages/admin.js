@@ -38,7 +38,7 @@ export default function Admin() {
 
   async function loadAdminData(pass = password, forcedPriceListId = selectedPriceListId) {
     const adminHeaders = { "x-admin-password": pass };
-    const sessionRes = await fetch("/api/session");
+    const sessionRes = await fetch("/api/session", { headers: adminHeaders });
     const sessionData = await sessionRes.json();
     const nextPriceLists = sessionData.priceLists || [];
     const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";

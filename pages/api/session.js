@@ -1,5 +1,6 @@
 const { getNextDelivery } = require("@/lib/schedule");
-const { getPartners, getPriceLists } = require("@/lib/db");
+const { getPriceLists } = require("@/lib/db");
+const { isAdmin } = require("@/lib/auth");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -7,10 +8,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Methode non autorisee" });
   }
 
-  const [partners, priceLists] = await Promise.all([getPartners(), getPriceLists()]);
-  return res.status(200).json({
-    delivery: getNextDelivery(),
-    partners: partners.filter((partner) => partner.active).map(({ id, name }) => ({ id, name })),
-    priceLists
-  });
+  const payload = { delivery: getNextDelivery() };
+  if (isAdmin(req)) {
+    payload.priceLists = await getPriceLists();
+  }
+
+  return res.status(200).json(payload);
 };
