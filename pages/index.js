@@ -11,6 +11,8 @@ export default function ClientPortal({ initialSession }) {
   const [code, setCode] = useState("");
   const [partner, setPartner] = useState(null);
   const [quantities, setQuantities] = useState({});
+  const [orders, setOrders] = useState([]);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
@@ -34,6 +36,9 @@ export default function ClientPortal({ initialSession }) {
   }, [products]);
 
   const total = products.reduce((sum, product) => sum + (Number(quantities[product.id]) || 0) * product.price, 0);
+  const selectedItems = products
+    .map((product) => ({ ...product, quantity: Number(quantities[product.id]) || 0 }))
+    .filter((product) => product.quantity > 0);
 
   async function loadProducts(nextPartnerId, nextCode) {
     const response = await fetch(`/api/products?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
@@ -44,6 +49,17 @@ export default function ClientPortal({ initialSession }) {
       return;
     }
     setProducts(data.products || []);
+  }
+
+  async function loadOrders(nextPartnerId, nextCode) {
+    const response = await fetch(`/api/orders?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+    const data = await response.json();
+    if (!response.ok) {
+      setOrders([]);
+      setMessage(data.error || "Impossible de charger les commandes.");
+      return;
+    }
+    setOrders(data.orders || []);
   }
 
   async function login(event) {
@@ -58,7 +74,7 @@ export default function ClientPortal({ initialSession }) {
     if (!response.ok) return setMessage(data.error || "Connexion refusee.");
     setPartner(data.partner);
     localStorage.setItem("atc-partner", JSON.stringify({ partnerId, code, partner: data.partner }));
-    await loadProducts(partnerId, code);
+    await Promise.all([loadProducts(partnerId, code), loadOrders(partnerId, code)]);
   }
 
   useEffect(() => {
@@ -71,6 +87,7 @@ export default function ClientPortal({ initialSession }) {
         setCode(parsed.code);
         setPartner(parsed.partner);
         loadProducts(parsed.partnerId, parsed.code);
+        loadOrders(parsed.partnerId, parsed.code);
       });
     } catch {
       localStorage.removeItem("atc-partner");
@@ -81,16 +98,36 @@ export default function ClientPortal({ initialSession }) {
     setLoading(true);
     setMessage("");
     const items = Object.entries(quantities).map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }));
+    const isEditing = Boolean(editingOrder);
     const response = await fetch("/api/orders", {
-      method: "POST",
+      method: isEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ partnerId, code, items })
+      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items })
     });
     const data = await response.json();
     setLoading(false);
     if (!response.ok) return setMessage(data.error || "Commande refusee.");
     setQuantities({});
-    setMessage(`Commande enregistrée pour le ${formatDate(data.delivery.deliveryDate)}.`);
+    setEditingOrder(null);
+    await loadOrders(partnerId, code);
+    const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
+    setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.`);
+  }
+
+  function editOrder(order) {
+    const nextQuantities = {};
+    for (const item of order.items) {
+      nextQuantities[item.productId] = String(item.quantity);
+    }
+    setEditingOrder(order);
+    setQuantities(nextQuantities);
+    setMessage("Commande chargée pour modification.");
+  }
+
+  function clearDraft() {
+    setEditingOrder(null);
+    setQuantities({});
+    setMessage("");
   }
 
   if (!session) return <main className="shell"><p>Chargement...</p></main>;
@@ -163,7 +200,7 @@ export default function ClientPortal({ initialSession }) {
                   Lignes
                 </button>
               </div>
-              <button className="ghost" onClick={() => { localStorage.removeItem("atc-partner"); setPartner(null); setProducts([]); }}>
+              <button className="ghost" onClick={() => { localStorage.removeItem("atc-partner"); setPartner(null); setProducts([]); setOrders([]); clearDraft(); }}>
                 Déconnexion
               </button>
             </div>
@@ -195,13 +232,69 @@ export default function ClientPortal({ initialSession }) {
             </section>
           ))}
 
+          <section className="panel order-recap">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">{editingOrder ? "Modification en cours" : "Commande en cours"}</p>
+                <h2>Récapitulatif</h2>
+              </div>
+              {editingOrder && <button className="ghost" type="button" onClick={clearDraft}>Annuler</button>}
+            </div>
+            {selectedItems.length ? (
+              <ul className="recap-list">
+                {selectedItems.map((item) => (
+                  <li key={item.id}>
+                    <span>{item.name}</span>
+                    <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
+                    <small>{currency.format(item.quantity * item.price)}</small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Aucun produit sélectionné.</p>
+            )}
+          </section>
+
+          <section className="panel order-recap">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Historique</p>
+                <h2>Vos commandes</h2>
+              </div>
+              <button className="ghost" type="button" onClick={() => loadOrders(partnerId, code)}>Actualiser</button>
+            </div>
+            {orders.length ? (
+              <div className="orders-list">
+                {orders.map((order) => (
+                  <article className="order-card" key={order.id}>
+                    <div>
+                      <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
+                      <span>Livraison {formatDate(order.deliveryDate)}</span>
+                    </div>
+                    <ul>
+                      {order.items.map((item) => (
+                        <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
+                      ))}
+                    </ul>
+                    <div className="order-actions">
+                      <strong>{currency.format(order.total)}</strong>
+                      <button className="ghost" type="button" onClick={() => editOrder(order)}>Modifier</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p>Aucune commande enregistrée pour le moment.</p>
+            )}
+          </section>
+
           <aside className="checkout">
             <div>
               <strong>Total estime</strong>
               <span>{currency.format(total)}</span>
             </div>
             <button className="primary" disabled={loading || total <= 0} onClick={submitOrder}>
-              {loading ? "Envoi..." : "Valider la commande"}
+              {loading ? "Envoi..." : editingOrder ? "Enregistrer les modifications" : "Valider la commande"}
             </button>
           </aside>
           {message && <p className="notice">{message}</p>}
@@ -225,6 +318,10 @@ export async function getServerSideProps() {
 
 function formatDate(value) {
   return new Intl.DateTimeFormat("fr-FR", { dateStyle: "full" }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value);
 }
 
 function unitLabel(unit) {

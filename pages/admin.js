@@ -13,6 +13,8 @@ export default function Admin() {
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [orderDraft, setOrderDraft] = useState({});
   const [message, setMessage] = useState("");
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
@@ -64,6 +66,29 @@ export default function Admin() {
     if (!response.ok) return setMessage(data.error || "Produit refuse.");
     setMessage("Catalogue mis a jour.");
     setDraft(emptyProduct);
+    await loadAdminData();
+  }
+
+  function startEditOrder(order) {
+    setEditingOrderId(order.id);
+    setOrderDraft(Object.fromEntries(order.items.map((item) => [item.productId, String(item.quantity)])));
+  }
+
+  async function saveOrder(order) {
+    const items = order.items.map((item) => ({
+      productId: item.productId,
+      quantity: Number(orderDraft[item.productId] || 0)
+    }));
+    const response = await fetch("/api/orders", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId, items })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Modification refusee.");
+    setEditingOrderId(null);
+    setOrderDraft({});
+    setMessage("Commande modifiee.");
     await loadAdminData();
   }
 
@@ -141,7 +166,31 @@ export default function Admin() {
                   <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                 ))}
               </ul>
-              <strong>{currency.format(order.total)}</strong>
+              {editingOrderId === order.id ? (
+                <div className="order-edit no-print">
+                  {order.items.map((item) => (
+                    <label key={item.id}>
+                      {item.productName}
+                      <input
+                        type="number"
+                        min="0"
+                        step={item.unit === "kg" ? "0.5" : "1"}
+                        value={orderDraft[item.productId] || ""}
+                        onChange={(event) => setOrderDraft((current) => ({ ...current, [item.productId]: event.target.value }))}
+                      />
+                    </label>
+                  ))}
+                  <div className="order-actions">
+                    <button className="primary" type="button" onClick={() => saveOrder(order)}>Enregistrer</button>
+                    <button className="ghost" type="button" onClick={() => setEditingOrderId(null)}>Annuler</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="order-actions">
+                  <strong>{currency.format(order.total)}</strong>
+                  <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
+                </div>
+              )}
             </article>
           ))}
         </div>

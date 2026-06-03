@@ -311,6 +311,40 @@ form {
   font-weight: 900;
 }
 
+.order-recap {
+  margin-top: 24px;
+}
+
+.recap-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recap-list li,
+.order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recap-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.recap-list li:last-child {
+  border-bottom: 0;
+}
+
+.recap-list small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .actions {
   display: flex;
   gap: 10px;
@@ -399,6 +433,17 @@ form {
   padding-left: 18px;
 }
 
+.order-edit {
+  display: grid;
+  gap: 10px;
+  min-width: 260px;
+}
+
+.order-edit label {
+  grid-template-columns: minmax(140px, 1fr) 100px;
+  align-items: center;
+}
+
 .admin-products {
   display: grid;
   gap: 10px;
@@ -444,7 +489,8 @@ form {
   .topbar,
   .section-heading,
   .checkout,
-  .order-card {
+  .order-card,
+  .order-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -473,6 +519,10 @@ form {
   }
 
   .product-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .order-edit label {
     grid-template-columns: 1fr;
   }
 }
