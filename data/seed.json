@@ -1,0 +1,1806 @@
+{
+  "priceLists": [
+    {
+      "id": "tarif-epicerie",
+      "name": "Tarif épicerie"
+    },
+    {
+      "id": "tarif-mercuriale-2026",
+      "name": "Mercuriale 2026 La Ravoire"
+    }
+  ],
+  "partners": [
+    {
+      "id": "epicerie-du-coin",
+      "name": "Épicerie du Coin",
+      "code": "EPICERIE",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "la-fourmiliene",
+      "name": "La Fourmiliène",
+      "code": "FOURMILIENE",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "auberge-savoyarde",
+      "name": "L'Auberge Savoyarde",
+      "code": "AUBERGE",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "biocoop-macher",
+      "name": "Biocoop Mâcher",
+      "code": "BIOMACHER",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "halles-de-chartreuse",
+      "name": "Les Halles de Chartreuse",
+      "code": "HALLESCHARTREUSE",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "co-clipcho",
+      "name": "Coclich'haut",
+      "code": "COCLIPCHO",
+      "active": true,
+      "priceListId": "tarif-epicerie"
+    },
+    {
+      "id": "satoriz-la-ravoire",
+      "name": "Satoriz La Ravoire",
+      "code": "SATORIZRAVOIRE",
+      "active": true,
+      "priceListId": "tarif-mercuriale-2026"
+    },
+    {
+      "id": "satoriz-chambery",
+      "name": "Satoriz Chambéry",
+      "code": "SATORIZCHAMBERY",
+      "active": true,
+      "priceListId": "tarif-mercuriale-2026"
+    },
+    {
+      "id": "biocoop-pont-beauvoisin",
+      "name": "Biocoop Pont-de-Beauvoisin",
+      "code": "BIOPONTBEAUVOISIN",
+      "active": true,
+      "priceListId": "tarif-mercuriale-2026"
+    }
+  ],
+  "products": [
+    {
+      "id": "ail-botte-piece",
+      "name": "Ail botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 10
+    },
+    {
+      "id": "ail-frais-kg",
+      "name": "Ail frais",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 11
+    },
+    {
+      "id": "ail-sec-kg",
+      "name": "Ail sec",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 12
+    },
+    {
+      "id": "aubergine-kg",
+      "name": "Aubergine",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 13
+    },
+    {
+      "id": "basilic-piece",
+      "name": "Basilic",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 14
+    },
+    {
+      "id": "bette-kg",
+      "name": "Bette",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 15
+    },
+    {
+      "id": "betterave-crue-kg",
+      "name": "Betterave crue",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 16
+    },
+    {
+      "id": "carotte-kg",
+      "name": "Carotte",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 17
+    },
+    {
+      "id": "carotte-botte-kg",
+      "name": "Carotte botte",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 18
+    },
+    {
+      "id": "celeri-rave-kg",
+      "name": "Céleri rave",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 19
+    },
+    {
+      "id": "chicoree-pain-de-sucre-kg",
+      "name": "Chicorée pain de sucre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 20
+    },
+    {
+      "id": "chicoree-trevise-kg",
+      "name": "Chicorée trévise",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 21
+    },
+    {
+      "id": "choux-cabus-kg",
+      "name": "Choux Cabus",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 22
+    },
+    {
+      "id": "choux-chinois-kg",
+      "name": "Choux chinois",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 23
+    },
+    {
+      "id": "choux-de-printemps-kg",
+      "name": "Choux de printemps",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 24
+    },
+    {
+      "id": "choux-fleur-kg",
+      "name": "Choux fleur",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 25
+    },
+    {
+      "id": "choux-frise-kg",
+      "name": "Choux frisé",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 26
+    },
+    {
+      "id": "choux-rave-kg",
+      "name": "Choux rave",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 27
+    },
+    {
+      "id": "concombre-kg",
+      "name": "Concombre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 28
+    },
+    {
+      "id": "courge-butternut-kg",
+      "name": "Courge Butternut",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 29
+    },
+    {
+      "id": "courge-carrat-kg",
+      "name": "Courge Carrat",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 30
+    },
+    {
+      "id": "courge-musquee-kg",
+      "name": "Courge Musquée",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 31
+    },
+    {
+      "id": "courge-patidou-kg",
+      "name": "Courge Patidou",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 32
+    },
+    {
+      "id": "courge-potimarron-kg",
+      "name": "Courge Potimarron",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 33
+    },
+    {
+      "id": "courge-potimarron-vert-kg",
+      "name": "Courge Potimarron Vert",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 34
+    },
+    {
+      "id": "courgette-pleine-saison-promo-piece",
+      "name": "Courgette pleine saison promo",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 35
+    },
+    {
+      "id": "courgette-kg",
+      "name": "Courgette",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 36
+    },
+    {
+      "id": "courgette-serre-kg",
+      "name": "Courgette serre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 37
+    },
+    {
+      "id": "echalotte-kg",
+      "name": "Echalotte",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 38
+    },
+    {
+      "id": "epinard-kg",
+      "name": "Epinard",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 39
+    },
+    {
+      "id": "fenouil-kg",
+      "name": "Fenouil",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 40
+    },
+    {
+      "id": "haricot-vert-kg",
+      "name": "Haricot vert",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 41
+    },
+    {
+      "id": "haricot-serre-kg",
+      "name": "Haricot serre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 42
+    },
+    {
+      "id": "laitue-piece",
+      "name": "Laitue",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 43
+    },
+    {
+      "id": "laitue-serre-piece",
+      "name": "Laitue serre",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 44
+    },
+    {
+      "id": "laitue-kg",
+      "name": "laitue",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 45
+    },
+    {
+      "id": "mache-kg",
+      "name": "Mâche",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 46
+    },
+    {
+      "id": "melon-kg",
+      "name": "Melon",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 47
+    },
+    {
+      "id": "mesclum-kg",
+      "name": "Mesclum",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 48
+    },
+    {
+      "id": "navet-kg",
+      "name": "Navet",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 49
+    },
+    {
+      "id": "navet-botte-piece",
+      "name": "Navet botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 50
+    },
+    {
+      "id": "oignon-kg",
+      "name": "Oignon",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 51
+    },
+    {
+      "id": "oignon-botte-piece",
+      "name": "Oignon botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 52
+    },
+    {
+      "id": "pasteque-kg",
+      "name": "Pastèque",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 53
+    },
+    {
+      "id": "panais-kg",
+      "name": "Panais",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 54
+    },
+    {
+      "id": "patate-douce-kg",
+      "name": "Patate douce",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 55
+    },
+    {
+      "id": "pdt-primeur-kg",
+      "name": "PDT primeur",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 56
+    },
+    {
+      "id": "pdt-primeur-saison-kg",
+      "name": "PDT primeur saison",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 57
+    },
+    {
+      "id": "pdt-conservation-kg",
+      "name": "PDT conservation",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 58
+    },
+    {
+      "id": "persil-piece",
+      "name": "Persil",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 59
+    },
+    {
+      "id": "poireaux-kg",
+      "name": "Poireaux",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 60
+    },
+    {
+      "id": "poivron-kg",
+      "name": "Poivron",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 61
+    },
+    {
+      "id": "poivron-mini-sucre-kg",
+      "name": "Poivron mini sucre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 62
+    },
+    {
+      "id": "radis-botte-piece",
+      "name": "Radis botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 63
+    },
+    {
+      "id": "radis-daikon-kg",
+      "name": "Radis daïkon",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 64
+    },
+    {
+      "id": "radis-noir-kg",
+      "name": "Radis noir",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 65
+    },
+    {
+      "id": "tomate-ancienne-kg",
+      "name": "Tomate ancienne",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 66
+    },
+    {
+      "id": "tomate-cerise-kg",
+      "name": "Tomate cerise",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 67
+    },
+    {
+      "id": "tomate-ronde-kg",
+      "name": "Tomate ronde",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 68
+    },
+    {
+      "id": "topinambour-kg",
+      "name": "Topinambour",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 69
+    },
+    {
+      "id": "confiture-peche-piece",
+      "name": "Confiture pêche",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 70
+    },
+    {
+      "id": "confiture-peche-gingembre-piece",
+      "name": "Confiture pêche gingembre",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 71
+    },
+    {
+      "id": "conserve-apero-courgette-piece",
+      "name": "Conserve apéro courgette",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 72
+    },
+    {
+      "id": "conserve-cardons-piece",
+      "name": "Conserve cardons",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 73
+    },
+    {
+      "id": "conserve-coulis-tomate-piece",
+      "name": "Conserve coulis tomate",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 74
+    },
+    {
+      "id": "conserve-ketchup-piece",
+      "name": "Conserve ketchup",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 75
+    },
+    {
+      "id": "conserve-pesto-basilic-piece",
+      "name": "Conserve pesto basilic",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 76
+    },
+    {
+      "id": "conserve-pickles-choux-fleur-piece",
+      "name": "Conserve pickles choux fleur",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 77
+    },
+    {
+      "id": "conserve-pickles-concombre-piece",
+      "name": "Conserve pickles concombre",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 78
+    },
+    {
+      "id": "chips-piece",
+      "name": "chips",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 79
+    },
+    {
+      "id": "tartinade-aubergine-piece",
+      "name": "tartinade aubergine",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 80
+    },
+    {
+      "id": "pickles-ail-piece",
+      "name": "pickles ail",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 81
+    },
+    {
+      "id": "biere-blonde-ambree-ipa-33cl-piece",
+      "name": "bière Blonde / Ambrée /Ipa 33cl",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 82
+    },
+    {
+      "id": "biere-blonde-ambree-ipa-75cl-piece",
+      "name": "bière Blonde / Ambrée /Ipa 75cl",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 83
+    },
+    {
+      "id": "basilic-bouquet-piece",
+      "name": "basilic bouquet",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 302
+    },
+    {
+      "id": "betterave-kg",
+      "name": "betterave",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 303
+    },
+    {
+      "id": "blette-kg",
+      "name": "blette",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 304
+    },
+    {
+      "id": "blette-couleur-botte-piece",
+      "name": "Blette couleur botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 305
+    },
+    {
+      "id": "carotte-botte-piece",
+      "name": "carotte botte",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 306
+    },
+    {
+      "id": "celeri-branche-kg",
+      "name": "celeri branche",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 307
+    },
+    {
+      "id": "cebette-piece",
+      "name": "cebette",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 309
+    },
+    {
+      "id": "chicoree-de-trevise-kg",
+      "name": "chicorée de trévise",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 310
+    },
+    {
+      "id": "chou-chinois-pak-choi-kg",
+      "name": "chou chinois/pak choi",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 312
+    },
+    {
+      "id": "chou-kale-piece",
+      "name": "chou kale",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 313
+    },
+    {
+      "id": "chou-lisse-chou-rouge-pointu-kg",
+      "name": "chou lisse/chou rouge/pointu",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 314
+    },
+    {
+      "id": "concombre-epineux-kg",
+      "name": "concombre épineux",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 315
+    },
+    {
+      "id": "concombre-lisse-piece-piece",
+      "name": "concombre lisse piece",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 316
+    },
+    {
+      "id": "courge-butternut-potimarron-kg",
+      "name": "courge butternut/potimarron",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 317
+    },
+    {
+      "id": "courge-muscade-bleue-kg",
+      "name": "courge muscade/bleue",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 318
+    },
+    {
+      "id": "courge-spaghetti-kg",
+      "name": "courge spaghetti",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 320
+    },
+    {
+      "id": "courgette-debut-et-fin-de-saison-kg",
+      "name": "courgette debut et fin de saison",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 321
+    },
+    {
+      "id": "courgette-juillet-aout-kg",
+      "name": "courgette juillet aout",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 322
+    },
+    {
+      "id": "courgette-jaune-blanche-ronde-kg",
+      "name": "courgette jaune, blanche ,ronde",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 323
+    },
+    {
+      "id": "fenouil-piece",
+      "name": "fenouil",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 326
+    },
+    {
+      "id": "haricot-vert-plat-kg",
+      "name": "haricot vert/ plat",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 328
+    },
+    {
+      "id": "mache-mesclum-kg",
+      "name": "mache/mesclum",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 330
+    },
+    {
+      "id": "navet-violet-jaune-kg",
+      "name": "navet violet/jaune",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 331
+    },
+    {
+      "id": "navet-daikon-kg",
+      "name": "navet daikon",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 332
+    },
+    {
+      "id": "oignon-rouge-blanc-kg",
+      "name": "oignon rouge/blanc",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 334
+    },
+    {
+      "id": "patate-douce-gros-calibre-kg",
+      "name": "patate douce gros calibre",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 337
+    },
+    {
+      "id": "persil-frise-bouquet-piece",
+      "name": "persil frisé bouquet",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 338
+    },
+    {
+      "id": "persil-plat-bouquet-piece",
+      "name": "persil plat bouquet",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 339
+    },
+    {
+      "id": "poireau-kg",
+      "name": "poireau",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 340
+    },
+    {
+      "id": "poivron-vert-kg",
+      "name": "poivron vert",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 341
+    },
+    {
+      "id": "poivron-couleur-kg",
+      "name": "poivron couleur",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 342
+    },
+    {
+      "id": "pdt-consommation-maiwen-blanche-kg",
+      "name": "pdt consommation Maiwen blanche",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 343
+    },
+    {
+      "id": "pdt-nouvelle-rouge-kg",
+      "name": "pdt nouvelle rouge",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 344
+    },
+    {
+      "id": "pdt-nouvelle-jaune-kg",
+      "name": "pdt nouvelle jaune",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 345
+    },
+    {
+      "id": "pdt-sac-2-5-kg",
+      "name": "pdt sac 2,5",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 346
+    },
+    {
+      "id": "potimarron-orange-vert-kg",
+      "name": "potimarron orange/ vert",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 347
+    },
+    {
+      "id": "radis-noir-violet-redd-meat-kg",
+      "name": "radis noir, violet, redd meat…",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 349
+    },
+    {
+      "id": "rutabaga-panais-kg",
+      "name": "rutabaga/panais",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 350
+    },
+    {
+      "id": "tomate-ancienne-rouge-kg",
+      "name": "tomate ancienne rouge",
+      "category": "Légumes",
+      "unit": "kg",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 351
+    },
+    {
+      "id": "tomate-ancienne-jaune-piece",
+      "name": "tomate ancienne jaune",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 352
+    },
+    {
+      "id": "tomate-ancienne-rose-piece",
+      "name": "tomate ancienne rose",
+      "category": "Légumes",
+      "unit": "piece",
+      "stock": 0,
+      "active": true,
+      "sortOrder": 353
+    },
+    {
+      "id": "ipa",
+      "name": "Bière IPA",
+      "category": "Bières",
+      "unit": "unite",
+      "stock": 96,
+      "active": true,
+      "sortOrder": 900
+    },
+    {
+      "id": "blonde-carton",
+      "name": "Bière blonde - carton 12",
+      "category": "Bières",
+      "unit": "carton",
+      "stock": 20,
+      "active": true,
+      "sortOrder": 910
+    }
+  ],
+  "productPrices": [
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "ail-botte-piece",
+      "price": 2.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "ail-frais-kg",
+      "price": 8.8
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "ail-sec-kg",
+      "price": 7.34
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "aubergine-kg",
+      "price": 3.86
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "basilic-piece",
+      "price": 1.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "bette-kg",
+      "price": 2.95
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "betterave-crue-kg",
+      "price": 2.5
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "carotte-kg",
+      "price": 2.65
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "carotte-botte-kg",
+      "price": 2.67
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "celeri-rave-kg",
+      "price": 2.9645
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "chicoree-pain-de-sucre-kg",
+      "price": 3.6784
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "chicoree-trevise-kg",
+      "price": 3.6784
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-cabus-kg",
+      "price": 2.5047
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-chinois-kg",
+      "price": 3.6784
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-de-printemps-kg",
+      "price": 2.8556
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-fleur-kg",
+      "price": 3.3033
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-frise-kg",
+      "price": 2.5047
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "choux-rave-kg",
+      "price": 2.7588
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "concombre-kg",
+      "price": 3.3033
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-butternut-kg",
+      "price": 2.51
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-carrat-kg",
+      "price": 2.51
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-musquee-kg",
+      "price": 2.36
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-patidou-kg",
+      "price": 2.51
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-potimarron-kg",
+      "price": 2.51
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courge-potimarron-vert-kg",
+      "price": 2.51
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courgette-pleine-saison-promo-piece",
+      "price": 2.32
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courgette-kg",
+      "price": 2.6375
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "courgette-serre-kg",
+      "price": 3.6925
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "echalotte-kg",
+      "price": 6
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "epinard-kg",
+      "price": 4.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "fenouil-kg",
+      "price": 3.48
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "haricot-vert-kg",
+      "price": 6.9
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "haricot-serre-kg",
+      "price": 8
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "laitue-piece",
+      "price": 1.05
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "laitue-serre-piece",
+      "price": 1.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "laitue-kg",
+      "price": 3.5
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "mache-kg",
+      "price": 13.1136
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "melon-kg",
+      "price": 2.6343
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "mesclum-kg",
+      "price": 13.1136
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "navet-kg",
+      "price": 2.5652
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "navet-botte-piece",
+      "price": 2.1121
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "oignon-kg",
+      "price": 2.86
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "oignon-botte-piece",
+      "price": 2.205
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "pasteque-kg",
+      "price": 2.09
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "panais-kg",
+      "price": 3.03
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "patate-douce-kg",
+      "price": 4.0462
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "pdt-primeur-kg",
+      "price": 5.05
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "pdt-primeur-saison-kg",
+      "price": 3.22
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "pdt-conservation-kg",
+      "price": 1.76
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "persil-piece",
+      "price": 1.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "poireaux-kg",
+      "price": 3.025
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "poivron-kg",
+      "price": 3.9204
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "poivron-mini-sucre-kg",
+      "price": 7.3447
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "radis-botte-piece",
+      "price": 1.6
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "radis-daikon-kg",
+      "price": 2.9403
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "radis-noir-kg",
+      "price": 2.9403
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "tomate-ancienne-kg",
+      "price": 3.95
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "tomate-cerise-kg",
+      "price": 6.3
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "tomate-ronde-kg",
+      "price": 2.9
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "topinambour-kg",
+      "price": 4.009
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "confiture-peche-piece",
+      "price": 3.6
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "confiture-peche-gingembre-piece",
+      "price": 3.23
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-apero-courgette-piece",
+      "price": 2.9
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-cardons-piece",
+      "price": 4.8
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-coulis-tomate-piece",
+      "price": 2.42
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-ketchup-piece",
+      "price": 3.23
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-pesto-basilic-piece",
+      "price": 4.03
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-pickles-choux-fleur-piece",
+      "price": 3.23
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "conserve-pickles-concombre-piece",
+      "price": 3.63
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "chips-piece",
+      "price": 2.28
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "tartinade-aubergine-piece",
+      "price": 3.63
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "pickles-ail-piece",
+      "price": 3.63
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "biere-blonde-ambree-ipa-33cl-piece",
+      "price": 1.8
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "biere-blonde-ambree-ipa-75cl-piece",
+      "price": 3.7
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "ail-frais-kg",
+      "price": 8.6
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "aubergine-kg",
+      "price": 3.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "basilic-bouquet-piece",
+      "price": 1.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "betterave-kg",
+      "price": 2.26
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "blette-kg",
+      "price": 3.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "blette-couleur-botte-piece",
+      "price": 1.8
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "carotte-botte-piece",
+      "price": 2.14
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "celeri-branche-kg",
+      "price": 3.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "celeri-rave-kg",
+      "price": 2.8
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "cebette-piece",
+      "price": 2.06
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "chicoree-de-trevise-kg",
+      "price": 3.35
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "chicoree-pain-de-sucre-kg",
+      "price": 2.95
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "chou-chinois-pak-choi-kg",
+      "price": 3.3
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "chou-kale-piece",
+      "price": 1.5
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "chou-lisse-chou-rouge-pointu-kg",
+      "price": 2.2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "concombre-epineux-kg",
+      "price": 3.2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "concombre-lisse-piece-piece",
+      "price": 1.3
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courge-butternut-potimarron-kg",
+      "price": 2.2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courge-muscade-bleue-kg",
+      "price": 2.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courge-patidou-kg",
+      "price": 2.9
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courge-spaghetti-kg",
+      "price": 2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courgette-debut-et-fin-de-saison-kg",
+      "price": 2.65
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courgette-juillet-aout-kg",
+      "price": 2.15
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "courgette-jaune-blanche-ronde-kg",
+      "price": 2.15
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "echalotte-kg",
+      "price": 5.3
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "epinard-kg",
+      "price": 4.35
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "fenouil-piece",
+      "price": 3.35
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "haricot-serre-kg",
+      "price": 8
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "haricot-vert-plat-kg",
+      "price": 6.9
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "laitue-piece",
+      "price": 1.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "mache-mesclum-kg",
+      "price": 12
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "navet-violet-jaune-kg",
+      "price": 2.26
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "navet-daikon-kg",
+      "price": 2.6
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "oignon-botte-piece",
+      "price": 2.06
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "oignon-rouge-blanc-kg",
+      "price": 3
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "pasteque-kg",
+      "price": 2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "patate-douce-kg",
+      "price": 3.3
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "patate-douce-gros-calibre-kg",
+      "price": 2.8
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "persil-frise-bouquet-piece",
+      "price": 1.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "persil-plat-bouquet-piece",
+      "price": 1.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "poireau-kg",
+      "price": 2.98
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "poivron-vert-kg",
+      "price": 3.1
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "poivron-couleur-kg",
+      "price": 3.75
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "pdt-consommation-maiwen-blanche-kg",
+      "price": 1.7
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "pdt-nouvelle-rouge-kg",
+      "price": 4.5
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "pdt-nouvelle-jaune-kg",
+      "price": 4.5
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "pdt-sac-2-5-kg",
+      "price": 4.6
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "potimarron-orange-vert-kg",
+      "price": 2.2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "radis-botte-piece",
+      "price": 1.6
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "radis-noir-violet-redd-meat-kg",
+      "price": 2.6
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "rutabaga-panais-kg",
+      "price": 2.75
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "tomate-ancienne-rouge-kg",
+      "price": 3.95
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "tomate-ancienne-jaune-piece",
+      "price": 3.95
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "tomate-ancienne-rose-piece",
+      "price": 3.95
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "tomate-ronde-kg",
+      "price": 2.9
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "tomate-cerise-kg",
+      "price": 5.3
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "ipa",
+      "price": 3.2
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "ipa",
+      "price": 3.2
+    },
+    {
+      "priceListId": "tarif-epicerie",
+      "productId": "blonde-carton",
+      "price": 34
+    },
+    {
+      "priceListId": "tarif-mercuriale-2026",
+      "productId": "blonde-carton",
+      "price": 34
+    }
+  ],
+  "orders": [],
+  "orderItems": []
+}

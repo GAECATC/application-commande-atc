@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 320" role="img" aria-labelledby="title desc">
+  <title id="title">GAEC à travers champs</title>
+  <desc id="desc">Logo vert ATC avec cinq rayons et la mention à travers champs.</desc>
+  <g fill="#103d23">
+    <rect x="241" y="24" width="38" height="70" rx="5" transform="rotate(-1 260 59)" />
+    <rect x="160" y="50" width="38" height="70" rx="5" transform="rotate(-29 179 85)" />
+    <rect x="322" y="50" width="38" height="70" rx="5" transform="rotate(29 341 85)" />
+    <rect x="96" y="112" width="38" height="70" rx="5" transform="rotate(-58 115 147)" />
+    <rect x="386" y="112" width="38" height="70" rx="5" transform="rotate(58 405 147)" />
+  </g>
+  <text
+    x="260"
+    y="223"
+    text-anchor="middle"
+    fill="#103d23"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="152"
+    font-weight="900"
+    letter-spacing="-9"
+  >atc</text>
+  <text
+    x="260"
+    y="284"
+    text-anchor="middle"
+    fill="#103d23"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="34"
+    font-weight="800"
+  >à travers champs</text>
+</svg>
