@@ -1,6 +1,16 @@
-const { createOrder, getOrders, getPartnerByCredentials, updateOrder } = require("@/lib/db");
+const { createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
+const { sendOrderConfirmation } = require("@/lib/mailer");
+
+async function notifyOrder(partner, order, mode) {
+  try {
+    return await sendOrderConfirmation({ partner, order, mode });
+  } catch (error) {
+    console.error("Order email failed", error);
+    return { sent: false, skipped: false, reason: "send-error" };
+  }
+}
 
 module.exports = async function handler(req, res) {
   if (req.method === "GET") {
@@ -28,18 +38,21 @@ module.exports = async function handler(req, res) {
       harvestDay: delivery.harvestDay,
       items: Array.isArray(items) ? items : []
     });
+    const email = await notifyOrder(partner, order, "created");
 
-    return res.status(201).json({ order, delivery });
+    return res.status(201).json({ order, delivery, email });
   }
 
   if (req.method === "PUT") {
     const { orderId, partnerId, code, items } = req.body || {};
     let nextPartnerId = partnerId;
+    let partnerForEmail = null;
 
     if (!isAdmin(req)) {
       const partner = await getPartnerByCredentials(partnerId, code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       nextPartnerId = partner.id;
+      partnerForEmail = partner;
     } else if (!partnerId) {
       return res.status(400).json({ error: "Partenaire requis" });
     }
@@ -52,7 +65,12 @@ module.exports = async function handler(req, res) {
         partnerId: nextPartnerId,
         items: Array.isArray(items) ? items : []
       });
-      return res.status(200).json({ order });
+      if (!partnerForEmail) {
+        const partners = await getPartners();
+        partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
+      }
+      const email = await notifyOrder(partnerForEmail, order, "updated");
+      return res.status(200).json({ order, email });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;
       return res.status(status).json({ error: error.message || "Modification refusee" });

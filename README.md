@@ -59,6 +59,10 @@ Tarif Mercuriale 2026 La Ravoire:
 - Satoriz Chambéry: `SATORIZCHAMBERY`
 - Biocoop Pont-de-Beauvoisin: `BIOPONTBEAUVOISIN`
 
+Client de test:
+
+- Client test: identifiant `client-test`, code `TESTCLIENT`
+
 Les noms/orthographes peuvent être corrigés dans `data/seed.json` avant la première création locale de `data/db.json`, ou dans Supabase après déploiement.
 
 ## Déploiement gratuit recommandé: Vercel + Supabase Free
@@ -89,6 +93,24 @@ SUPABASE_SERVICE_ROLE_KEY=ey...
 - Ne jamais l'exposer dans du code frontend.
 - Les codes partenaires sont simples: adaptés à un portail pro léger, mais pas à une application bancaire ou RH.
 - Change `ADMIN_PASSWORD` avant tout déploiement public.
+
+## Emails de confirmation
+
+L'application peut envoyer un email de confirmation lors de la création ou de la modification d'une commande.
+Si la configuration SMTP est absente, la commande reste enregistrée et l'email est simplement ignoré.
+
+Variables nécessaires:
+
+```bash
+SMTP_HOST=mail.infomaniak.com
+SMTP_PORT=465
+SMTP_USER=adresse@domaine.fr
+SMTP_PASSWORD=mot-de-passe-mail-ou-application
+ORDER_EMAIL_FROM=adresse@domaine.fr
+ORDER_TEST_EMAIL=adresse-de-test@domaine.fr
+```
+
+`ORDER_TEST_EMAIL` est optionnel. S'il est défini, les emails du client `client-test` sont envoyés à cette adresse.
 
 ## Tarifs par boutique
 

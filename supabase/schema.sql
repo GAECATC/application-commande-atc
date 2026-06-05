@@ -7,9 +7,12 @@ create table if not exists partners (
   id text primary key,
   name text not null,
   code text not null,
+  email text not null default '',
   active boolean not null default true,
   price_list_id text not null references price_lists(id)
 );
+
+alter table partners add column if not exists email text not null default '';
 
 create table if not exists products (
   id text primary key,
@@ -57,19 +60,21 @@ insert into price_lists (id, name) values
   ('tarif-mercuriale-2026', 'Mercuriale 2026 La Ravoire')
 on conflict (id) do update set name = excluded.name;
 
-insert into partners (id, name, code, active, price_list_id) values
-  ('epicerie-du-coin', 'Épicerie du Coin', 'EPICERIE', true, 'tarif-epicerie'),
-  ('la-fourmiliene', 'La Fourmiliène', 'FOURMILIENE', true, 'tarif-epicerie'),
-  ('auberge-savoyarde', 'L''Auberge Savoyarde', 'AUBERGE', true, 'tarif-epicerie'),
-  ('biocoop-macher', 'Biocoop Mâcher', 'BIOMACHER', true, 'tarif-epicerie'),
-  ('halles-de-chartreuse', 'Les Halles de Chartreuse', 'HALLESCHARTREUSE', true, 'tarif-epicerie'),
-  ('co-clipcho', 'Coclich''haut', 'COCLIPCHO', true, 'tarif-epicerie'),
-  ('satoriz-la-ravoire', 'Satoriz La Ravoire', 'SATORIZRAVOIRE', true, 'tarif-mercuriale-2026'),
-  ('satoriz-chambery', 'Satoriz Chambéry', 'SATORIZCHAMBERY', true, 'tarif-mercuriale-2026'),
-  ('biocoop-pont-beauvoisin', 'Biocoop Pont-de-Beauvoisin', 'BIOPONTBEAUVOISIN', true, 'tarif-mercuriale-2026')
+insert into partners (id, name, code, email, active, price_list_id) values
+  ('epicerie-du-coin', 'Épicerie du Coin', 'EPICERIE', 'contact@epicerie-du-coing.fr', true, 'tarif-epicerie'),
+  ('la-fourmiliene', 'La Fourmiliène', 'FOURMILIENE', 'fourmilienne@gmail.com', true, 'tarif-epicerie'),
+  ('auberge-savoyarde', 'L''Auberge Savoyarde', 'AUBERGE', 'sarl-gtt@orange.fr', true, 'tarif-epicerie'),
+  ('biocoop-macher', 'Biocoop Mâcher', 'BIOMACHER', 'magasin@biocoop-chambery.com', true, 'tarif-epicerie'),
+  ('halles-de-chartreuse', 'Les Halles de Chartreuse', 'HALLESCHARTREUSE', '', true, 'tarif-epicerie'),
+  ('co-clipcho', 'Coclich''haut', 'COCLIPCHO', 'appro@coclic-haut.fr', true, 'tarif-epicerie'),
+  ('satoriz-la-ravoire', 'Satoriz La Ravoire', 'SATORIZRAVOIRE', 'laravoire@satoriz.fr', true, 'tarif-mercuriale-2026'),
+  ('satoriz-chambery', 'Satoriz Chambéry', 'SATORIZCHAMBERY', 'chambery@satoriz.fr', true, 'tarif-mercuriale-2026'),
+  ('biocoop-pont-beauvoisin', 'Biocoop Pont-de-Beauvoisin', 'BIOPONTBEAUVOISIN', 'magasin@biocoopbeauvoisin.fr', true, 'tarif-mercuriale-2026'),
+  ('client-test', 'Client test', 'TESTCLIENT', 'client-test@example.com', true, 'tarif-epicerie')
 on conflict (id) do update set
   name = excluded.name,
   code = excluded.code,
+  email = excluded.email,
   active = excluded.active,
   price_list_id = excluded.price_list_id;
 

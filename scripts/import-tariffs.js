@@ -35,6 +35,19 @@ const manualProducts = [
   { id: "blonde-carton", name: "Bière blonde - carton 12", category: "Bières", unit: "carton", price: 34, stock: 20, active: true, sortOrder: 910 }
 ];
 
+const partnerEmails = {
+  "epicerie-du-coin": "contact@epicerie-du-coing.fr",
+  "la-fourmiliene": "fourmilienne@gmail.com",
+  "auberge-savoyarde": "sarl-gtt@orange.fr",
+  "biocoop-macher": "magasin@biocoop-chambery.com",
+  "halles-de-chartreuse": "",
+  "co-clipcho": "appro@coclic-haut.fr",
+  "satoriz-la-ravoire": "laravoire@satoriz.fr",
+  "satoriz-chambery": "chambery@satoriz.fr",
+  "biocoop-pont-beauvoisin": "magasin@biocoopbeauvoisin.fr",
+  "client-test": "client-test@example.com"
+};
+
 function slugify(value) {
   return String(value)
     .normalize("NFD")
@@ -99,7 +112,14 @@ const productPrices = [];
 
 function addSource(source, rows, sortOffset) {
   priceLists.push({ id: source.priceListId, name: source.priceListName });
-  partners.push(...source.partners.map(([id, name, code]) => ({ id, name, code, active: true, priceListId: source.priceListId })));
+  partners.push(...source.partners.map(([id, name, code]) => ({
+    id,
+    name,
+    code,
+    email: partnerEmails[id] || "",
+    active: true,
+    priceListId: source.priceListId
+  })));
 
   rows.forEach((row, index) => {
     const id = `${slugify(row.name)}-${row.unit}`;
@@ -124,6 +144,15 @@ function addSource(source, rows, sortOffset) {
 
 addSource(sources.grocery, readGrocery(sources.grocery.file), 10);
 addSource(sources.satoriz, readSatoriz(sources.satoriz.file), 300);
+
+partners.push({
+  id: "client-test",
+  name: "Client test",
+  code: "TESTCLIENT",
+  email: partnerEmails["client-test"],
+  active: true,
+  priceListId: "tarif-epicerie"
+});
 
 for (const product of manualProducts) {
   productById.set(product.id, {

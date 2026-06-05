@@ -14,6 +14,7 @@
       "id": "epicerie-du-coin",
       "name": "Épicerie du Coin",
       "code": "EPICERIE",
+      "email": "contact@epicerie-du-coing.fr",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -21,6 +22,7 @@
       "id": "la-fourmiliene",
       "name": "La Fourmiliène",
       "code": "FOURMILIENE",
+      "email": "fourmilienne@gmail.com",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -28,6 +30,7 @@
       "id": "auberge-savoyarde",
       "name": "L'Auberge Savoyarde",
       "code": "AUBERGE",
+      "email": "sarl-gtt@orange.fr",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -35,6 +38,7 @@
       "id": "biocoop-macher",
       "name": "Biocoop Mâcher",
       "code": "BIOMACHER",
+      "email": "magasin@biocoop-chambery.com",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -42,6 +46,7 @@
       "id": "halles-de-chartreuse",
       "name": "Les Halles de Chartreuse",
       "code": "HALLESCHARTREUSE",
+      "email": "",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -49,6 +54,7 @@
       "id": "co-clipcho",
       "name": "Coclich'haut",
       "code": "COCLIPCHO",
+      "email": "appro@coclic-haut.fr",
       "active": true,
       "priceListId": "tarif-epicerie"
     },
@@ -56,6 +62,7 @@
       "id": "satoriz-la-ravoire",
       "name": "Satoriz La Ravoire",
       "code": "SATORIZRAVOIRE",
+      "email": "laravoire@satoriz.fr",
       "active": true,
       "priceListId": "tarif-mercuriale-2026"
     },
@@ -63,6 +70,7 @@
       "id": "satoriz-chambery",
       "name": "Satoriz Chambéry",
       "code": "SATORIZCHAMBERY",
+      "email": "chambery@satoriz.fr",
       "active": true,
       "priceListId": "tarif-mercuriale-2026"
     },
@@ -70,8 +78,17 @@
       "id": "biocoop-pont-beauvoisin",
       "name": "Biocoop Pont-de-Beauvoisin",
       "code": "BIOPONTBEAUVOISIN",
+      "email": "magasin@biocoopbeauvoisin.fr",
       "active": true,
       "priceListId": "tarif-mercuriale-2026"
+    },
+    {
+      "id": "client-test",
+      "name": "Client test",
+      "code": "TESTCLIENT",
+      "email": "client-test@example.com",
+      "active": true,
+      "priceListId": "tarif-epicerie"
     }
   ],
   "products": [
