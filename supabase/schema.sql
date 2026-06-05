@@ -70,7 +70,7 @@ insert into partners (id, name, code, email, active, price_list_id) values
   ('satoriz-la-ravoire', 'Satoriz La Ravoire', 'SATORIZRAVOIRE', 'laravoire@satoriz.fr', true, 'tarif-mercuriale-2026'),
   ('satoriz-chambery', 'Satoriz Chambéry', 'SATORIZCHAMBERY', 'chambery@satoriz.fr', true, 'tarif-mercuriale-2026'),
   ('biocoop-pont-beauvoisin', 'Biocoop Pont-de-Beauvoisin', 'BIOPONTBEAUVOISIN', 'magasin@biocoopbeauvoisin.fr', true, 'tarif-mercuriale-2026'),
-  ('client-test', 'Client test', 'TESTCLIENT', 'client-test@example.com', true, 'tarif-epicerie')
+  ('client-test', 'Client test', 'TESTCLIENT', 'atraverschamps73@gmail.com', true, 'tarif-epicerie')
 on conflict (id) do update set
   name = excluded.name,
   code = excluded.code,

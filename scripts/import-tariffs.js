@@ -45,7 +45,7 @@ const partnerEmails = {
   "satoriz-la-ravoire": "laravoire@satoriz.fr",
   "satoriz-chambery": "chambery@satoriz.fr",
   "biocoop-pont-beauvoisin": "magasin@biocoopbeauvoisin.fr",
-  "client-test": "client-test@example.com"
+  "client-test": "atraverschamps73@gmail.com"
 };
 
 function slugify(value) {

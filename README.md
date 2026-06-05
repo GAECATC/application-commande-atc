@@ -61,7 +61,7 @@ Tarif Mercuriale 2026 La Ravoire:
 
 Client de test:
 
-- Client test: identifiant `client-test`, code `TESTCLIENT`
+- Client test: identifiant `client-test`, code `TESTCLIENT`, email `atraverschamps73@gmail.com`
 
 Les noms/orthographes peuvent être corrigés dans `data/seed.json` avant la première création locale de `data/db.json`, ou dans Supabase après déploiement.
 
