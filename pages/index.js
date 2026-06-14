@@ -264,12 +264,12 @@ export default function ClientPortal({ initialSession }) {
                     <div>
                       <h4>{product.name}</h4>
                       <p>{currency.format(product.price)} / {unitLabel(product.unit)}</p>
-                      <span className="stock">Disponible: {product.stock} {unitLabel(product.unit)}</span>
+                      <span className="stock">{stockLabel(product)}</span>
                     </div>
                     <input
                       type="number"
                       min="0"
-                      max={product.stock}
+                      max={hasStockLimit(product) ? product.stock : undefined}
                       step={product.unit === "kg" ? "0.5" : "1"}
                       value={quantities[product.id] || ""}
                       onChange={(event) => setQuantities((current) => ({ ...current, [product.id]: event.target.value }))}
@@ -353,4 +353,13 @@ function formatNumber(value) {
 
 function unitLabel(unit) {
   return ({ kg: "kg", piece: "pièce", unite: "unité", carton: "carton" })[unit] || unit;
+}
+
+function hasStockLimit(product) {
+  return Number(product.stock) > 0;
+}
+
+function stockLabel(product) {
+  if (!hasStockLimit(product)) return "Disponible: à confirmer";
+  return `Disponible: ${formatNumber(product.stock)} ${unitLabel(product.unit)}`;
 }
