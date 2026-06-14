@@ -31,18 +31,19 @@ module.exports = async function handler(req, res) {
     const product = req.body || {};
     const id = product.id || slugify(product.name);
     if (!id || !product.name) return res.status(400).json({ error: "Nom produit requis" });
-    const saved = await upsertProduct({
+    const payload = {
       id,
       name: product.name,
       category: product.category,
       unit: product.unit,
       price: Number(product.price || 0),
       stock: Number(product.stock || 0),
-      active: product.active !== false,
       sortOrder: Number(product.sortOrder || 100),
-      priceListId: product.priceListId,
-      price: Number(product.price || 0)
-    });
+      priceListId: product.priceListId
+    };
+    if (Object.hasOwn(product, "active")) payload.active = Boolean(product.active);
+
+    const saved = await upsertProduct(payload);
     return res.status(200).json({ product: saved });
   }
 

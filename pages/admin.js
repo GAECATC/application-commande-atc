@@ -250,7 +250,7 @@ export default function Admin() {
         </div>
         <div className="admin-products">
           {products.map((product) => (
-            <ProductEditor key={product.id} product={product} onSave={saveProduct} />
+            <ProductEditor key={`${product.id}:${product.active}:${product.price}:${product.stock}`} product={product} onSave={saveProduct} />
           ))}
         </div>
       </section>
