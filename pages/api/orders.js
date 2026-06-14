@@ -1,4 +1,4 @@
-const { createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder } = require("@/lib/db");
+const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendOrderConfirmation } = require("@/lib/mailer");
@@ -77,6 +77,29 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  res.setHeader("Allow", "GET, POST, PUT");
+  if (req.method === "DELETE") {
+    const { orderId, partnerId, code } = req.body || {};
+    let nextPartnerId = partnerId;
+
+    if (!isAdmin(req)) {
+      const partner = await getPartnerByCredentials(partnerId, code);
+      if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
+      nextPartnerId = partner.id;
+    } else if (!partnerId) {
+      return res.status(400).json({ error: "Partenaire requis" });
+    }
+
+    if (!orderId) return res.status(400).json({ error: "Commande requise" });
+
+    try {
+      const order = await cancelOrder({ orderId, partnerId: nextPartnerId });
+      return res.status(200).json({ order });
+    } catch (error) {
+      const status = error.message === "Commande introuvable" ? 404 : 400;
+      return res.status(status).json({ error: error.message || "Suppression refusee" });
+    }
+  }
+
+  res.setHeader("Allow", "GET, POST, PUT, DELETE");
   return res.status(405).json({ error: "Methode non autorisee" });
 };

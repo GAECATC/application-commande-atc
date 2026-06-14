@@ -92,6 +92,25 @@ export default function Admin() {
     await loadAdminData();
   }
 
+  async function deleteOrder(order) {
+    if (!window.confirm(`Supprimer la commande de ${order.partnerName} ?`)) return;
+
+    const response = await fetch("/api/orders", {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Suppression refusee.");
+
+    if (editingOrderId === order.id) {
+      setEditingOrderId(null);
+      setOrderDraft({});
+    }
+    setMessage("Commande supprimee.");
+    await loadAdminData();
+  }
+
   if (!authenticated) {
     return (
       <main className="shell">
@@ -189,6 +208,7 @@ export default function Admin() {
                 <div className="order-actions">
                   <strong>{currency.format(order.total)}</strong>
                   <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
+                  <button className="danger no-print" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                 </div>
               )}
             </article>

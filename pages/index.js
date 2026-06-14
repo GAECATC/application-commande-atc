@@ -130,6 +130,25 @@ export default function ClientPortal({ initialSession }) {
     setMessage("");
   }
 
+  async function deleteOrder(order) {
+    if (!window.confirm("Supprimer cette commande ?")) return;
+
+    setLoading(true);
+    setMessage("");
+    const response = await fetch("/api/orders", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: order.id, partnerId, code })
+    });
+    const data = await response.json();
+    setLoading(false);
+    if (!response.ok) return setMessage(data.error || "Suppression refusee.");
+
+    if (editingOrder?.id === order.id) clearDraft();
+    await loadOrders(partnerId, code);
+    setMessage("Commande supprimée.");
+  }
+
   if (!session) return <main className="shell"><p>Chargement...</p></main>;
 
   return (
@@ -279,6 +298,7 @@ export default function ClientPortal({ initialSession }) {
                     <div className="order-actions">
                       <strong>{currency.format(order.total)}</strong>
                       <button className="ghost" type="button" onClick={() => editOrder(order)}>Modifier</button>
+                      <button className="danger" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                     </div>
                   </article>
                 ))}

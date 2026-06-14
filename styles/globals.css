@@ -202,6 +202,7 @@ form {
 
 .primary,
 .ghost,
+.danger,
 .link-button {
   display: inline-flex;
   align-items: center;
@@ -227,6 +228,16 @@ form {
   color: var(--primary-dark);
   background: #fff;
   border: 1px solid #b9c9ad;
+}
+
+.danger {
+  color: #fff;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.danger:hover {
+  background: #7f2424;
 }
 
 .notice {
