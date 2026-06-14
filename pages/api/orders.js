@@ -3,9 +3,9 @@ const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendOrderConfirmation } = require("@/lib/mailer");
 
-async function notifyOrder(partner, order, mode) {
+async function notifyOrder(partner, order, mode, previousOrder) {
   try {
-    return await sendOrderConfirmation({ partner, order, mode });
+    return await sendOrderConfirmation({ partner, order, mode, previousOrder });
   } catch (error) {
     console.error("Order email failed", error);
     return { sent: false, skipped: false, reason: "send-error" };
@@ -60,6 +60,8 @@ module.exports = async function handler(req, res) {
     if (!orderId) return res.status(400).json({ error: "Commande requise" });
 
     try {
+      const previousOrders = await getOrders({ partnerId: nextPartnerId });
+      const previousOrder = previousOrders.find((order) => order.id === orderId);
       const order = await updateOrder({
         orderId,
         partnerId: nextPartnerId,
@@ -69,7 +71,7 @@ module.exports = async function handler(req, res) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
-      const email = await notifyOrder(partnerForEmail, order, "updated");
+      const email = await notifyOrder(partnerForEmail, order, "updated", previousOrder);
       return res.status(200).json({ order, email });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;
