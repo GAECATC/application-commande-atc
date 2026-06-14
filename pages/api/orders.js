@@ -1,13 +1,22 @@
 const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
-const { sendOrderConfirmation } = require("@/lib/mailer");
+const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
 
 async function notifyOrder(partner, order, mode, previousOrder) {
   try {
     return await sendOrderConfirmation({ partner, order, mode, previousOrder });
   } catch (error) {
     console.error("Order email failed", error);
+    return { sent: false, skipped: false, reason: "send-error" };
+  }
+}
+
+async function notifyAdmin(partner, order, mode, previousOrder) {
+  try {
+    return await sendAdminOrderAlert({ partner, order, mode, previousOrder });
+  } catch (error) {
+    console.error("Admin order email failed", error);
     return { sent: false, skipped: false, reason: "send-error" };
   }
 }
@@ -45,8 +54,9 @@ module.exports = async function handler(req, res) {
       items: Array.isArray(items) ? items : []
     });
     const email = await notifyOrder(partner, order, "created");
+    const adminEmail = await notifyAdmin(partner, order, "created");
 
-    return res.status(201).json({ order, delivery, email });
+    return res.status(201).json({ order, delivery, email, adminEmail });
   }
 
   if (req.method === "PUT") {
@@ -78,8 +88,10 @@ module.exports = async function handler(req, res) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
-      const email = await notifyOrder(partnerForEmail, order, adminRequest ? "updated" : "updated-by-client", previousOrder);
-      return res.status(200).json({ order, email });
+      const mode = adminRequest ? "updated" : "updated-by-client";
+      const email = await notifyOrder(partnerForEmail, order, mode, previousOrder);
+      const adminEmail = adminRequest ? null : await notifyAdmin(partnerForEmail, order, mode, previousOrder);
+      return res.status(200).json({ order, email, adminEmail });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;
       return res.status(status).json({ error: error.message || "Modification refusee" });
@@ -109,8 +121,10 @@ module.exports = async function handler(req, res) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
-      const email = await notifyOrder(partnerForEmail, order, adminRequest ? "cancelled" : "cancelled-by-client");
-      return res.status(200).json({ order, email });
+      const mode = adminRequest ? "cancelled" : "cancelled-by-client";
+      const email = await notifyOrder(partnerForEmail, order, mode);
+      const adminEmail = adminRequest ? null : await notifyAdmin(partnerForEmail, order, mode);
+      return res.status(200).json({ order, email, adminEmail });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;
       return res.status(status).json({ error: error.message || "Suppression refusee" });
