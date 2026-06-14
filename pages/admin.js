@@ -9,6 +9,7 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [products, setProducts] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [summary, setSummary] = useState(null);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
@@ -16,7 +17,9 @@ export default function Admin() {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [orderDraft, setOrderDraft] = useState({});
   const [dirtyProductIds, setDirtyProductIds] = useState([]);
+  const [dirtyPartnerIds, setDirtyPartnerIds] = useState([]);
   const [savingCatalog, setSavingCatalog] = useState(false);
+  const [savingPartners, setSavingPartners] = useState(false);
   const [message, setMessage] = useState("");
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
@@ -46,16 +49,20 @@ export default function Admin() {
     const sessionData = await sessionRes.json();
     const nextPriceLists = sessionData.priceLists || [];
     const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";
-    const [productRes, summaryRes] = await Promise.all([
+    const [productRes, summaryRes, partnerRes] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(nextPriceListId)}`, { headers: adminHeaders }),
-      fetch("/api/summary", { headers: adminHeaders })
+      fetch("/api/summary", { headers: adminHeaders }),
+      fetch("/api/partners", { headers: adminHeaders })
     ]);
     const productData = await productRes.json();
     const summaryData = await summaryRes.json();
+    const partnerData = await partnerRes.json();
     setPriceLists(nextPriceLists);
     setSelectedPriceListId(nextPriceListId);
     setProducts(productData.products || []);
+    setPartners(partnerData.partners || []);
     setDirtyProductIds([]);
+    setDirtyPartnerIds([]);
     setSummary(summaryData);
   }
 
@@ -97,6 +104,34 @@ export default function Admin() {
 
     setSavingCatalog(false);
     setMessage("Catalogue mis a jour.");
+    await loadAdminData();
+  }
+
+  function updatePartnerDraft(partnerId, nextPartner) {
+    setPartners((current) => current.map((partner) => partner.id === partnerId ? nextPartner : partner));
+    setDirtyPartnerIds((current) => current.includes(partnerId) ? current : [...current, partnerId]);
+  }
+
+  async function savePartnerChanges() {
+    const dirtyPartners = partners.filter((partner) => dirtyPartnerIds.includes(partner.id));
+    if (!dirtyPartners.length) return;
+
+    setSavingPartners(true);
+    for (const partner of dirtyPartners) {
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(partner)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setSavingPartners(false);
+        return setMessage(data.error || "Client refuse.");
+      }
+    }
+
+    setSavingPartners(false);
+    setMessage("Clients mis a jour.");
     await loadAdminData();
   }
 
@@ -271,6 +306,39 @@ export default function Admin() {
       <section className="panel no-print">
         <div className="section-heading">
           <div>
+            <h2>Clients</h2>
+            <p className="section-note">
+              {partners.filter((partner) => !partner.email).length} email client manquant
+            </p>
+          </div>
+          <button className="primary" type="button" disabled={!dirtyPartnerIds.length || savingPartners} onClick={savePartnerChanges}>
+            {savingPartners ? "Enregistrement..." : `Enregistrer les clients${dirtyPartnerIds.length ? ` (${dirtyPartnerIds.length})` : ""}`}
+          </button>
+        </div>
+        <div className="partner-editor partner-editor-header">
+          <span>Client</span>
+          <span>Email</span>
+          <span>Facturation</span>
+          <span>SIRET</span>
+          <span>TVA intracom.</span>
+          <span>Tarif</span>
+          <span>Actif</span>
+        </div>
+        <div className="admin-partners">
+          {partners.map((partner) => (
+            <PartnerEditor
+              key={partner.id}
+              partner={partner}
+              priceLists={priceLists}
+              onChange={(nextPartner) => updatePartnerDraft(partner.id, nextPartner)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="panel no-print">
+        <div className="section-heading">
+          <div>
             <h2>Catalogue</h2>
             <label className="compact-label">
               Grille tarifaire
@@ -328,6 +396,51 @@ export default function Admin() {
 
 function ProductEditor({ product, onChange }) {
   return <ProductForm value={product} onChange={onChange} showSubmit={false} />;
+}
+
+function PartnerEditor({ partner, priceLists, onChange }) {
+  function patch(field, nextValue) {
+    onChange({ ...partner, [field]: nextValue });
+  }
+
+  return (
+    <div className={`partner-editor ${partner.email ? "" : "missing-email"}`}>
+      <div className="partner-identity">
+        <strong>{partner.name}</strong>
+        <small>{partner.id} / {partner.code}</small>
+      </div>
+      <input
+        type="email"
+        value={partner.email || ""}
+        onChange={(event) => patch("email", event.target.value)}
+        placeholder="email client"
+      />
+      <div className="billing-fields">
+        <input
+          value={partner.billingName || ""}
+          onChange={(event) => patch("billingName", event.target.value)}
+          placeholder="Raison sociale / nom"
+        />
+        <textarea
+          value={partner.billingAddress || ""}
+          onChange={(event) => patch("billingAddress", event.target.value)}
+          placeholder="Adresse de facturation"
+          rows={2}
+        />
+      </div>
+      <input value={partner.siret || ""} onChange={(event) => patch("siret", event.target.value)} placeholder="SIRET" />
+      <input value={partner.vatNumber || ""} onChange={(event) => patch("vatNumber", event.target.value)} placeholder="FR..." />
+      <select value={partner.priceListId} onChange={(event) => patch("priceListId", event.target.value)}>
+        {priceLists.map((priceList) => (
+          <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
+        ))}
+      </select>
+      <label className="toggle">
+        <input type="checkbox" checked={partner.active} onChange={(event) => patch("active", event.target.checked)} />
+        Actif
+      </label>
+    </div>
+  );
 }
 
 function ProductForm({ value, onChange, onSubmit, showSubmit = true }) {

@@ -35,7 +35,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -179,7 +180,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -190,9 +192,14 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 3px solid rgba(185, 216, 91, 0.38);
   border-color: var(--primary);
+}
+
+textarea {
+  resize: vertical;
 }
 
 form {
@@ -243,6 +250,13 @@ form {
 .notice {
   margin: 0;
   color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.section-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
   font-weight: 700;
 }
 
@@ -522,6 +536,11 @@ form {
   gap: 10px;
 }
 
+.admin-partners {
+  display: grid;
+  gap: 10px;
+}
+
 .product-editor {
   display: grid;
   grid-template-columns: minmax(180px, 1.4fr) 130px 110px 90px 90px 96px;
@@ -539,6 +558,40 @@ form {
   font-size: 0.8rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.partner-editor {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(190px, 1fr) minmax(230px, 1.25fr) 120px 140px 150px 80px;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.partner-editor-header {
+  margin-bottom: 10px;
+  color: var(--primary);
+  background: #eef5de;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.partner-editor.missing-email {
+  border-left: 5px solid var(--accent);
+}
+
+.partner-identity,
+.billing-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.partner-identity small {
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .toggle {
@@ -616,6 +669,10 @@ form {
   }
 
   .product-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-editor {
     grid-template-columns: 1fr;
   }
 

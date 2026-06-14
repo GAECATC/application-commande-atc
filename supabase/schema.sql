@@ -8,11 +8,19 @@ create table if not exists partners (
   name text not null,
   code text not null,
   email text not null default '',
+  billing_name text not null default '',
+  billing_address text not null default '',
+  siret text not null default '',
+  vat_number text not null default '',
   active boolean not null default true,
   price_list_id text not null references price_lists(id)
 );
 
 alter table partners add column if not exists email text not null default '';
+alter table partners add column if not exists billing_name text not null default '';
+alter table partners add column if not exists billing_address text not null default '';
+alter table partners add column if not exists siret text not null default '';
+alter table partners add column if not exists vat_number text not null default '';
 
 create table if not exists products (
   id text primary key,
