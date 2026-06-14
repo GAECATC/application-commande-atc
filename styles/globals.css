@@ -360,6 +360,28 @@ form {
   font-weight: 700;
 }
 
+.edit-guidance {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 18px;
+  padding: 14px 16px;
+  color: var(--primary-dark);
+  background: #fff3e8;
+  border: 1px solid #ffb27f;
+  border-left: 5px solid var(--accent);
+  border-radius: 8px;
+}
+
+.edit-guidance strong {
+  color: var(--primary);
+}
+
+.edit-guidance a {
+  width: fit-content;
+  color: var(--accent);
+  font-weight: 900;
+}
+
 .actions {
   display: flex;
   gap: 10px;

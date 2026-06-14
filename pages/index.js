@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -16,6 +16,7 @@ export default function ClientPortal({ initialSession }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("list");
+  const catalogRef = useRef(null);
 
   useEffect(() => {
     if (initialSession) return;
@@ -121,7 +122,10 @@ export default function ClientPortal({ initialSession }) {
     }
     setEditingOrder(order);
     setQuantities(nextQuantities);
-    setMessage("Commande chargée pour modification.");
+    setMessage("");
+    requestAnimationFrame(() => {
+      catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function clearDraft() {
@@ -218,6 +222,13 @@ export default function ClientPortal({ initialSession }) {
               </div>
               {editingOrder && <button className="ghost" type="button" onClick={clearDraft}>Annuler</button>}
             </div>
+            {editingOrder && (
+              <div className="edit-guidance">
+                <strong>Modification en cours</strong>
+                <span>Ajustez les quantités directement dans le catalogue ci-dessous, puis cliquez sur “Enregistrer les modifications”.</span>
+                <a href="#catalogue">↓ Catalogue</a>
+              </div>
+            )}
             {selectedItems.length ? (
               <ul className="recap-list">
                 {selectedItems.map((item) => (
@@ -267,7 +278,7 @@ export default function ClientPortal({ initialSession }) {
             )}
           </section>
 
-          <div className="section-heading catalog-heading">
+          <div className="section-heading catalog-heading" id="catalogue" ref={catalogRef}>
             <div>
               <p className="eyebrow">Catalogue</p>
               <h2>Produits disponibles</h2>
