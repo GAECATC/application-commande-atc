@@ -518,7 +518,7 @@ form {
 
 .product-editor {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) 130px 110px 90px 90px 96px 120px;
+  grid-template-columns: minmax(180px, 1.4fr) 130px 110px 90px 90px 96px;
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -544,6 +544,30 @@ form {
 .toggle input {
   width: 18px;
   min-height: 18px;
+}
+
+.admin-savebar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 2px solid var(--brand-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.admin-savebar span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {

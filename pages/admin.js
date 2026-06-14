@@ -15,6 +15,8 @@ export default function Admin() {
   const [draft, setDraft] = useState(emptyProduct);
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [orderDraft, setOrderDraft] = useState({});
+  const [dirtyProductIds, setDirtyProductIds] = useState([]);
+  const [savingCatalog, setSavingCatalog] = useState(false);
   const [message, setMessage] = useState("");
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
@@ -53,6 +55,7 @@ export default function Admin() {
     setPriceLists(nextPriceLists);
     setSelectedPriceListId(nextPriceListId);
     setProducts(productData.products || []);
+    setDirtyProductIds([]);
     setSummary(summaryData);
   }
 
@@ -66,6 +69,34 @@ export default function Admin() {
     if (!response.ok) return setMessage(data.error || "Produit refuse.");
     setMessage("Catalogue mis a jour.");
     setDraft(emptyProduct);
+    await loadAdminData();
+  }
+
+  function updateProductDraft(productId, nextProduct) {
+    setProducts((current) => current.map((product) => product.id === productId ? nextProduct : product));
+    setDirtyProductIds((current) => current.includes(productId) ? current : [...current, productId]);
+  }
+
+  async function saveCatalogChanges() {
+    const dirtyProducts = products.filter((product) => dirtyProductIds.includes(product.id));
+    if (!dirtyProducts.length) return;
+
+    setSavingCatalog(true);
+    for (const product of dirtyProducts) {
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...product, priceListId: selectedPriceListId })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setSavingCatalog(false);
+        return setMessage(data.error || "Catalogue refuse.");
+      }
+    }
+
+    setSavingCatalog(false);
+    setMessage("Catalogue mis a jour.");
     await loadAdminData();
   }
 
@@ -246,13 +277,25 @@ export default function Admin() {
           <span>Prix</span>
           <span>Volume disponible</span>
           <span>Visible</span>
-          <span>Action</span>
         </div>
         <div className="admin-products">
           {products.map((product) => (
-            <ProductEditor key={`${product.id}:${product.active}:${product.price}:${product.stock}`} product={product} onSave={saveProduct} />
+            <ProductEditor
+              key={product.id}
+              product={product}
+              onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
+            />
           ))}
         </div>
+        <aside className="admin-savebar">
+          <div>
+            <strong>Catalogue</strong>
+            <span>{dirtyProductIds.length ? `${dirtyProductIds.length} modification${dirtyProductIds.length > 1 ? "s" : ""} en attente` : "Aucune modification en attente"}</span>
+          </div>
+          <button className="primary" type="button" disabled={!dirtyProductIds.length || savingCatalog} onClick={saveCatalogChanges}>
+            {savingCatalog ? "Enregistrement..." : "Enregistrer le catalogue"}
+          </button>
+        </aside>
       </section>
 
       <section className="panel no-print">
@@ -263,12 +306,11 @@ export default function Admin() {
   );
 }
 
-function ProductEditor({ product, onSave }) {
-  const [value, setValue] = useState(product);
-  return <ProductForm value={value} onChange={setValue} onSubmit={() => onSave(value)} />;
+function ProductEditor({ product, onChange }) {
+  return <ProductForm value={product} onChange={onChange} showSubmit={false} />;
 }
 
-function ProductForm({ value, onChange, onSubmit }) {
+function ProductForm({ value, onChange, onSubmit, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -292,7 +334,7 @@ function ProductForm({ value, onChange, onSubmit }) {
         <input type="checkbox" checked={value.active} onChange={(event) => patch("active", event.target.checked)} />
         Visible
       </label>
-      <button className="primary" onClick={onSubmit}>Enregistrer</button>
+      {showSubmit && <button className="primary" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );
 }
