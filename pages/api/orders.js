@@ -47,8 +47,9 @@ module.exports = async function handler(req, res) {
     const { orderId, partnerId, code, items } = req.body || {};
     let nextPartnerId = partnerId;
     let partnerForEmail = null;
+    const adminRequest = isAdmin(req);
 
-    if (!isAdmin(req)) {
+    if (!adminRequest) {
       const partner = await getPartnerByCredentials(partnerId, code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       nextPartnerId = partner.id;
@@ -71,7 +72,7 @@ module.exports = async function handler(req, res) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
-      const email = await notifyOrder(partnerForEmail, order, "updated", previousOrder);
+      const email = await notifyOrder(partnerForEmail, order, adminRequest ? "updated" : "updated-by-client", previousOrder);
       return res.status(200).json({ order, email });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;

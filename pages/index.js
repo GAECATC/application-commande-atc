@@ -15,7 +15,7 @@ export default function ClientPortal({ initialSession }) {
   const [editingOrder, setEditingOrder] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("list");
 
   useEffect(() => {
     if (initialSession) return;
@@ -199,28 +199,58 @@ export default function ClientPortal({ initialSession }) {
         <>
           <div className="section-heading">
             <div>
-              <p className="eyebrow">{partner.name}</p>
-              <h2>Catalogue</h2>
+              <p className="eyebrow">Client</p>
+              <h2>{partner.name}</h2>
             </div>
             <div className="actions">
-              <div className="segmented" aria-label="Affichage catalogue">
-                <button
-                  className={viewMode === "grid" ? "active" : ""}
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                >
-                  Blocs
-                </button>
-                <button
-                  className={viewMode === "list" ? "active" : ""}
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                >
-                  Lignes
-                </button>
-              </div>
               <button className="ghost" onClick={() => { localStorage.removeItem("atc-partner"); setPartner(null); setProducts([]); setOrders([]); clearDraft(); }}>
                 Déconnexion
+              </button>
+            </div>
+          </div>
+
+          <section className="panel order-recap">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">{editingOrder ? "Modification en cours" : "Commande en cours"}</p>
+                <h2>Récapitulatif</h2>
+              </div>
+              {editingOrder && <button className="ghost" type="button" onClick={clearDraft}>Annuler</button>}
+            </div>
+            {selectedItems.length ? (
+              <ul className="recap-list">
+                {selectedItems.map((item) => (
+                  <li key={item.id}>
+                    <span>{item.name}</span>
+                    <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
+                    <small>{currency.format(item.quantity * item.price)}</small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Aucun produit sélectionné.</p>
+            )}
+          </section>
+
+          <div className="section-heading catalog-heading">
+            <div>
+              <p className="eyebrow">Catalogue</p>
+              <h2>Produits disponibles</h2>
+            </div>
+            <div className="segmented" aria-label="Affichage catalogue">
+              <button
+                className={viewMode === "list" ? "active" : ""}
+                type="button"
+                onClick={() => setViewMode("list")}
+              >
+                Lignes
+              </button>
+              <button
+                className={viewMode === "grid" ? "active" : ""}
+                type="button"
+                onClick={() => setViewMode("grid")}
+              >
+                Blocs
               </button>
             </div>
           </div>
@@ -250,29 +280,6 @@ export default function ClientPortal({ initialSession }) {
               </div>
             </section>
           ))}
-
-          <section className="panel order-recap">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">{editingOrder ? "Modification en cours" : "Commande en cours"}</p>
-                <h2>Récapitulatif</h2>
-              </div>
-              {editingOrder && <button className="ghost" type="button" onClick={clearDraft}>Annuler</button>}
-            </div>
-            {selectedItems.length ? (
-              <ul className="recap-list">
-                {selectedItems.map((item) => (
-                  <li key={item.id}>
-                    <span>{item.name}</span>
-                    <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
-                    <small>{currency.format(item.quantity * item.price)}</small>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Aucun produit sélectionné.</p>
-            )}
-          </section>
 
           <section className="panel order-recap">
             <div className="section-heading">

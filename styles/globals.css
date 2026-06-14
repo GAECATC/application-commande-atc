@@ -250,6 +250,10 @@ form {
   margin-top: 26px;
 }
 
+.catalog-heading {
+  margin-top: 28px;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
