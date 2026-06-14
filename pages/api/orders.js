@@ -1,4 +1,4 @@
-const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder } = require("@/lib/db");
+const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder, validateOrder } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
@@ -131,6 +131,24 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  res.setHeader("Allow", "GET, POST, PUT, DELETE");
+  if (req.method === "PATCH") {
+    if (!isAdmin(req)) return res.status(401).json({ error: "Acces admin refuse" });
+    const { orderId, partnerId } = req.body || {};
+    if (!orderId) return res.status(400).json({ error: "Commande requise" });
+    if (!partnerId) return res.status(400).json({ error: "Partenaire requis" });
+
+    try {
+      const order = await validateOrder({ orderId, partnerId });
+      const partners = await getPartners();
+      const partnerForEmail = partners.find((partner) => partner.id === partnerId);
+      const email = await notifyOrder(partnerForEmail, order, "validated");
+      return res.status(200).json({ order, email });
+    } catch (error) {
+      const status = error.message === "Commande introuvable" ? 404 : 400;
+      return res.status(status).json({ error: error.message || "Validation refusee" });
+    }
+  }
+
+  res.setHeader("Allow", "GET, POST, PUT, DELETE, PATCH");
   return res.status(405).json({ error: "Methode non autorisee" });
 };

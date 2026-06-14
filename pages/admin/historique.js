@@ -80,7 +80,7 @@ export default function AdminHistory() {
                       <div>
                         <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
                         <span>Livraison {formatDate(order.deliveryDate)}</span>
-                        <span className={`status-pill ${order.status === "cancelled" ? "cancelled" : ""}`}>{statusLabel(order.status)}</span>
+                        <span className={`status-pill ${order.status}`}>{statusLabel(order.status)}</span>
                       </div>
                       <ul>
                         {order.items.map((item) => (
@@ -115,5 +115,5 @@ function unitLabel(unit) {
 }
 
 function statusLabel(status) {
-  return ({ active: "En cours", cancelled: "Annulée" })[status] || status;
+  return ({ active: "En cours", cancelled: "Annulée", validated: "Validée" })[status] || status;
 }

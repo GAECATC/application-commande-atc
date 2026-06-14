@@ -142,6 +142,25 @@ export default function Admin() {
     await loadAdminData();
   }
 
+  async function validateAdminOrder(order) {
+    if (!window.confirm(`Valider la commande de ${order.partnerName} ?`)) return;
+
+    const response = await fetch("/api/orders", {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Validation refusee.");
+
+    if (editingOrderId === order.id) {
+      setEditingOrderId(null);
+      setOrderDraft({});
+    }
+    setMessage("Commande validee.");
+    await loadAdminData();
+  }
+
   if (!authenticated) {
     return (
       <main className="shell">
@@ -240,6 +259,7 @@ export default function Admin() {
                 <div className="order-actions">
                   <strong>{currency.format(order.total)}</strong>
                   <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
+                  <button className="primary no-print" type="button" onClick={() => validateAdminOrder(order)}>Valider</button>
                   <button className="danger no-print" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                 </div>
               )}

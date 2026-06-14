@@ -500,6 +500,12 @@ form {
   border-color: #e6c5c5;
 }
 
+.status-pill.validated {
+  color: var(--primary);
+  background: #e8f6dd;
+  border-color: #b9d85b;
+}
+
 .order-edit {
   display: grid;
   gap: 10px;
