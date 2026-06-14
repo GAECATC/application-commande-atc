@@ -232,12 +232,12 @@ form {
 
 .danger {
   color: #fff;
-  background: var(--danger);
-  border: 1px solid var(--danger);
+  background: #111;
+  border: 1px solid #111;
 }
 
 .danger:hover {
-  background: #7f2424;
+  background: #000;
 }
 
 .notice {
