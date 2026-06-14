@@ -14,15 +14,21 @@ async function notifyOrder(partner, order, mode, previousOrder) {
 
 module.exports = async function handler(req, res) {
   if (req.method === "GET") {
+    const includeInactive = req.query.history === "true";
+
     if (isAdmin(req)) {
-      const orders = await getOrders({ deliveryDate: req.query.deliveryDate });
-      return res.status(200).json({ orders });
+      const orders = await getOrders({ deliveryDate: req.query.deliveryDate, includeInactive });
+      const partners = await getPartners();
+      const partnerById = new Map(partners.map((partner) => [partner.id, partner.name]));
+      return res.status(200).json({
+        orders: orders.map((order) => ({ ...order, partnerName: partnerById.get(order.partnerId) || order.partnerId }))
+      });
     }
 
     const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
     if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
-    const orders = await getOrders({ deliveryDate: req.query.deliveryDate, partnerId: partner.id });
+    const orders = await getOrders({ deliveryDate: req.query.deliveryDate, partnerId: partner.id, includeInactive });
     return res.status(200).json({ orders });
   }
 

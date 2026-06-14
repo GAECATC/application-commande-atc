@@ -148,6 +148,7 @@ export default function Admin() {
           </div>
         </div>
         <div className="actions">
+          <Link className="link-button" href="/admin/historique">Historique des commandes</Link>
           <button className="ghost" onClick={() => loadAdminData()}>Actualiser</button>
           <button className="primary" onClick={() => window.print()}>Imprimer / PDF</button>
         </div>

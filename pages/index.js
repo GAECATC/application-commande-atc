@@ -203,6 +203,7 @@ export default function ClientPortal({ initialSession }) {
               <h2>{partner.name}</h2>
             </div>
             <div className="actions">
+              <Link className="link-button" href="/historique">Historique des commandes</Link>
               <button className="ghost" onClick={() => { localStorage.removeItem("atc-partner"); setPartner(null); setProducts([]); setOrders([]); clearDraft(); }}>
                 Déconnexion
               </button>

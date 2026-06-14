@@ -431,6 +431,16 @@ form {
   gap: 10px;
 }
 
+.history-groups {
+  display: grid;
+  gap: 28px;
+}
+
+.history-group {
+  display: grid;
+  gap: 12px;
+}
+
 .order-card {
   align-items: flex-start;
   padding: 14px;
@@ -446,6 +456,26 @@ form {
 .order-card ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  padding: 4px 9px;
+  color: var(--primary);
+  background: #eef5de;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.status-pill.cancelled {
+  color: #6e2626;
+  background: #f8e9e9;
+  border-color: #e6c5c5;
 }
 
 .order-edit {
