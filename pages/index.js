@@ -232,6 +232,40 @@ export default function ClientPortal({ initialSession }) {
             )}
           </section>
 
+          <section className="panel order-recap">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Commande enregistrée</p>
+                <h2>Vos commandes en cours</h2>
+              </div>
+              <button className="ghost" type="button" onClick={() => loadOrders(partnerId, code)}>Actualiser</button>
+            </div>
+            {orders.length ? (
+              <div className="orders-list">
+                {orders.map((order) => (
+                  <article className="order-card" key={order.id}>
+                    <div>
+                      <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
+                      <span>Livraison {formatDate(order.deliveryDate)}</span>
+                    </div>
+                    <ul>
+                      {order.items.map((item) => (
+                        <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
+                      ))}
+                    </ul>
+                    <div className="order-actions">
+                      <strong>{currency.format(order.total)}</strong>
+                      <button className="ghost" type="button" onClick={() => editOrder(order)}>Modifier</button>
+                      <button className="danger" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p>Aucune commande enregistrée pour le moment.</p>
+            )}
+          </section>
+
           <div className="section-heading catalog-heading">
             <div>
               <p className="eyebrow">Catalogue</p>
@@ -280,40 +314,6 @@ export default function ClientPortal({ initialSession }) {
               </div>
             </section>
           ))}
-
-          <section className="panel order-recap">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Historique</p>
-                <h2>Vos commandes</h2>
-              </div>
-              <button className="ghost" type="button" onClick={() => loadOrders(partnerId, code)}>Actualiser</button>
-            </div>
-            {orders.length ? (
-              <div className="orders-list">
-                {orders.map((order) => (
-                  <article className="order-card" key={order.id}>
-                    <div>
-                      <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
-                      <span>Livraison {formatDate(order.deliveryDate)}</span>
-                    </div>
-                    <ul>
-                      {order.items.map((item) => (
-                        <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
-                      ))}
-                    </ul>
-                    <div className="order-actions">
-                      <strong>{currency.format(order.total)}</strong>
-                      <button className="ghost" type="button" onClick={() => editOrder(order)}>Modifier</button>
-                      <button className="danger" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p>Aucune commande enregistrée pour le moment.</p>
-            )}
-          </section>
 
           <aside className="checkout">
             <div>
