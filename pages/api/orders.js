@@ -21,7 +21,7 @@ async function notifyAdmin(partner, order, mode, previousOrder) {
   }
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "GET") {
     const includeInactive = req.query.history === "true";
 

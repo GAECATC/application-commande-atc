@@ -6,7 +6,7 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
 
   if (req.method === "GET") {

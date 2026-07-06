@@ -2,7 +2,7 @@ const { getOrders, getPartners } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { requireAdmin } = require("@/lib/auth");
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Methode non autorisee" });
