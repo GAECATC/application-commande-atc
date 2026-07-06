@@ -193,6 +193,7 @@ export default function Admin() {
       setOrderDraft({});
     }
     setMessage("Commande validee.");
+    window.open(`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`, "_blank", "noopener,noreferrer");
     await loadAdminData();
   }
 
@@ -294,6 +295,7 @@ export default function Admin() {
                 <div className="order-actions">
                   <strong>{currency.format(order.total)}</strong>
                   <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
+                  <Link className="ghost no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">Bon livraison</Link>
                   <button className="primary no-print" type="button" onClick={() => validateAdminOrder(order)}>Valider</button>
                   <button className="danger no-print" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                 </div>
