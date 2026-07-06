@@ -541,6 +541,27 @@ form {
   gap: 10px;
 }
 
+.section-toggle {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.partner-add-form {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 140px 130px minmax(190px, 1fr) 170px 80px 150px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdf7;
+}
+
 .product-editor {
   display: grid;
   grid-template-columns: minmax(180px, 1.4fr) 130px 110px 90px 90px 96px 110px;
@@ -562,7 +583,7 @@ form {
 
 .partner-editor {
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) minmax(190px, 1fr) minmax(230px, 1.25fr) 120px 140px 150px 80px;
+  grid-template-columns: minmax(190px, 1fr) minmax(220px, 1fr) 170px 80px;
   gap: 10px;
   align-items: start;
   padding: 12px;
@@ -837,6 +858,10 @@ form {
   }
 
   .partner-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-add-form {
     grid-template-columns: 1fr;
   }
 

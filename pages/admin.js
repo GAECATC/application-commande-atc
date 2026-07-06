@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: "Légumes", unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 
 export default function Admin() {
@@ -21,6 +22,8 @@ export default function Admin() {
   const [savingCatalog, setSavingCatalog] = useState(false);
   const [savingPartners, setSavingPartners] = useState(false);
   const [message, setMessage] = useState("");
+  const [clientsOpen, setClientsOpen] = useState(false);
+  const [newPartner, setNewPartner] = useState(emptyPartner);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
 
@@ -126,6 +129,30 @@ export default function Admin() {
   function updatePartnerDraft(partnerId, nextPartner) {
     setPartners((current) => current.map((partner) => partner.id === partnerId ? nextPartner : partner));
     setDirtyPartnerIds((current) => current.includes(partnerId) ? current : [...current, partnerId]);
+  }
+
+  function addPartnerDraft() {
+    const partner = {
+      ...newPartner,
+      id: newPartner.id.trim(),
+      name: newPartner.name.trim(),
+      code: newPartner.code.trim(),
+      email: newPartner.email.trim(),
+      priceListId: newPartner.priceListId || selectedPriceListId || priceLists[0]?.id || "",
+      active: newPartner.active !== false
+    };
+
+    if (!partner.id || !partner.name || !partner.code || !partner.priceListId) {
+      return setMessage("Nom, identifiant, code et tarif sont obligatoires.");
+    }
+    if (partners.some((item) => item.id === partner.id)) {
+      return setMessage("Cet identifiant client existe deja.");
+    }
+
+    setPartners((current) => [...current, partner].sort((a, b) => a.name.localeCompare(b.name)));
+    setDirtyPartnerIds((current) => [...current, partner.id]);
+    setNewPartner({ ...emptyPartner, priceListId: selectedPriceListId || priceLists[0]?.id || "" });
+    setMessage("Nouveau client ajoute. Cliquez sur Enregistrer les clients pour valider.");
   }
 
   async function savePartnerChanges() {
@@ -324,7 +351,9 @@ export default function Admin() {
       <section className="panel no-print">
         <div className="section-heading">
           <div>
-            <h2>Clients</h2>
+            <button className="section-toggle" type="button" onClick={() => setClientsOpen((current) => !current)}>
+              <h2>{clientsOpen ? "Clients v" : "Clients >"}</h2>
+            </button>
             <p className="section-note">
               {partners.filter((partner) => !partner.email).length} email client manquant
             </p>
@@ -333,25 +362,42 @@ export default function Admin() {
             {savingPartners ? "Enregistrement..." : `Enregistrer les clients${dirtyPartnerIds.length ? ` (${dirtyPartnerIds.length})` : ""}`}
           </button>
         </div>
-        <div className="partner-editor partner-editor-header">
-          <span>Client</span>
-          <span>Email</span>
-          <span>Facturation</span>
-          <span>SIRET</span>
-          <span>TVA intracom.</span>
-          <span>Tarif</span>
-          <span>Actif</span>
-        </div>
-        <div className="admin-partners">
-          {partners.map((partner) => (
-            <PartnerEditor
-              key={partner.id}
-              partner={partner}
-              priceLists={priceLists}
-              onChange={(nextPartner) => updatePartnerDraft(partner.id, nextPartner)}
-            />
-          ))}
-        </div>
+        {clientsOpen && (
+          <>
+            <div className="partner-add-form">
+              <input value={newPartner.name} onChange={(event) => setNewPartner((current) => ({ ...current, name: event.target.value }))} placeholder="Nom du client" />
+              <input value={newPartner.id} onChange={(event) => setNewPartner((current) => ({ ...current, id: event.target.value }))} placeholder="Identifiant" />
+              <input value={newPartner.code} onChange={(event) => setNewPartner((current) => ({ ...current, code: event.target.value }))} placeholder="Code client" />
+              <input type="email" value={newPartner.email} onChange={(event) => setNewPartner((current) => ({ ...current, email: event.target.value }))} placeholder="Email" />
+              <select value={newPartner.priceListId || selectedPriceListId} onChange={(event) => setNewPartner((current) => ({ ...current, priceListId: event.target.value }))}>
+                {priceLists.map((priceList) => (
+                  <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
+                ))}
+              </select>
+              <label className="toggle">
+                <input type="checkbox" checked={newPartner.active} onChange={(event) => setNewPartner((current) => ({ ...current, active: event.target.checked }))} />
+                Actif
+              </label>
+              <button className="ghost" type="button" onClick={addPartnerDraft}>Ajouter un client</button>
+            </div>
+            <div className="partner-editor partner-editor-header">
+              <span>Client</span>
+              <span>Email</span>
+              <span>Tarif</span>
+              <span>Actif</span>
+            </div>
+            <div className="admin-partners">
+              {partners.map((partner) => (
+                <PartnerEditor
+                  key={partner.id}
+                  partner={partner}
+                  priceLists={priceLists}
+                  onChange={(nextPartner) => updatePartnerDraft(partner.id, nextPartner)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       <section className="panel no-print">
@@ -435,21 +481,6 @@ function PartnerEditor({ partner, priceLists, onChange }) {
         onChange={(event) => patch("email", event.target.value)}
         placeholder="email client"
       />
-      <div className="billing-fields">
-        <input
-          value={partner.billingName || ""}
-          onChange={(event) => patch("billingName", event.target.value)}
-          placeholder="Raison sociale / nom"
-        />
-        <textarea
-          value={partner.billingAddress || ""}
-          onChange={(event) => patch("billingAddress", event.target.value)}
-          placeholder="Adresse de facturation"
-          rows={2}
-        />
-      </div>
-      <input value={partner.siret || ""} onChange={(event) => patch("siret", event.target.value)} placeholder="SIRET" />
-      <input value={partner.vatNumber || ""} onChange={(event) => patch("vatNumber", event.target.value)} placeholder="FR..." />
       <select value={partner.priceListId} onChange={(event) => patch("priceListId", event.target.value)}>
         {priceLists.map((priceList) => (
           <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
