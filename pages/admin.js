@@ -107,6 +107,22 @@ export default function Admin() {
     await loadAdminData();
   }
 
+  async function deleteProduct(product) {
+    if (!window.confirm(`Supprimer le produit "${product.name}" ?`)) return;
+
+    const response = await fetch("/api/products", {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ id: product.id })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Suppression refusee.");
+
+    setDirtyProductIds((current) => current.filter((id) => id !== product.id));
+    setMessage("Produit supprime.");
+    await loadAdminData();
+  }
+
   function updatePartnerDraft(partnerId, nextPartner) {
     setPartners((current) => current.map((partner) => partner.id === partnerId ? nextPartner : partner));
     setDirtyPartnerIds((current) => current.includes(partnerId) ? current : [...current, partnerId]);
@@ -367,6 +383,7 @@ export default function Admin() {
           <span>Prix</span>
           <span>Volume disponible</span>
           <span>Visible</span>
+          <span>Action</span>
         </div>
         <div className="admin-products">
           {products.map((product) => (
@@ -374,6 +391,7 @@ export default function Admin() {
               key={product.id}
               product={product}
               onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
+              onDelete={() => deleteProduct(product)}
             />
           ))}
         </div>
@@ -396,8 +414,8 @@ export default function Admin() {
   );
 }
 
-function ProductEditor({ product, onChange }) {
-  return <ProductForm value={product} onChange={onChange} showSubmit={false} />;
+function ProductEditor({ product, onChange, onDelete }) {
+  return <ProductForm value={product} onChange={onChange} onDelete={onDelete} showSubmit={false} />;
 }
 
 function PartnerEditor({ partner, priceLists, onChange }) {
@@ -445,7 +463,7 @@ function PartnerEditor({ partner, priceLists, onChange }) {
   );
 }
 
-function ProductForm({ value, onChange, onSubmit, showSubmit = true }) {
+function ProductForm({ value, onChange, onSubmit, onDelete, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -469,6 +487,7 @@ function ProductForm({ value, onChange, onSubmit, showSubmit = true }) {
         <input type="checkbox" checked={value.active} onChange={(event) => patch("active", event.target.checked)} />
         Visible
       </label>
+      {onDelete && <button className="danger" type="button" onClick={onDelete}>Supprimer</button>}
       {showSubmit && <button className="primary" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );

@@ -1,4 +1,4 @@
-const { getPartnerByCredentials, getProducts, upsertProduct } = require("@/lib/db");
+const { deleteProduct, getPartnerByCredentials, getProducts, upsertProduct } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
 
 function slugify(value) {
@@ -47,6 +47,18 @@ export default async function handler(req, res) {
     return res.status(200).json({ product: saved });
   }
 
-  res.setHeader("Allow", "GET, POST");
+  if (req.method === "DELETE") {
+    if (!requireAdmin(req, res)) return;
+    const { id } = req.body || {};
+    try {
+      const deleted = await deleteProduct(id);
+      return res.status(200).json({ product: deleted });
+    } catch (error) {
+      const status = error.message === "Produit introuvable" ? 404 : 400;
+      return res.status(status).json({ error: error.message || "Suppression refusee" });
+    }
+  }
+
+  res.setHeader("Allow", "GET, POST, DELETE");
   return res.status(405).json({ error: "Methode non autorisee" });
 };
