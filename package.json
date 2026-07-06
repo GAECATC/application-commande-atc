@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "db:import:mysql": "node scripts/import-json-to-mysql.js",
     "start": "next start",
     "lint": "eslint ."
   },
   "dependencies": {
+    "mysql2": "^3.22.5",
     "next": "^16.2.6",
     "nodemailer": "^8.0.10",
     "react": "^19.2.6",
