@@ -18,6 +18,7 @@ export default function ClientPortal({ initialSession }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
+  const [commentOpen, setCommentOpen] = useState(false);
   const [viewMode, setViewMode] = useState("list");
   const catalogRef = useRef(null);
 
@@ -123,6 +124,7 @@ export default function ClientPortal({ initialSession }) {
     if (!response.ok) return setMessage(data.error || "Commande refusee.");
     setQuantities({});
     setComment("");
+    setCommentOpen(false);
     setEditingOrder(null);
     await loadOrders(partnerId, code);
     const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
@@ -137,6 +139,7 @@ export default function ClientPortal({ initialSession }) {
     setEditingOrder(order);
     setQuantities(nextQuantities);
     setComment(order.comment || "");
+    setCommentOpen(Boolean(order.comment));
     setMessage("");
     requestAnimationFrame(() => {
       catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -147,6 +150,7 @@ export default function ClientPortal({ initialSession }) {
     setEditingOrder(null);
     setQuantities({});
     setComment("");
+    setCommentOpen(false);
     setMessage("");
   }
 
@@ -345,17 +349,22 @@ export default function ClientPortal({ initialSession }) {
           ))}
 
           <aside className="checkout">
-            <label className="order-comment-field">
-              Commentaire pour votre commande <small>(facultatif)</small>
-              <textarea
-                value={comment}
-                maxLength={MAX_ORDER_COMMENT_LENGTH}
-                rows="3"
-                onChange={(event) => setComment(event.target.value)}
-                placeholder="Exemple : merci de préparer les produits dans deux cagettes séparées."
-              />
-              <small>{comment.length}/{MAX_ORDER_COMMENT_LENGTH} caractères</small>
-            </label>
+            <div className={`order-comment-field ${commentOpen ? "open" : ""}`}>
+              <button className="comment-toggle ghost" type="button" onClick={() => setCommentOpen((current) => !current)}>
+                💬 {comment ? "Modifier le commentaire" : "Ajouter un commentaire"}
+              </button>
+              <label className="order-comment-editor">
+                Commentaire pour votre commande <small>(facultatif)</small>
+                <textarea
+                  value={comment}
+                  maxLength={MAX_ORDER_COMMENT_LENGTH}
+                  rows="3"
+                  onChange={(event) => setComment(event.target.value)}
+                  placeholder="Exemple : merci de préparer les produits dans deux cagettes séparées."
+                />
+                <small>{comment.length}/{MAX_ORDER_COMMENT_LENGTH} caractères</small>
+              </label>
+            </div>
             <div className="checkout-total">
               <strong>Total estimé</strong>
               <span>{currency.format(total)}</span>
