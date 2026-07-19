@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
+const { MAX_ORDER_COMMENT_LENGTH } = require("@/lib/order-comment");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -16,6 +17,7 @@ export default function ClientPortal({ initialSession }) {
   const [editingOrder, setEditingOrder] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [comment, setComment] = useState("");
   const [viewMode, setViewMode] = useState("list");
   const catalogRef = useRef(null);
 
@@ -114,12 +116,13 @@ export default function ClientPortal({ initialSession }) {
     const response = await fetch("/api/orders", {
       method: isEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items })
+      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items, comment })
     });
     const data = await response.json();
     setLoading(false);
     if (!response.ok) return setMessage(data.error || "Commande refusee.");
     setQuantities({});
+    setComment("");
     setEditingOrder(null);
     await loadOrders(partnerId, code);
     const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
@@ -133,6 +136,7 @@ export default function ClientPortal({ initialSession }) {
     }
     setEditingOrder(order);
     setQuantities(nextQuantities);
+    setComment(order.comment || "");
     setMessage("");
     requestAnimationFrame(() => {
       catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -142,6 +146,7 @@ export default function ClientPortal({ initialSession }) {
   function clearDraft() {
     setEditingOrder(null);
     setQuantities({});
+    setComment("");
     setMessage("");
   }
 
@@ -276,6 +281,7 @@ export default function ClientPortal({ initialSession }) {
                         <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                       ))}
                     </ul>
+                    {order.comment && <p className="order-comment"><strong>Commentaire :</strong> {order.comment}</p>}
                     <div className="order-actions">
                       <strong>{currency.format(order.total)}</strong>
                       <button className="ghost" type="button" onClick={() => editOrder(order)}>Modifier</button>
@@ -339,8 +345,19 @@ export default function ClientPortal({ initialSession }) {
           ))}
 
           <aside className="checkout">
-            <div>
-              <strong>Total estime</strong>
+            <label className="order-comment-field">
+              Commentaire pour votre commande <small>(facultatif)</small>
+              <textarea
+                value={comment}
+                maxLength={MAX_ORDER_COMMENT_LENGTH}
+                rows="3"
+                onChange={(event) => setComment(event.target.value)}
+                placeholder="Exemple : merci de préparer les produits dans deux cagettes séparées."
+              />
+              <small>{comment.length}/{MAX_ORDER_COMMENT_LENGTH} caractères</small>
+            </label>
+            <div className="checkout-total">
+              <strong>Total estimé</strong>
               <span>{currency.format(total)}</span>
             </div>
             <button className="primary" disabled={loading || total <= 0} onClick={submitOrder}>

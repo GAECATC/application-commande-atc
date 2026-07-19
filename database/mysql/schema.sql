@@ -44,6 +44,7 @@ create table if not exists orders (
   status varchar(32) not null default 'active',
   created_at datetime(3) not null,
   total decimal(10, 2) not null default 0,
+  customer_comment text null,
   constraint orders_partner_fk foreign key (partner_id) references partners(id)
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 

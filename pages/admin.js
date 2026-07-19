@@ -316,6 +316,7 @@ export default function Admin() {
                   <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                 ))}
               </ul>
+              {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
               {editingOrderId === order.id ? (
                 <div className="order-edit no-print">
                   {order.items.map((item) => (

@@ -46,7 +46,8 @@ create table if not exists orders (
   harvest_day text not null check (harvest_day in ('lundi', 'jeudi')),
   status text not null default 'active',
   created_at timestamptz not null default now(),
-  total numeric(10, 2) not null default 0
+  total numeric(10, 2) not null default 0,
+  comment text not null default ''
 );
 
 create table if not exists order_items (

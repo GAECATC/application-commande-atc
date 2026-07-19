@@ -115,6 +115,7 @@ export default function DeliveryNote() {
             </dl>
           </div>
         </section>
+        {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
 
         <table className="delivery-note-table">
           <thead>

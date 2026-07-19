@@ -2,6 +2,7 @@ const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartner
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
+const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
 
 async function notifyOrder(partner, order, mode, previousOrder) {
   try {
@@ -42,7 +43,8 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { partnerId, code, items } = req.body || {};
+    const { partnerId, code, items, comment } = req.body || {};
+    if (String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
     const partner = await getPartnerByCredentials(partnerId, code);
     if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
@@ -51,7 +53,8 @@ export default async function handler(req, res) {
       partnerId: partner.id,
       deliveryDate: delivery.deliveryDate,
       harvestDay: delivery.harvestDay,
-      items: Array.isArray(items) ? items : []
+      items: Array.isArray(items) ? items : [],
+      comment: normalizeOrderComment(comment)
     });
     const email = await notifyOrder(partner, order, "created");
     const adminEmail = await notifyAdmin(partner, order, "created");
@@ -60,7 +63,8 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    const { orderId, partnerId, code, items } = req.body || {};
+    const { orderId, partnerId, code, items, comment } = req.body || {};
+    if (comment !== undefined && String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
     let nextPartnerId = partnerId;
     let partnerForEmail = null;
     const adminRequest = isAdmin(req);
@@ -82,7 +86,8 @@ export default async function handler(req, res) {
       const order = await updateOrder({
         orderId,
         partnerId: nextPartnerId,
-        items: Array.isArray(items) ? items : []
+        items: Array.isArray(items) ? items : [],
+        comment: comment === undefined ? undefined : normalizeOrderComment(comment)
       });
       if (!partnerForEmail) {
         const partners = await getPartners();

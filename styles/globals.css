@@ -333,6 +333,38 @@ form {
   box-shadow: var(--shadow);
 }
 
+.order-comment-field {
+  flex: 1 1 420px;
+  font-weight: 700;
+}
+
+.order-comment-field textarea {
+  margin-top: 0.4rem;
+  min-height: 76px;
+  resize: vertical;
+}
+
+.order-comment-field small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.checkout-total {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 150px;
+}
+
+.order-comment {
+  margin: 0.75rem 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 4px solid var(--orange);
+  border-radius: 4px;
+  background: #f6f7f2;
+  white-space: pre-wrap;
+}
+
 .checkout span {
   display: block;
   margin-top: 4px;
