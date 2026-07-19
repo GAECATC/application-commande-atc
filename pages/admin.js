@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
+const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 import Link from "next/link";
 import Image from "next/image";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
-const emptyProduct = { name: "", category: "Légumes", unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
+const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 
 export default function Admin() {
   const [password, setPassword] = useState("");
@@ -503,8 +504,7 @@ function ProductForm({ value, onChange, onSubmit, onDelete, showSubmit = true })
     <div className="product-editor">
       <input value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
       <select value={value.category} onChange={(event) => patch("category", event.target.value)}>
-        <option>Légumes</option>
-        <option>Bières</option>
+        {PRODUCT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
       </select>
       <select value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
         <option value="kg">kg</option>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -29,11 +30,21 @@ export default function ClientPortal({ initialSession }) {
   }, [initialSession]);
 
   const grouped = useMemo(() => {
-    return products.reduce((acc, product) => {
+    const groups = products.reduce((acc, product) => {
       acc[product.category] = acc[product.category] || [];
       acc[product.category].push(product);
       return acc;
     }, {});
+    return Object.fromEntries(
+      Object.entries(groups).sort(([categoryA], [categoryB]) => {
+        const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
+        const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
+        if (indexA === -1 && indexB === -1) return categoryA.localeCompare(categoryB, "fr");
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      })
+    );
   }, [products]);
 
   const total = products.reduce((sum, product) => sum + (Number(quantities[product.id]) || 0) * product.price, 0);
