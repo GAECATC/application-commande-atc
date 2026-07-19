@@ -581,6 +581,61 @@ form {
   gap: 10px;
 }
 
+.availability-client-select {
+  width: min(420px, 100%);
+}
+
+.availability-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.availability-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.availability-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdf7;
+}
+
+.availability-group h3 {
+  margin: 0;
+  padding: 11px 14px;
+  background: #eef5de;
+  border-bottom: 1px solid var(--line);
+}
+
+.availability-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 110px 55px;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.availability-row:last-child {
+  border-bottom: 0;
+}
+
+.availability-row span,
+.availability-row small {
+  display: block;
+}
+
+.availability-row small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
 .section-toggle {
   padding: 0;
   color: inherit;
@@ -926,6 +981,14 @@ form {
 
   .partner-add-form {
     grid-template-columns: 1fr;
+  }
+
+  .availability-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-row {
+    grid-template-columns: minmax(130px, 1fr) 90px 45px;
   }
 
   .order-edit label {

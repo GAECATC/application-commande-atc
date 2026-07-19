@@ -1,5 +1,6 @@
-const { deleteProduct, getPartnerByCredentials, getProducts, upsertProduct } = require("@/lib/db");
+const { deleteProduct, getOrders, getPartnerByCredentials, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
+const { getNextDelivery } = require("@/lib/schedule");
 
 function slugify(value) {
   return String(value)
@@ -16,13 +17,36 @@ export default async function handler(req, res) {
     if (includeHidden && !requireAdmin(req, res)) return;
 
     let priceListId = req.query.priceListId;
+    let partner;
     if (!includeHidden && req.query.partnerId) {
-      const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+      partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       priceListId = partner.priceListId;
     }
 
-    const products = await getProducts({ includeHidden, priceListId });
+    let products = await getProducts({ includeHidden, priceListId });
+    if (partner) {
+      const deliveryDate = getNextDelivery().deliveryDate;
+      const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate });
+      if (allocations.length) {
+        const orders = await getOrders({ partnerId: partner.id, deliveryDate });
+        const orderedByProduct = new Map();
+        for (const order of orders) {
+          for (const item of order.items) {
+            orderedByProduct.set(item.productId, (orderedByProduct.get(item.productId) || 0) + Number(item.quantity));
+          }
+        }
+        const allocationByProduct = new Map(allocations.map((item) => [item.productId, Number(item.quantity)]));
+        products = products
+          .filter((product) => allocationByProduct.has(product.id))
+          .map((product) => ({
+            ...product,
+            stock: Math.max(0, allocationByProduct.get(product.id) - (orderedByProduct.get(product.id) || 0)),
+            clientAllocation: true
+          }))
+          .filter((product) => product.stock > 0);
+      }
+    }
     return res.status(200).json({ products });
   }
 

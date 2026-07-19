@@ -36,6 +36,16 @@ create table if not exists product_prices (
   constraint product_prices_product_fk foreign key (product_id) references products(id) on delete cascade
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 
+create table if not exists product_allocations (
+  delivery_date date not null,
+  partner_id varchar(191) not null,
+  product_id varchar(191) not null,
+  quantity decimal(10, 2) not null default 0,
+  primary key (delivery_date, partner_id, product_id),
+  constraint product_allocations_partner_fk foreign key (partner_id) references partners(id) on delete cascade,
+  constraint product_allocations_product_fk foreign key (product_id) references products(id) on delete cascade
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
+
 create table if not exists orders (
   id char(36) primary key,
   partner_id varchar(191) not null,

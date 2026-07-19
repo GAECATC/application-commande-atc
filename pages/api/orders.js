@@ -1,4 +1,4 @@
-const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder, validateOrder } = require("@/lib/db");
+const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
@@ -49,11 +49,13 @@ export default async function handler(req, res) {
     if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
     const delivery = getNextDelivery();
+    const cleanItems = Array.isArray(items) ? items : [];
+    await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
     const order = await createOrder({
       partnerId: partner.id,
       deliveryDate: delivery.deliveryDate,
       harvestDay: delivery.harvestDay,
-      items: Array.isArray(items) ? items : [],
+      items: cleanItems,
       comment: normalizeOrderComment(comment)
     });
     const email = await notifyOrder(partner, order, "created");
@@ -83,10 +85,18 @@ export default async function handler(req, res) {
     try {
       const previousOrders = await getOrders({ partnerId: nextPartnerId });
       const previousOrder = previousOrders.find((order) => order.id === orderId);
+      if (!previousOrder) return res.status(404).json({ error: "Commande introuvable" });
+      const cleanItems = Array.isArray(items) ? items : [];
+      await validateProductAllocations({
+        partnerId: nextPartnerId,
+        deliveryDate: previousOrder.deliveryDate,
+        items: cleanItems,
+        excludeOrderId: orderId
+      });
       const order = await updateOrder({
         orderId,
         partnerId: nextPartnerId,
-        items: Array.isArray(items) ? items : [],
+        items: cleanItems,
         comment: comment === undefined ? undefined : normalizeOrderComment(comment)
       });
       if (!partnerForEmail) {

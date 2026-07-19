@@ -25,6 +25,12 @@ export default function Admin() {
   const [message, setMessage] = useState("");
   const [clientsOpen, setClientsOpen] = useState(false);
   const [newPartner, setNewPartner] = useState(emptyPartner);
+  const [availabilityPartnerId, setAvailabilityPartnerId] = useState("");
+  const [availabilityProducts, setAvailabilityProducts] = useState([]);
+  const [allocationDraft, setAllocationDraft] = useState({});
+  const [orderedByProduct, setOrderedByProduct] = useState({});
+  const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
+  const [savingAvailability, setSavingAvailability] = useState(false);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
 
@@ -68,6 +74,52 @@ export default function Admin() {
     setDirtyProductIds([]);
     setDirtyPartnerIds([]);
     setSummary(summaryData);
+  }
+
+  async function loadAvailability(partnerId, pass = password) {
+    setAvailabilityPartnerId(partnerId);
+    setAllocationDraft({});
+    setOrderedByProduct({});
+    setAvailabilityConfigured(false);
+    if (!partnerId) return setAvailabilityProducts([]);
+
+    const partner = partners.find((item) => item.id === partnerId);
+    if (!partner || !summary?.deliveryDate) return;
+    const adminHeaders = { "x-admin-password": pass };
+    const [productRes, availabilityRes] = await Promise.all([
+      fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
+      fetch(`/api/availability?partnerId=${encodeURIComponent(partnerId)}&deliveryDate=${encodeURIComponent(summary.deliveryDate)}`, { headers: adminHeaders })
+    ]);
+    const productData = await productRes.json();
+    const availabilityData = await availabilityRes.json();
+    if (!productRes.ok || !availabilityRes.ok) {
+      setMessage(productData.error || availabilityData.error || "Disponibilités impossibles à charger.");
+      return;
+    }
+    setAvailabilityProducts(productData.products || []);
+    setAllocationDraft(Object.fromEntries((availabilityData.allocations || []).map((item) => [item.productId, String(item.quantity)])));
+    setOrderedByProduct(availabilityData.orderedByProduct || {});
+    setAvailabilityConfigured(Boolean(availabilityData.configured));
+  }
+
+  async function saveAvailability() {
+    if (!availabilityPartnerId || !summary?.deliveryDate) return;
+    const allocations = Object.entries(allocationDraft)
+      .filter(([, quantity]) => quantity !== "")
+      .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }));
+    if (!allocations.length && !window.confirm("Supprimer toutes les allocations de ce client et revenir au fonctionnement général ?")) return;
+
+    setSavingAvailability(true);
+    const response = await fetch("/api/availability", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ partnerId: availabilityPartnerId, deliveryDate: summary.deliveryDate, allocations })
+    });
+    const data = await response.json();
+    setSavingAvailability(false);
+    if (!response.ok) return setMessage(data.error || "Enregistrement des disponibilités refusé.");
+    setMessage("Disponibilités client enregistrées.");
+    await loadAvailability(availabilityPartnerId);
   }
 
   async function saveProduct(product) {
@@ -348,6 +400,71 @@ export default function Admin() {
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="panel no-print availability-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Livraison du {summary ? formatDate(summary.deliveryDate) : ""}</p>
+            <h2>Disponibilités par client</h2>
+          </div>
+          {availabilityPartnerId && (
+            <button className="primary" type="button" disabled={savingAvailability} onClick={saveAvailability}>
+              {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
+            </button>
+          )}
+        </div>
+        <label className="compact-label availability-client-select">
+          Client
+          <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
+            <option value="">Choisir un client</option>
+            {partners.filter((partner) => partner.active).map((partner) => (
+              <option key={partner.id} value={partner.id}>{partner.name}</option>
+            ))}
+          </select>
+        </label>
+        {availabilityPartnerId && (
+          <>
+            <p className="section-note">
+              {availabilityConfigured
+                ? "Les quantités ci-dessous remplacent la disponibilité générale pour ce client. Un champ vide signifie que le produit ne lui est pas proposé."
+                : "Aucune allocation spécifique : ce client utilise encore la disponibilité générale. Saisissez au moins une quantité pour activer son allocation personnalisée."}
+            </p>
+            <div className="availability-actions">
+              <button className="ghost" type="button" onClick={() => setAllocationDraft(Object.fromEntries(
+                availabilityProducts.filter((product) => Number(product.stock) > 0).map((product) => [product.id, String(product.stock)])
+              ))}>Préremplir avec les volumes généraux</button>
+              <button className="ghost" type="button" onClick={() => setAllocationDraft({})}>Tout effacer</button>
+            </div>
+            <div className="availability-groups">
+              {Object.entries(availabilityProducts.reduce((groups, product) => {
+                (groups[product.category] ||= []).push(product);
+                return groups;
+              }, {})).map(([category, categoryProducts]) => (
+                <section className="availability-group" key={category}>
+                  <h3>{category}</h3>
+                  {categoryProducts.map((product) => {
+                    const ordered = Number(orderedByProduct[product.id] || 0);
+                    return (
+                      <label className="availability-row" key={product.id}>
+                        <span>{product.name}<small>{ordered ? `${formatNumber(ordered)} ${unitLabel(product.unit)} déjà commandé` : "Aucune commande"}</small></span>
+                        <input
+                          type="number"
+                          min="0"
+                          step={product.unit === "kg" ? "0.5" : "1"}
+                          value={allocationDraft[product.id] ?? ""}
+                          onChange={(event) => setAllocationDraft((current) => ({ ...current, [product.id]: event.target.value }))}
+                          placeholder="Non proposé"
+                        />
+                        <strong>{unitLabel(product.unit)}</strong>
+                      </label>
+                    );
+                  })}
+                </section>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       <section className="panel no-print">
