@@ -7,7 +7,6 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 
 export default function DeliveryNote() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
   const [orders, setOrders] = useState([]);
   const [partners, setPartners] = useState([]);
   const [message, setMessage] = useState("Chargement...");
@@ -17,30 +16,37 @@ export default function DeliveryNote() {
   useEffect(() => {
     if (!router.isReady) return;
     const saved = localStorage.getItem("atc-admin-password") || "";
-    setPassword(saved);
     if (!saved) {
-      setMessage("Connexion admin requise. Retournez sur l'admin, connectez-vous, puis rouvrez ce bon.");
+      queueMicrotask(() => setMessage("Connexion admin requise. Retournez sur l'admin, connectez-vous, puis rouvrez ce bon."));
       return;
     }
-    loadDeliveryNote(saved);
+
+    let cancelled = false;
+    async function loadDeliveryNote() {
+      const headers = { "x-admin-password": saved };
+      const [ordersRes, partnersRes] = await Promise.all([
+        fetch("/api/orders?history=true", { headers }),
+        fetch("/api/partners", { headers })
+      ]);
+
+      const ordersData = await ordersRes.json();
+      const partnersData = await partnersRes.json();
+      if (cancelled) return;
+      if (!ordersRes.ok) return setMessage(ordersData.error || "Impossible de charger la commande.");
+      if (!partnersRes.ok) return setMessage(partnersData.error || "Impossible de charger le client.");
+
+      setOrders(ordersData.orders || []);
+      setPartners(partnersData.partners || []);
+      setMessage("");
+    }
+
+    loadDeliveryNote().catch(() => {
+      if (!cancelled) setMessage("Impossible de charger le bon de livraison.");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router.isReady, orderId]);
-
-  async function loadDeliveryNote(adminPassword) {
-    const headers = { "x-admin-password": adminPassword };
-    const [ordersRes, partnersRes] = await Promise.all([
-      fetch("/api/orders?history=true", { headers }),
-      fetch("/api/partners", { headers })
-    ]);
-
-    const ordersData = await ordersRes.json();
-    const partnersData = await partnersRes.json();
-    if (!ordersRes.ok) return setMessage(ordersData.error || "Impossible de charger la commande.");
-    if (!partnersRes.ok) return setMessage(partnersData.error || "Impossible de charger le client.");
-
-    setOrders(ordersData.orders || []);
-    setPartners(partnersData.partners || []);
-    setMessage("");
-  }
 
   const order = useMemo(
     () => orders.find((item) => item.id === orderId),
