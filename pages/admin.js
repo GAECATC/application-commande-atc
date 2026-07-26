@@ -28,6 +28,7 @@ export default function Admin() {
   const [availabilityPartnerId, setAvailabilityPartnerId] = useState("");
   const [availabilityProducts, setAvailabilityProducts] = useState([]);
   const [allocationDraft, setAllocationDraft] = useState({});
+  const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
@@ -79,6 +80,7 @@ export default function Admin() {
   async function loadAvailability(partnerId, pass = password) {
     setAvailabilityPartnerId(partnerId);
     setAllocationDraft({});
+    setSavedAllocationProductIds([]);
     setOrderedByProduct({});
     setAvailabilityConfigured(false);
     if (!partnerId) return setAvailabilityProducts([]);
@@ -97,7 +99,9 @@ export default function Admin() {
       return;
     }
     setAvailabilityProducts(productData.products || []);
-    setAllocationDraft(Object.fromEntries((availabilityData.allocations || []).map((item) => [item.productId, String(item.quantity)])));
+    const savedAllocations = availabilityData.allocations || [];
+    setAllocationDraft(Object.fromEntries(savedAllocations.map((item) => [item.productId, String(item.quantity)])));
+    setSavedAllocationProductIds(savedAllocations.map((item) => item.productId));
     setOrderedByProduct(availabilityData.orderedByProduct || {});
     setAvailabilityConfigured(Boolean(availabilityData.configured));
   }
@@ -255,6 +259,7 @@ export default function Admin() {
       setAvailabilityPartnerId("");
       setAvailabilityProducts([]);
       setAllocationDraft({});
+      setSavedAllocationProductIds([]);
     }
     setMessage("Client supprimé.");
     await loadAdminData();
@@ -474,8 +479,9 @@ export default function Admin() {
                   <h3>{category}</h3>
                   {categoryProducts.map((product) => {
                     const ordered = Number(orderedByProduct[product.id] || 0);
+                    const isSaved = savedAllocationProductIds.includes(product.id);
                     return (
-                      <label className="availability-row" key={product.id}>
+                      <label className={`availability-row ${isSaved ? "saved" : ""}`} key={product.id}>
                         <span>{product.name}<small>{ordered ? `${formatNumber(ordered)} ${unitLabel(product.unit)} déjà commandé` : "Aucune commande"}</small></span>
                         <input
                           type="number"

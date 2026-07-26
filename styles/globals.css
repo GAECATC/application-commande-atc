@@ -619,6 +619,12 @@ form {
   align-items: center;
   padding: 9px 12px;
   border-bottom: 1px solid var(--line);
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.availability-row.saved {
+  background: rgba(185, 216, 91, 0.2);
+  box-shadow: inset 4px 0 0 rgba(103, 139, 34, 0.65);
 }
 
 .availability-row:last-child {
