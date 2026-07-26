@@ -36,6 +36,8 @@ export default function Admin() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newPriceListName, setNewPriceListName] = useState("");
   const [savingPriceList, setSavingPriceList] = useState(false);
+  const [categoryActionsOpen, setCategoryActionsOpen] = useState(false);
+  const [priceListActionsOpen, setPriceListActionsOpen] = useState(false);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -202,6 +204,88 @@ export default function Admin() {
     setNewPriceListName("");
     setMessage(`Grille « ${data.priceList.name} » créée. Saisissez maintenant ses prix.`);
     await loadAdminData(password, data.priceList.id);
+  }
+
+  async function renameSelectedPriceList() {
+    const selected = priceLists.find((item) => item.id === selectedPriceListId);
+    if (!selected) return;
+    const name = window.prompt("Nouveau nom de la grille tarifaire :", selected.name)?.trim().replace(/\s+/g, " ");
+    if (!name || name === selected.name) return setPriceListActionsOpen(false);
+    const response = await fetch("/api/price-lists", {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ id: selected.id, name })
+    });
+    const data = await response.json();
+    setPriceListActionsOpen(false);
+    if (!response.ok) return setMessage(data.error || "Modification de la grille refusée.");
+    setMessage(`Grille renommée « ${data.priceList.name} ».`);
+    await loadAdminData(password, selected.id);
+  }
+
+  async function deleteSelectedPriceList() {
+    const selected = priceLists.find((item) => item.id === selectedPriceListId);
+    if (!selected || !window.confirm(`Supprimer définitivement la grille « ${selected.name} » et tous ses prix ?`)) return;
+    const response = await fetch("/api/price-lists", {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ id: selected.id })
+    });
+    const data = await response.json();
+    setPriceListActionsOpen(false);
+    if (!response.ok) return setMessage(data.error || "Suppression de la grille refusée.");
+    setMessage(`Grille « ${selected.name} » supprimée.`);
+    await loadAdminData(password, "");
+  }
+
+  async function renameSelectedCategory() {
+    const currentName = draft.category;
+    if (PRODUCT_CATEGORIES.includes(currentName)) {
+      return setMessage("Les catégories d’origine sont protégées. Créez une nouvelle catégorie si nécessaire.");
+    }
+    const nextName = window.prompt("Nouveau nom de la catégorie :", currentName)?.trim().replace(/\s+/g, " ");
+    if (!nextName || nextName === currentName) return setCategoryActionsOpen(false);
+    const isPersisted = products.some((product) => product.category === currentName);
+    if (isPersisted) {
+      const response = await fetch("/api/categories", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ currentName, nextName })
+      });
+      const data = await response.json();
+      if (!response.ok) return setMessage(data.error || "Modification de la catégorie refusée.");
+    }
+    setCustomCategories((current) => [...current.filter((item) => item !== currentName), nextName]);
+    setDraft((current) => ({ ...current, category: nextName }));
+    setCategoryActionsOpen(false);
+    setMessage(`Catégorie renommée « ${nextName} ».`);
+    if (isPersisted) await loadAdminData();
+  }
+
+  async function deleteSelectedCategory() {
+    const name = draft.category;
+    if (PRODUCT_CATEGORIES.includes(name)) {
+      return setMessage("Les catégories d’origine sont protégées et ne peuvent pas être supprimées.");
+    }
+    const affectedProducts = products.filter((product) => product.category === name).length;
+    const warning = affectedProducts
+      ? `Supprimer la catégorie « ${name} » ? Ses ${affectedProducts} produit(s) seront reclassés dans « Autres ».`
+      : `Supprimer la catégorie « ${name} » ?`;
+    if (!window.confirm(warning)) return;
+    if (affectedProducts) {
+      const response = await fetch("/api/categories", {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ name })
+      });
+      const data = await response.json();
+      if (!response.ok) return setMessage(data.error || "Suppression de la catégorie refusée.");
+    }
+    setCustomCategories((current) => current.filter((item) => item !== name));
+    setDraft((current) => ({ ...current, category: PRODUCT_CATEGORIES[0] }));
+    setCategoryActionsOpen(false);
+    setMessage(`Catégorie « ${name} » supprimée.`);
+    if (affectedProducts) await loadAdminData();
   }
 
   function updateProductDraft(productId, nextProduct) {
@@ -636,21 +720,31 @@ export default function Admin() {
         <div className="section-heading">
           <div>
             <h2>Catalogue</h2>
-            <label className="compact-label">
-              Grille tarifaire
-              <select
-                value={selectedPriceListId}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  setSelectedPriceListId(nextValue);
-                  queueMicrotask(() => loadAdminData(password, nextValue));
-                }}
-              >
-                {priceLists.map((priceList) => (
-                  <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
-                ))}
-              </select>
-            </label>
+            <div className="managed-select">
+              <label className="compact-label">
+                Grille tarifaire
+                <select
+                  value={selectedPriceListId}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setSelectedPriceListId(nextValue);
+                    setPriceListActionsOpen(false);
+                    queueMicrotask(() => loadAdminData(password, nextValue));
+                  }}
+                >
+                  {priceLists.map((priceList) => (
+                    <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
+                  ))}
+                </select>
+              </label>
+              <button className="more-actions-button" type="button" aria-label="Actions sur la grille tarifaire" onClick={() => setPriceListActionsOpen((open) => !open)}>⋯</button>
+              {priceListActionsOpen && (
+                <div className="management-menu">
+                  <button type="button" onClick={renameSelectedPriceList}>Renommer</button>
+                  <button className="danger-text" type="button" onClick={deleteSelectedPriceList}>Supprimer</button>
+                </div>
+              )}
+            </div>
             <form className="new-price-list-form" onSubmit={addPriceList}>
               <label>
                 Nouvelle grille tarifaire
@@ -724,6 +818,16 @@ export default function Admin() {
           </label>
           <small>La catégorie sera enregistrée durablement dès qu’un produit l’utilisant sera enregistré.</small>
         </form>
+        <div className="managed-category">
+          <span>Gérer la catégorie sélectionnée : <strong>{draft.category}</strong></span>
+          <button className="more-actions-button" type="button" aria-label="Actions sur la catégorie" onClick={() => setCategoryActionsOpen((open) => !open)}>⋯</button>
+          {categoryActionsOpen && (
+            <div className="management-menu">
+              <button type="button" onClick={renameSelectedCategory}>Renommer</button>
+              <button className="danger-text" type="button" onClick={deleteSelectedCategory}>Supprimer</button>
+            </div>
+          )}
+        </div>
         <ProductForm
           value={draft}
           categories={categoryOptions}

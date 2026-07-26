@@ -646,6 +646,63 @@ form {
   margin-bottom: 0;
 }
 
+.managed-select,
+.managed-category {
+  position: relative;
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.managed-category {
+  align-items: center;
+  margin-bottom: 14px;
+  color: var(--muted);
+}
+
+.more-actions-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--green);
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.management-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  min-width: 150px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 8px 24px rgba(12, 63, 39, 0.14);
+}
+
+.management-menu button {
+  justify-content: flex-start;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  text-align: left;
+}
+
+.management-menu button:hover {
+  background: var(--pale);
+}
+
+.management-menu .danger-text {
+  color: #a32a1f;
+}
+
 .admin-partners {
   display: grid;
   gap: 10px;
