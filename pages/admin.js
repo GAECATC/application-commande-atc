@@ -34,6 +34,21 @@ export default function Admin() {
   const [savingAvailability, setSavingAvailability] = useState(false);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
+  const catalogGroups = useMemo(() => {
+    const groups = products.reduce((result, product) => {
+      const category = product.category || "Autres";
+      (result[category] ||= []).push(product);
+      return result;
+    }, {});
+    return Object.entries(groups).sort(([categoryA], [categoryB]) => {
+      const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
+      const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
+      if (indexA === -1 && indexB === -1) return categoryA.localeCompare(categoryB, "fr");
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [products]);
 
   useEffect(() => {
     const saved = localStorage.getItem("atc-admin-password");
@@ -598,14 +613,21 @@ export default function Admin() {
           <span>Visible</span>
           <span>Action</span>
         </div>
-        <div className="admin-products">
-          {products.map((product) => (
-            <ProductEditor
-              key={product.id}
-              product={product}
-              onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
-              onDelete={() => deleteProduct(product)}
-            />
+        <div className="catalog-groups">
+          {catalogGroups.map(([category, categoryProducts]) => (
+            <section className="catalog-admin-group" key={category}>
+              <h3>{category}<span>{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span></h3>
+              <div className="admin-products">
+                {categoryProducts.map((product) => (
+                  <ProductEditor
+                    key={product.id}
+                    product={product}
+                    onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
+                    onDelete={() => deleteProduct(product)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
         <aside className="admin-savebar">

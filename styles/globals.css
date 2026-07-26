@@ -576,6 +576,37 @@ form {
   gap: 10px;
 }
 
+.catalog-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.catalog-admin-group {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfdf7;
+}
+
+.catalog-admin-group > h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -12px -12px 12px;
+  padding: 12px 14px;
+  background: #eef5de;
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+}
+
+.catalog-admin-group > h3 span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .admin-partners {
   display: grid;
   gap: 10px;
