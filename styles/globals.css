@@ -607,7 +607,8 @@ form {
   text-transform: uppercase;
 }
 
-.new-category-form {
+.new-category-form,
+.new-price-list-form {
   display: grid;
   gap: 6px;
   margin-bottom: 16px;
@@ -617,23 +618,32 @@ form {
   background: #fbfdf7;
 }
 
-.new-category-form label {
+.new-category-form label,
+.new-price-list-form label {
   display: grid;
   gap: 6px;
   font-weight: 800;
 }
 
-.new-category-form label > span {
+.new-category-form label > span,
+.new-price-list-form label > span {
   display: flex;
   gap: 10px;
 }
 
-.new-category-form input {
+.new-category-form input,
+.new-price-list-form input {
   flex: 1 1 260px;
 }
 
-.new-category-form small {
+.new-category-form small,
+.new-price-list-form small {
   color: var(--muted);
+}
+
+.new-price-list-form {
+  margin-top: 12px;
+  margin-bottom: 0;
 }
 
 .admin-partners {
@@ -1112,7 +1122,8 @@ form {
     grid-template-columns: minmax(130px, 1fr) 90px 45px;
   }
 
-  .new-category-form label > span {
+  .new-category-form label > span,
+  .new-price-list-form label > span {
     align-items: stretch;
     flex-direction: column;
   }

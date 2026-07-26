@@ -34,6 +34,8 @@ export default function Admin() {
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [customCategories, setCustomCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newPriceListName, setNewPriceListName] = useState("");
+  const [savingPriceList, setSavingPriceList] = useState(false);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -180,6 +182,26 @@ export default function Admin() {
     setMessage(existingCategory
       ? `La catégorie « ${existingCategory} » existe déjà et a été sélectionnée.`
       : `Catégorie « ${category} » ajoutée. Elle sera conservée avec le nouveau produit.`);
+  }
+
+  async function addPriceList(event) {
+    event.preventDefault();
+    const name = newPriceListName.trim().replace(/\s+/g, " ");
+    if (!name) return setMessage("Saisissez un nom de grille tarifaire.");
+
+    setSavingPriceList(true);
+    const response = await fetch("/api/price-lists", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ name })
+    });
+    const data = await response.json();
+    setSavingPriceList(false);
+    if (!response.ok) return setMessage(data.error || "Création de la grille refusée.");
+
+    setNewPriceListName("");
+    setMessage(`Grille « ${data.priceList.name} » créée. Saisissez maintenant ses prix.`);
+    await loadAdminData(password, data.priceList.id);
   }
 
   function updateProductDraft(productId, nextProduct) {
@@ -629,6 +651,22 @@ export default function Admin() {
                 ))}
               </select>
             </label>
+            <form className="new-price-list-form" onSubmit={addPriceList}>
+              <label>
+                Nouvelle grille tarifaire
+                <span>
+                  <input
+                    value={newPriceListName}
+                    onChange={(event) => setNewPriceListName(event.target.value)}
+                    placeholder="Exemple : Restaurants 2026"
+                  />
+                  <button className="ghost" type="submit" disabled={savingPriceList}>
+                    {savingPriceList ? "Création..." : "Créer la grille"}
+                  </button>
+                </span>
+              </label>
+              <small>La nouvelle grille affichera tous les produits avec un prix initial de 0 €.</small>
+            </form>
           </div>
           {message && <p className="notice">{message}</p>}
         </div>
