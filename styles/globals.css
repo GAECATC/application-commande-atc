@@ -607,6 +607,35 @@ form {
   text-transform: uppercase;
 }
 
+.new-category-form {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdf7;
+}
+
+.new-category-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 800;
+}
+
+.new-category-form label > span {
+  display: flex;
+  gap: 10px;
+}
+
+.new-category-form input {
+  flex: 1 1 260px;
+}
+
+.new-category-form small {
+  color: var(--muted);
+}
+
 .admin-partners {
   display: grid;
   gap: 10px;
@@ -1081,6 +1110,11 @@ form {
 
   .availability-row {
     grid-template-columns: minmax(130px, 1fr) 90px 45px;
+  }
+
+  .new-category-form label > span {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .order-edit label {

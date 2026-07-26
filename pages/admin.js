@@ -32,8 +32,22 @@ export default function Admin() {
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
+  const [customCategories, setCustomCategories] = useState([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
+  const categoryOptions = useMemo(() => {
+    const existingCategories = products.map((product) => product.category).filter(Boolean);
+    const categories = Array.from(new Set([...PRODUCT_CATEGORIES, ...existingCategories, ...customCategories]));
+    return categories.sort((categoryA, categoryB) => {
+      const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
+      const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
+      if (indexA === -1 && indexB === -1) return categoryA.localeCompare(categoryB, "fr");
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [products, customCategories]);
   const catalogGroups = useMemo(() => {
     const groups = products.reduce((result, product) => {
       const category = product.category || "Autres";
@@ -152,6 +166,20 @@ export default function Admin() {
     setMessage("Catalogue mis a jour.");
     setDraft(emptyProduct);
     await loadAdminData();
+  }
+
+  function addCustomCategory(event) {
+    event.preventDefault();
+    const category = newCategoryName.trim().replace(/\s+/g, " ");
+    if (!category) return setMessage("Saisissez un nom de catégorie.");
+    const existingCategory = categoryOptions.find((item) => item.localeCompare(category, "fr", { sensitivity: "base" }) === 0);
+    const selectedCategory = existingCategory || category;
+    if (!existingCategory) setCustomCategories((current) => [...current, category]);
+    setDraft((current) => ({ ...current, category: selectedCategory }));
+    setNewCategoryName("");
+    setMessage(existingCategory
+      ? `La catégorie « ${existingCategory} » existe déjà et a été sélectionnée.`
+      : `Catégorie « ${category} » ajoutée. Elle sera conservée avec le nouveau produit.`);
   }
 
   function updateProductDraft(productId, nextProduct) {
@@ -622,6 +650,7 @@ export default function Admin() {
                   <ProductEditor
                     key={product.id}
                     product={product}
+                    categories={categoryOptions}
                     onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
                     onDelete={() => deleteProduct(product)}
                   />
@@ -643,14 +672,33 @@ export default function Admin() {
 
       <section className="panel no-print">
         <h2>Ajouter un produit</h2>
-        <ProductForm value={draft} onChange={setDraft} onSubmit={() => saveProduct(draft)} />
+        <form className="new-category-form" onSubmit={addCustomCategory}>
+          <label>
+            Nouvelle catégorie
+            <span>
+              <input
+                value={newCategoryName}
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                placeholder="Exemple : Champignons"
+              />
+              <button className="ghost" type="submit">Créer la catégorie</button>
+            </span>
+          </label>
+          <small>La catégorie sera enregistrée durablement dès qu’un produit l’utilisant sera enregistré.</small>
+        </form>
+        <ProductForm
+          value={draft}
+          categories={categoryOptions}
+          onChange={setDraft}
+          onSubmit={() => saveProduct(draft)}
+        />
       </section>
     </main>
   );
 }
 
-function ProductEditor({ product, onChange, onDelete }) {
-  return <ProductForm value={product} onChange={onChange} onDelete={onDelete} showSubmit={false} />;
+function ProductEditor({ product, categories, onChange, onDelete }) {
+  return <ProductForm value={product} categories={categories} onChange={onChange} onDelete={onDelete} showSubmit={false} />;
 }
 
 function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
@@ -683,7 +731,7 @@ function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
   );
 }
 
-function ProductForm({ value, onChange, onSubmit, onDelete, showSubmit = true }) {
+function ProductForm({ value, categories, onChange, onSubmit, onDelete, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -692,7 +740,7 @@ function ProductForm({ value, onChange, onSubmit, onDelete, showSubmit = true })
     <div className="product-editor">
       <input value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
       <select value={value.category} onChange={(event) => patch("category", event.target.value)}>
-        {PRODUCT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+        {categories.map((category) => <option key={category}>{category}</option>)}
       </select>
       <select value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
         <option value="kg">kg</option>
