@@ -645,6 +645,54 @@ form {
   cursor: pointer;
 }
 
+.clients-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 4px 8px 4px 0;
+  border-radius: 8px;
+}
+
+.clients-toggle:hover {
+  color: var(--primary-dark);
+}
+
+.clients-toggle h2 {
+  margin: 0;
+}
+
+.clients-toggle-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.clients-chevron {
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  color: var(--primary);
+  background: #eef5de;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.clients-chevron path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.clients-chevron.open {
+  transform: rotate(180deg);
+  background: var(--brand-light);
+}
+
 .partner-add-form {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) 140px 130px minmax(190px, 1fr) 170px 80px 150px;
@@ -678,7 +726,14 @@ form {
 
 .partner-editor {
   display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(220px, 1fr) 170px 80px;
+  grid-template-columns:
+    minmax(180px, 1.15fr)
+    minmax(145px, 0.85fr)
+    minmax(130px, 0.75fr)
+    minmax(220px, 1.3fr)
+    170px
+    80px
+    110px;
   gap: 10px;
   align-items: start;
   padding: 12px;

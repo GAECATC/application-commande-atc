@@ -70,7 +70,7 @@ export default function Admin() {
     setPriceLists(nextPriceLists);
     setSelectedPriceListId(nextPriceListId);
     setProducts(productData.products || []);
-    setPartners(partnerData.partners || []);
+    setPartners((partnerData.partners || []).map((partner) => ({ ...partner, originalId: partner.id })));
     setDirtyProductIds([]);
     setDirtyPartnerIds([]);
     setSummary(summaryData);
@@ -179,14 +179,15 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  function updatePartnerDraft(partnerId, nextPartner) {
-    setPartners((current) => current.map((partner) => partner.id === partnerId ? nextPartner : partner));
-    setDirtyPartnerIds((current) => current.includes(partnerId) ? current : [...current, partnerId]);
+  function updatePartnerDraft(partnerKey, nextPartner) {
+    setPartners((current) => current.map((partner) => (partner.originalId || partner.id) === partnerKey ? nextPartner : partner));
+    setDirtyPartnerIds((current) => current.includes(partnerKey) ? current : [...current, partnerKey]);
   }
 
   function addPartnerDraft() {
     const partner = {
       ...newPartner,
+      originalId: "",
       id: newPartner.id.trim(),
       name: newPartner.name.trim(),
       code: newPartner.code.trim(),
@@ -209,7 +210,7 @@ export default function Admin() {
   }
 
   async function savePartnerChanges() {
-    const dirtyPartners = partners.filter((partner) => dirtyPartnerIds.includes(partner.id));
+    const dirtyPartners = partners.filter((partner) => dirtyPartnerIds.includes(partner.originalId || partner.id));
     if (!dirtyPartners.length) return;
 
     setSavingPartners(true);
@@ -228,6 +229,34 @@ export default function Admin() {
 
     setSavingPartners(false);
     setMessage("Clients mis a jour.");
+    await loadAdminData();
+  }
+
+  async function deletePartnerAccount(partner) {
+    const partnerId = partner.originalId || partner.id;
+    if (!window.confirm(`Supprimer définitivement le client « ${partner.name} » ?`)) return;
+
+    if (!partner.originalId) {
+      setPartners((current) => current.filter((item) => item.id !== partner.id));
+      setDirtyPartnerIds((current) => current.filter((id) => id !== partner.id));
+      setMessage("Nouveau client retiré.");
+      return;
+    }
+
+    const response = await fetch("/api/partners", {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ id: partnerId })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Suppression du client refusée.");
+
+    if (availabilityPartnerId === partnerId) {
+      setAvailabilityPartnerId("");
+      setAvailabilityProducts([]);
+      setAllocationDraft({});
+    }
+    setMessage("Client supprimé.");
     await loadAdminData();
   }
 
@@ -470,8 +499,17 @@ export default function Admin() {
       <section className="panel no-print">
         <div className="section-heading">
           <div>
-            <button className="section-toggle" type="button" onClick={() => setClientsOpen((current) => !current)}>
-              <h2>{clientsOpen ? "Clients v" : "Clients >"}</h2>
+            <button
+              className="section-toggle clients-toggle"
+              type="button"
+              aria-expanded={clientsOpen}
+              onClick={() => setClientsOpen((current) => !current)}
+            >
+              <h2>Clients</h2>
+              <span className="clients-toggle-label">{clientsOpen ? "Masquer" : "Afficher"}</span>
+              <svg className={`clients-chevron ${clientsOpen ? "open" : ""}`} viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
             </button>
             <p className="section-note">
               {partners.filter((partner) => !partner.email).length} email client manquant
@@ -500,18 +538,22 @@ export default function Admin() {
               <button className="ghost" type="button" onClick={addPartnerDraft}>Ajouter un client</button>
             </div>
             <div className="partner-editor partner-editor-header">
-              <span>Client</span>
+              <span>Nom du client</span>
+              <span>Identifiant</span>
+              <span>Code</span>
               <span>Email</span>
               <span>Tarif</span>
               <span>Actif</span>
+              <span>Action</span>
             </div>
             <div className="admin-partners">
               {partners.map((partner) => (
                 <PartnerEditor
-                  key={partner.id}
+                  key={partner.originalId || partner.id}
                   partner={partner}
                   priceLists={priceLists}
-                  onChange={(nextPartner) => updatePartnerDraft(partner.id, nextPartner)}
+                  onChange={(nextPartner) => updatePartnerDraft(partner.originalId || partner.id, nextPartner)}
+                  onDelete={() => deletePartnerAccount(partner)}
                 />
               ))}
             </div>
@@ -583,17 +625,16 @@ function ProductEditor({ product, onChange, onDelete }) {
   return <ProductForm value={product} onChange={onChange} onDelete={onDelete} showSubmit={false} />;
 }
 
-function PartnerEditor({ partner, priceLists, onChange }) {
+function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
   function patch(field, nextValue) {
     onChange({ ...partner, [field]: nextValue });
   }
 
   return (
     <div className={`partner-editor ${partner.email ? "" : "missing-email"}`}>
-      <div className="partner-identity">
-        <strong>{partner.name}</strong>
-        <small>{partner.id} / {partner.code}</small>
-      </div>
+      <input value={partner.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom du client" />
+      <input value={partner.id} onChange={(event) => patch("id", event.target.value.trim())} placeholder="Identifiant" />
+      <input value={partner.code} onChange={(event) => patch("code", event.target.value.trim())} placeholder="Code client" />
       <input
         type="email"
         value={partner.email || ""}
@@ -609,6 +650,7 @@ function PartnerEditor({ partner, priceLists, onChange }) {
         <input type="checkbox" checked={partner.active} onChange={(event) => patch("active", event.target.checked)} />
         Actif
       </label>
+      <button className="danger" type="button" onClick={onDelete}>Supprimer</button>
     </div>
   );
 }
