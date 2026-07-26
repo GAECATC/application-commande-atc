@@ -38,6 +38,11 @@ export default function ClientPortal({ initialSession }) {
       acc[product.category].push(product);
       return acc;
     }, {});
+    for (const categoryProducts of Object.values(groups)) {
+      categoryProducts.sort((productA, productB) =>
+        productA.name.localeCompare(productB.name, "fr", { sensitivity: "base", numeric: true })
+      );
+    }
     return Object.fromEntries(
       Object.entries(groups).sort(([categoryA], [categoryB]) => {
         const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);

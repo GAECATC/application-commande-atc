@@ -58,6 +58,11 @@ export default function Admin() {
       (result[category] ||= []).push(product);
       return result;
     }, {});
+    for (const categoryProducts of Object.values(groups)) {
+      categoryProducts.sort((productA, productB) =>
+        productA.name.localeCompare(productB.name, "fr", { sensitivity: "base", numeric: true })
+      );
+    }
     return Object.entries(groups).sort(([categoryA], [categoryB]) => {
       const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
       const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
@@ -620,7 +625,9 @@ export default function Admin() {
               <button className="ghost" type="button" onClick={() => setAllocationDraft({})}>Tout effacer</button>
             </div>
             <div className="availability-groups">
-              {Object.entries(availabilityProducts.reduce((groups, product) => {
+              {Object.entries([...availabilityProducts].sort((productA, productB) =>
+                productA.name.localeCompare(productB.name, "fr", { sensitivity: "base", numeric: true })
+              ).reduce((groups, product) => {
                 (groups[product.category] ||= []).push(product);
                 return groups;
               }, {})).map(([category, categoryProducts]) => (
