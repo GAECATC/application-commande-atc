@@ -1,6 +1,6 @@
 const { deleteProduct, getOrders, getPartnerByCredentials, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
-const { getNextDelivery } = require("@/lib/schedule");
+const { getNextPartnerDelivery } = require("@/lib/schedule");
 
 function slugify(value) {
   return String(value)
@@ -25,8 +25,10 @@ export default async function handler(req, res) {
     }
 
     let products = await getProducts({ includeHidden, priceListId });
+    let delivery;
     if (partner) {
-      const deliveryDate = getNextDelivery().deliveryDate;
+      delivery = getNextPartnerDelivery(partner.id);
+      const deliveryDate = delivery.deliveryDate;
       const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate });
       if (allocations.length) {
         const orders = await getOrders({ partnerId: partner.id, deliveryDate });
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
           .filter((product) => product.stock > 0);
       }
     }
-    return res.status(200).json({ products });
+    return res.status(200).json({ products, delivery });
   }
 
   if (req.method === "POST") {

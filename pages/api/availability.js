@@ -5,12 +5,14 @@ const {
   replaceProductAllocations
 } = require("@/lib/db");
 const { isAdmin } = require("@/lib/auth");
-const { getNextDelivery } = require("@/lib/schedule");
+const { getNextPartnerDelivery } = require("@/lib/schedule");
 
 export default async function handler(req, res) {
-  const deliveryDate = req.query.deliveryDate || req.body?.deliveryDate || getNextDelivery().deliveryDate;
   const partnerId = req.query.partnerId || req.body?.partnerId;
   if (!partnerId) return res.status(400).json({ error: "Client requis" });
+  const deliveryDate = req.query.deliveryDate
+    || req.body?.deliveryDate
+    || getNextPartnerDelivery(partnerId).deliveryDate;
 
   if (req.method === "GET") {
     if (!isAdmin(req)) {

@@ -1,5 +1,5 @@
 const { cancelOrder, createOrder, getOrders, getPartnerByCredentials, getPartners, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
-const { getNextDelivery } = require("@/lib/schedule");
+const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
 const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     const partner = await getPartnerByCredentials(partnerId, code);
     if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
-    const delivery = getNextDelivery();
+    const delivery = getNextPartnerDelivery(partner.id);
     const cleanItems = Array.isArray(items) ? items : [];
     await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
     const order = await createOrder({

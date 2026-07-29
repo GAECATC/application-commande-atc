@@ -69,6 +69,9 @@ export default function ClientPortal({ initialSession }) {
       return;
     }
     setProducts(data.products || []);
+    if (data.delivery) {
+      setSession((current) => ({ ...(current || {}), delivery: data.delivery }));
+    }
   }
 
   async function loadOrders(nextPartnerId, nextCode) {

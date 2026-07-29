@@ -26,6 +26,7 @@ export default function Admin() {
   const [clientsOpen, setClientsOpen] = useState(false);
   const [newPartner, setNewPartner] = useState(emptyPartner);
   const [availabilityPartnerId, setAvailabilityPartnerId] = useState("");
+  const [availabilityDeliveryDate, setAvailabilityDeliveryDate] = useState("");
   const [availabilityProducts, setAvailabilityProducts] = useState([]);
   const [allocationDraft, setAllocationDraft] = useState({});
   const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
@@ -117,6 +118,7 @@ export default function Admin() {
 
   async function loadAvailability(partnerId, pass = password) {
     setAvailabilityPartnerId(partnerId);
+    setAvailabilityDeliveryDate("");
     setAllocationDraft({});
     setSavedAllocationProductIds([]);
     setOrderedByProduct({});
@@ -124,11 +126,11 @@ export default function Admin() {
     if (!partnerId) return setAvailabilityProducts([]);
 
     const partner = partners.find((item) => item.id === partnerId);
-    if (!partner || !summary?.deliveryDate) return;
+    if (!partner) return;
     const adminHeaders = { "x-admin-password": pass };
     const [productRes, availabilityRes] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
-      fetch(`/api/availability?partnerId=${encodeURIComponent(partnerId)}&deliveryDate=${encodeURIComponent(summary.deliveryDate)}`, { headers: adminHeaders })
+      fetch(`/api/availability?partnerId=${encodeURIComponent(partnerId)}`, { headers: adminHeaders })
     ]);
     const productData = await productRes.json();
     const availabilityData = await availabilityRes.json();
@@ -137,6 +139,7 @@ export default function Admin() {
       return;
     }
     setAvailabilityProducts(productData.products || []);
+    setAvailabilityDeliveryDate(availabilityData.deliveryDate || "");
     const savedAllocations = availabilityData.allocations || [];
     setAllocationDraft(Object.fromEntries(savedAllocations.map((item) => [item.productId, String(item.quantity)])));
     setSavedAllocationProductIds(savedAllocations.map((item) => item.productId));
@@ -145,7 +148,7 @@ export default function Admin() {
   }
 
   async function saveAvailability() {
-    if (!availabilityPartnerId || !summary?.deliveryDate) return;
+    if (!availabilityPartnerId || !availabilityDeliveryDate) return;
     const allocations = Object.entries(allocationDraft)
       .filter(([, quantity]) => quantity !== "")
       .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }));
@@ -155,7 +158,7 @@ export default function Admin() {
     const response = await fetch("/api/availability", {
       method: "POST",
       headers,
-      body: JSON.stringify({ partnerId: availabilityPartnerId, deliveryDate: summary.deliveryDate, allocations })
+      body: JSON.stringify({ partnerId: availabilityPartnerId, deliveryDate: availabilityDeliveryDate, allocations })
     });
     const data = await response.json();
     setSavingAvailability(false);
@@ -525,27 +528,29 @@ export default function Admin() {
       </header>
 
       <section className="print-report">
+        {summary?.groups?.length ? summary.groups.map((deliverySummary) => (
+          <section className="delivery-summary" key={deliverySummary.deliveryDate}>
         <div className="section-heading">
           <div>
             <p className="eyebrow">Récapitulatif des récoltes</p>
-            <h2>Total à préparer pour le {summary ? formatDate(summary.deliveryDate) : ""}</h2>
+            <h2>Total à préparer pour le {formatDate(deliverySummary.deliveryDate)}</h2>
           </div>
-          <span className="badge">{summary?.orders?.length || 0} commandes</span>
+          <span className="badge">{deliverySummary.orders.length} commandes</span>
         </div>
 
         <div className="summary-grid">
-          {summary?.totals?.length ? summary.totals.map((item) => (
+          {deliverySummary.totals.map((item) => (
             <article className="summary-row" key={`${item.productId}-${item.unit}`}>
               <span>{item.productName}</span>
               <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
               <small>{item.category}</small>
             </article>
-          )) : <p>Aucune commande en cours pour cette récolte.</p>}
+          ))}
         </div>
 
         <h3>Commandes par client</h3>
         <div className="orders-list">
-          {summary?.orders?.map((order) => (
+          {deliverySummary.orders.map((order) => (
             <article className="order-card" key={order.id}>
               <div>
                 <strong>{order.partnerName}</strong>
@@ -588,12 +593,14 @@ export default function Admin() {
             </article>
           ))}
         </div>
+          </section>
+        )) : <p>Aucune commande en cours.</p>}
       </section>
 
       <section className="panel no-print availability-panel">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Livraison du {summary ? formatDate(summary.deliveryDate) : ""}</p>
+            <p className="eyebrow">Livraison du {availabilityDeliveryDate ? formatDate(availabilityDeliveryDate) : "prochain créneau du client"}</p>
             <h2>Disponibilités par client</h2>
           </div>
           {availabilityPartnerId && (
