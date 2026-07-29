@@ -64,7 +64,7 @@ function OrderList({ orders }) {
       {orders.map((order) => (
         <article className="order-card" key={order.id}>
           <div>
-            <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
+            <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</strong>
             <span>Livraison {formatDate(order.deliveryDate)}</span>
             <span className={`status-pill ${order.status}`}>{statusLabel(order.status)}</span>
           </div>

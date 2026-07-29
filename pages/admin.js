@@ -569,7 +569,7 @@ export default function Admin() {
             <article className="order-card" key={order.id}>
               <div>
                 <strong>{order.partnerName}</strong>
-                <span>{new Date(order.createdAt).toLocaleString("fr-FR")}</span>
+                <span>{new Date(order.createdAt).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</span>
               </div>
               <ul>
                 {order.items.map((item) => (

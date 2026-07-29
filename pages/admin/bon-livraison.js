@@ -183,7 +183,13 @@ function formatShortDate(value) {
 }
 
 function formatDateTime(value) {
-  return value ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)) : "";
+  return value
+    ? new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Europe/Paris"
+    }).format(new Date(value))
+    : "";
 }
 
 function formatNumber(value) {
