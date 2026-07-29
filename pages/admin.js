@@ -894,24 +894,45 @@ function ProductForm({ value, categories, onChange, onSubmit, onDelete, showSubm
 
   return (
     <div className="product-editor">
-      <input value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
-      <select value={value.category} onChange={(event) => patch("category", event.target.value)}>
-        {categories.map((category) => <option key={category}>{category}</option>)}
-      </select>
-      <select value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
-        <option value="kg">kg</option>
-        <option value="piece">pièce</option>
-        <option value="unite">unité</option>
-        <option value="carton">carton</option>
-      </select>
-      <input type="number" step="0.01" value={value.price} onChange={(event) => patch("price", Number(event.target.value))} placeholder="Prix" />
-      <input type="number" step="1" value={value.stock} onChange={(event) => patch("stock", Number(event.target.value))} placeholder="Stock" />
-      <label className="toggle">
+      <label className="product-field product-name-field">
+        <span>Produit</span>
+        <input value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
+      </label>
+      <label className="product-field product-category-field">
+        <span>Catégorie</span>
+        <select value={value.category} onChange={(event) => patch("category", event.target.value)}>
+          {categories.map((category) => <option key={category}>{category}</option>)}
+        </select>
+      </label>
+      <label className="product-field product-unit-field">
+        <span>Unité</span>
+        <select value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
+          <option value="kg">kg</option>
+          <option value="piece">pièce</option>
+          <option value="unite">unité</option>
+          <option value="carton">carton</option>
+        </select>
+      </label>
+      <label className="product-field product-price-field">
+        <span>Prix</span>
+        <span className="input-with-suffix">
+          <input type="number" step="0.01" value={value.price} onChange={(event) => patch("price", Number(event.target.value))} placeholder="0,00" />
+          <strong>€</strong>
+        </span>
+      </label>
+      <label className="product-field product-stock-field">
+        <span>Disponible</span>
+        <span className="input-with-suffix">
+          <input type="number" step="0.01" value={value.stock} onChange={(event) => patch("stock", Number(event.target.value))} placeholder="0" />
+          <strong>{unitLabel(value.unit)}</strong>
+        </span>
+      </label>
+      <label className="toggle product-visible-field">
         <input type="checkbox" checked={value.active} onChange={(event) => patch("active", event.target.checked)} />
         Visible
       </label>
-      {onDelete && <button className="danger" type="button" onClick={onDelete}>Supprimer</button>}
-      {showSubmit && <button className="primary" onClick={onSubmit}>Enregistrer</button>}
+      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Supprimer</button>}
+      {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );
 }

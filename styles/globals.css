@@ -840,7 +840,7 @@ form {
 
 .product-editor {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) 130px 110px 90px 90px 96px 110px;
+  grid-template-columns: minmax(180px, 1.4fr) 130px 110px 100px 110px 96px 110px;
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -855,6 +855,39 @@ form {
   font-size: 0.8rem;
   font-weight: 900;
   text-transform: uppercase;
+}
+
+.product-field {
+  display: block;
+  min-width: 0;
+}
+
+.product-field > span:first-child {
+  display: none;
+}
+
+.product-field input,
+.product-field select {
+  width: 100%;
+}
+
+.input-with-suffix {
+  position: relative;
+  display: block;
+}
+
+.input-with-suffix input {
+  padding-right: 34px;
+}
+
+.input-with-suffix strong {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .partner-editor {
@@ -1160,7 +1193,107 @@ form {
   }
 
   .product-editor {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .product-editor-header {
+    display: none;
+  }
+
+  .catalog-groups {
+    gap: 12px;
+  }
+
+  .catalog-admin-group {
+    padding: 8px;
+  }
+
+  .catalog-admin-group > h3 {
+    margin: -8px -8px 8px;
+    padding: 10px 12px;
+    font-size: 1.02rem;
+  }
+
+  .catalog-admin-group > h3 span {
+    font-size: 0.68rem;
+  }
+
+  .admin-products {
+    gap: 8px;
+  }
+
+  .product-field {
+    grid-column: span 2;
+  }
+
+  .product-name-field,
+  .product-category-field {
+    grid-column: 1 / -1;
+  }
+
+  .product-field > span:first-child {
+    display: block;
+    margin: 0 0 4px 2px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .product-field input,
+  .product-field select {
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+  }
+
+  .input-with-suffix input {
+    padding-right: 31px;
+  }
+
+  .input-with-suffix strong {
+    right: 9px;
+    font-size: 0.72rem;
+  }
+
+  .product-visible-field,
+  .product-action-field {
+    grid-column: span 3;
+    min-height: 42px;
+  }
+
+  .product-visible-field {
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .product-action-field {
+    padding: 8px 10px;
+  }
+
+  .admin-savebar {
+    bottom: 8px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .admin-savebar > div {
+    min-width: 0;
+  }
+
+  .admin-savebar span {
+    font-size: 0.76rem;
+  }
+
+  .admin-savebar button {
+    flex: 0 0 48%;
+    padding: 9px 10px;
   }
 
   .partner-editor {
