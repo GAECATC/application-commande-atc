@@ -507,7 +507,8 @@ form {
   gap: 10px;
 }
 
-.history-groups {
+.history-groups,
+.history-delivery-groups {
   display: grid;
   gap: 28px;
 }
@@ -515,6 +516,18 @@ form {
 .history-group {
   display: grid;
   gap: 12px;
+}
+
+.history-delivery-group {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid var(--line);
+}
+
+.history-delivery-group:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .order-card {
@@ -1405,5 +1418,25 @@ form {
   .order-card,
   .summary-row {
     break-inside: avoid;
+  }
+
+  .history-delivery-group {
+    break-before: page;
+    padding: 0;
+    border: 0;
+  }
+
+  .history-delivery-group:first-child {
+    break-before: auto;
+  }
+
+  .history-delivery-group.print-excluded {
+    display: none;
+  }
+
+  .history-print-report {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
   }
 }
