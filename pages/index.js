@@ -417,6 +417,6 @@ function hasStockLimit(product) {
 }
 
 function stockLabel(product) {
-  if (!hasStockLimit(product)) return "Disponible: à confirmer";
-  return `Disponible: ${formatNumber(product.stock)} ${unitLabel(product.unit)}`;
+  if (!hasStockLimit(product)) return "Disponibilité : à volonté";
+  return `Disponibilité : ${formatNumber(product.stock)} ${unitLabel(product.unit)}`;
 }

@@ -35,7 +35,11 @@ export default async function handler(req, res) {
     const rawAllocations = Array.isArray(req.body?.allocations) ? req.body.allocations : [];
     const allocations = rawAllocations
       .filter((item) => item.productId && Number.isFinite(Number(item.quantity)) && Number(item.quantity) >= 0)
-      .map((item) => ({ productId: item.productId, quantity: Number(item.quantity) }));
+      .map((item) => ({
+        productId: item.productId,
+        quantity: Number(item.quantity),
+        visible: item.visible !== false
+      }));
     try {
       const saved = await replaceProductAllocations({ partnerId, deliveryDate, allocations });
       return res.status(200).json({ allocations: saved });

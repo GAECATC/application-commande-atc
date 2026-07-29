@@ -44,6 +44,7 @@ create table if not exists product_allocations (
   partner_id text not null references partners(id) on delete cascade,
   product_id text not null references products(id) on delete cascade,
   quantity numeric(10, 2) not null default 0,
+  visible boolean not null default true,
   primary key (delivery_date, partner_id, product_id)
 );
 

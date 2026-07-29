@@ -38,15 +38,21 @@ export default async function handler(req, res) {
             orderedByProduct.set(item.productId, (orderedByProduct.get(item.productId) || 0) + Number(item.quantity));
           }
         }
-        const allocationByProduct = new Map(allocations.map((item) => [item.productId, Number(item.quantity)]));
+        const allocationByProduct = new Map(allocations.map((item) => [item.productId, item]));
         products = products
-          .filter((product) => allocationByProduct.has(product.id))
-          .map((product) => ({
-            ...product,
-            stock: Math.max(0, allocationByProduct.get(product.id) - (orderedByProduct.get(product.id) || 0)),
-            clientAllocation: true
-          }))
-          .filter((product) => product.stock > 0);
+          .filter((product) => allocationByProduct.get(product.id)?.visible !== false && allocationByProduct.has(product.id))
+          .map((product) => {
+            const allocationQuantity = Number(allocationByProduct.get(product.id).quantity);
+            return {
+              ...product,
+              stock: allocationQuantity > 0
+                ? Math.max(0, allocationQuantity - (orderedByProduct.get(product.id) || 0))
+                : 0,
+              clientAllocation: true,
+              clientUnlimited: allocationQuantity <= 0
+            };
+          })
+          .filter((product) => product.clientUnlimited || product.stock > 0);
       }
     }
     return res.status(200).json({ products, delivery });

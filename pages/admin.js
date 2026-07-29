@@ -29,6 +29,7 @@ export default function Admin() {
   const [availabilityDeliveryDate, setAvailabilityDeliveryDate] = useState("");
   const [availabilityProducts, setAvailabilityProducts] = useState([]);
   const [allocationDraft, setAllocationDraft] = useState({});
+  const [allocationVisibilityDraft, setAllocationVisibilityDraft] = useState({});
   const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
@@ -120,6 +121,7 @@ export default function Admin() {
     setAvailabilityPartnerId(partnerId);
     setAvailabilityDeliveryDate("");
     setAllocationDraft({});
+    setAllocationVisibilityDraft({});
     setSavedAllocationProductIds([]);
     setOrderedByProduct({});
     setAvailabilityConfigured(false);
@@ -141,18 +143,30 @@ export default function Admin() {
     setAvailabilityProducts(productData.products || []);
     setAvailabilityDeliveryDate(availabilityData.deliveryDate || "");
     const savedAllocations = availabilityData.allocations || [];
-    setAllocationDraft(Object.fromEntries(savedAllocations.map((item) => [item.productId, String(item.quantity)])));
-    setSavedAllocationProductIds(savedAllocations.map((item) => item.productId));
+    setAllocationDraft(Object.fromEntries(savedAllocations.map((item) => [
+      item.productId,
+      item.quantity > 0 ? String(item.quantity) : ""
+    ])));
+    setAllocationVisibilityDraft(
+      availabilityData.configured
+        ? Object.fromEntries((productData.products || []).map((product) => {
+          const allocation = savedAllocations.find((item) => item.productId === product.id);
+          return [product.id, Boolean(allocation && allocation.visible !== false)];
+        }))
+        : Object.fromEntries((productData.products || []).map((product) => [product.id, Boolean(product.active)]))
+    );
+    setSavedAllocationProductIds(savedAllocations.filter((item) => item.visible !== false).map((item) => item.productId));
     setOrderedByProduct(availabilityData.orderedByProduct || {});
     setAvailabilityConfigured(Boolean(availabilityData.configured));
   }
 
   async function saveAvailability() {
     if (!availabilityPartnerId || !availabilityDeliveryDate) return;
-    const allocations = Object.entries(allocationDraft)
-      .filter(([, quantity]) => quantity !== "")
-      .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }));
-    if (!allocations.length && !window.confirm("Supprimer toutes les allocations de ce client et revenir au fonctionnement général ?")) return;
+    const allocations = availabilityProducts.map((product) => ({
+      productId: product.id,
+      quantity: Number(allocationDraft[product.id] || 0),
+      visible: Boolean(allocationVisibilityDraft[product.id])
+    }));
 
     setSavingAvailability(true);
     const response = await fetch("/api/availability", {
@@ -416,6 +430,7 @@ export default function Admin() {
       setAvailabilityPartnerId("");
       setAvailabilityProducts([]);
       setAllocationDraft({});
+      setAllocationVisibilityDraft({});
       setSavedAllocationProductIds([]);
     }
     setMessage("Client supprimé.");
@@ -622,14 +637,24 @@ export default function Admin() {
           <>
             <p className="section-note">
               {availabilityConfigured
-                ? "Les quantités ci-dessous remplacent la disponibilité générale pour ce client. Un champ vide signifie que le produit ne lui est pas proposé."
-                : "Aucune allocation spécifique : ce client utilise encore la disponibilité générale. Saisissez au moins une quantité pour activer son allocation personnalisée."}
+                ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
+                : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
             </p>
             <div className="availability-actions">
-              <button className="ghost" type="button" onClick={() => setAllocationDraft(Object.fromEntries(
-                availabilityProducts.filter((product) => Number(product.stock) > 0).map((product) => [product.id, String(product.stock)])
-              ))}>Préremplir avec les volumes généraux</button>
-              <button className="ghost" type="button" onClick={() => setAllocationDraft({})}>Tout effacer</button>
+              <button className="ghost" type="button" onClick={() => {
+                setAllocationDraft(Object.fromEntries(
+                  availabilityProducts.map((product) => [product.id, Number(product.stock) > 0 ? String(product.stock) : ""])
+                ));
+                setAllocationVisibilityDraft(Object.fromEntries(
+                  availabilityProducts.map((product) => [product.id, Boolean(product.active)])
+                ));
+              }}>Utiliser les disponibilités générales</button>
+              <button className="ghost" type="button" onClick={() => setAllocationVisibilityDraft(
+                Object.fromEntries(availabilityProducts.map((product) => [product.id, true]))
+              )}>Tout rendre visible</button>
+              <button className="ghost" type="button" onClick={() => setAllocationVisibilityDraft(
+                Object.fromEntries(availabilityProducts.map((product) => [product.id, false]))
+              )}>Tout masquer</button>
             </div>
             <div className="availability-groups">
               {Object.entries([...availabilityProducts].sort((productA, productB) =>
@@ -643,8 +668,9 @@ export default function Admin() {
                   {categoryProducts.map((product) => {
                     const ordered = Number(orderedByProduct[product.id] || 0);
                     const isSaved = savedAllocationProductIds.includes(product.id);
+                    const isVisible = Boolean(allocationVisibilityDraft[product.id]);
                     return (
-                      <label className={`availability-row ${isSaved ? "saved" : ""}`} key={product.id}>
+                      <div className={`availability-row ${isSaved ? "saved" : ""} ${isVisible ? "" : "hidden-product"}`} key={product.id}>
                         <span>{product.name}<small>{ordered ? `${formatNumber(ordered)} ${unitLabel(product.unit)} déjà commandé` : "Aucune commande"}</small></span>
                         <input
                           type="number"
@@ -652,10 +678,22 @@ export default function Admin() {
                           step={product.unit === "kg" ? "0.5" : "1"}
                           value={allocationDraft[product.id] ?? ""}
                           onChange={(event) => setAllocationDraft((current) => ({ ...current, [product.id]: event.target.value }))}
-                          placeholder="Non proposé"
+                          placeholder="À volonté"
+                          aria-label={`Limite pour ${product.name}`}
                         />
                         <strong>{unitLabel(product.unit)}</strong>
-                      </label>
+                        <label className="availability-visible">
+                          <input
+                            type="checkbox"
+                            checked={isVisible}
+                            onChange={(event) => setAllocationVisibilityDraft((current) => ({
+                              ...current,
+                              [product.id]: event.target.checked
+                            }))}
+                          />
+                          Visible
+                        </label>
+                      </div>
                     );
                   })}
                 </section>

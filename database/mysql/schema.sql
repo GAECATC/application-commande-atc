@@ -41,6 +41,7 @@ create table if not exists product_allocations (
   partner_id varchar(191) not null,
   product_id varchar(191) not null,
   quantity decimal(10, 2) not null default 0,
+  visible tinyint(1) not null default 1,
   primary key (delivery_date, partner_id, product_id),
   constraint product_allocations_partner_fk foreign key (partner_id) references partners(id) on delete cascade,
   constraint product_allocations_product_fk foreign key (product_id) references products(id) on delete cascade
