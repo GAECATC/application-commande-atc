@@ -9,6 +9,8 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 export default function ClientPortal({ initialSession }) {
   const [session, setSession] = useState(initialSession);
   const [products, setProducts] = useState([]);
+  const [baskets, setBaskets] = useState([]);
+  const [basketQuantities, setBasketQuantities] = useState({});
   const [partnerId, setPartnerId] = useState("");
   const [code, setCode] = useState("");
   const [partner, setPartner] = useState(null);
@@ -55,7 +57,14 @@ export default function ClientPortal({ initialSession }) {
     );
   }, [products]);
 
-  const total = products.reduce((sum, product) => sum + (Number(quantities[product.id]) || 0) * product.price, 0);
+  const basketTotal = baskets.reduce((sum, basket) => {
+    const count = Number(basketQuantities[basket.id] || 0);
+    return sum + count * basket.items.reduce((basketSum, item) => {
+      const product = products.find((entry) => entry.id === item.productId);
+      return basketSum + Number(item.quantity) * Number(product?.price || 0);
+    }, 0);
+  }, 0);
+  const total = products.reduce((sum, product) => sum + (Number(quantities[product.id]) || 0) * product.price, 0) + basketTotal;
   const selectedItems = products
     .map((product) => ({ ...product, quantity: Number(quantities[product.id]) || 0 }))
     .filter((product) => product.quantity > 0);
@@ -85,6 +94,12 @@ export default function ClientPortal({ initialSession }) {
     setOrders(data.orders || []);
   }
 
+  async function loadBaskets(nextPartnerId, nextCode) {
+    const response = await fetch(`/api/baskets?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+    const data = await response.json();
+    setBaskets(response.ok ? (data.baskets || []) : []);
+  }
+
   async function login(event) {
     event.preventDefault();
     setMessage("");
@@ -97,7 +112,7 @@ export default function ClientPortal({ initialSession }) {
     if (!response.ok) return setMessage(data.error || "Connexion refusee.");
     setPartner(data.partner);
     localStorage.setItem("atc-partner", JSON.stringify({ partnerId, code, partner: data.partner }));
-    await Promise.all([loadProducts(partnerId, code), loadOrders(partnerId, code)]);
+    await Promise.all([loadProducts(partnerId, code), loadOrders(partnerId, code), loadBaskets(partnerId, code)]);
   }
 
   useEffect(() => {
@@ -111,6 +126,7 @@ export default function ClientPortal({ initialSession }) {
         setPartner(parsed.partner);
         loadProducts(parsed.partnerId, parsed.code);
         loadOrders(parsed.partnerId, parsed.code);
+        loadBaskets(parsed.partnerId, parsed.code);
       });
     } catch {
       localStorage.removeItem("atc-partner");
@@ -120,7 +136,15 @@ export default function ClientPortal({ initialSession }) {
   async function submitOrder() {
     setLoading(true);
     setMessage("");
-    const items = Object.entries(quantities).map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }));
+    const mergedQuantities = Object.fromEntries(Object.entries(quantities).map(([productId, quantity]) => [productId, Number(quantity) || 0]));
+    for (const basket of baskets) {
+      const count = Number(basketQuantities[basket.id] || 0);
+      if (count <= 0) continue;
+      for (const item of basket.items) {
+        mergedQuantities[item.productId] = (mergedQuantities[item.productId] || 0) + Number(item.quantity) * count;
+      }
+    }
+    const items = Object.entries(mergedQuantities).map(([productId, quantity]) => ({ productId, quantity }));
     const isEditing = Boolean(editingOrder);
     const response = await fetch("/api/orders", {
       method: isEditing ? "PUT" : "POST",
@@ -131,6 +155,7 @@ export default function ClientPortal({ initialSession }) {
     setLoading(false);
     if (!response.ok) return setMessage(data.error || "Commande refusee.");
     setQuantities({});
+    setBasketQuantities({});
     setComment("");
     setCommentOpen(false);
     setEditingOrder(null);
@@ -157,6 +182,7 @@ export default function ClientPortal({ initialSession }) {
   function clearDraft() {
     setEditingOrder(null);
     setQuantities({});
+    setBasketQuantities({});
     setComment("");
     setCommentOpen(false);
     setMessage("");
@@ -271,6 +297,43 @@ export default function ClientPortal({ initialSession }) {
               <p>Aucun produit sélectionné.</p>
             )}
           </section>
+
+          {baskets.length > 0 && !editingOrder && (
+            <section className="panel basket-order-panel">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Paniers composés</p>
+                  <h2>Commander des paniers</h2>
+                  <p className="section-note">Indiquez uniquement le nombre de paniers souhaité. Les quantités de produits sont calculées automatiquement.</p>
+                </div>
+              </div>
+              <div className="basket-client-grid">
+                {baskets.map((basket) => (
+                  <article className="basket-client-card" key={basket.id}>
+                    <div>
+                      <h3>{basket.name}</h3>
+                      <ul>
+                        {basket.items.map((item) => {
+                          const product = products.find((entry) => entry.id === item.productId);
+                          return <li key={item.productId}>{formatNumber(item.quantity)} {unitLabel(product?.unit)} — {product?.name || item.productId}</li>;
+                        })}
+                      </ul>
+                    </div>
+                    <label>
+                      Nombre de paniers
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={basketQuantities[basket.id] || ""}
+                        onChange={(event) => setBasketQuantities((current) => ({ ...current, [basket.id]: event.target.value }))}
+                      />
+                    </label>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="panel order-recap">
             <div className="section-heading">

@@ -6,12 +6,16 @@ import Image from "next/image";
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
+const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
 
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [products, setProducts] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [baskets, setBaskets] = useState([]);
+  const [basketDraft, setBasketDraft] = useState(emptyBasket);
+  const [savingBasket, setSavingBasket] = useState(false);
   const [summary, setSummary] = useState(null);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
@@ -100,21 +104,62 @@ export default function Admin() {
     const sessionData = await sessionRes.json();
     const nextPriceLists = sessionData.priceLists || [];
     const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";
-    const [productRes, summaryRes, partnerRes] = await Promise.all([
+    const [productRes, summaryRes, partnerRes, basketRes] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(nextPriceListId)}`, { headers: adminHeaders }),
       fetch("/api/summary", { headers: adminHeaders }),
-      fetch("/api/partners", { headers: adminHeaders })
+      fetch("/api/partners", { headers: adminHeaders }),
+      fetch("/api/baskets", { headers: adminHeaders })
     ]);
     const productData = await productRes.json();
     const summaryData = await summaryRes.json();
     const partnerData = await partnerRes.json();
+    const basketData = await basketRes.json();
     setPriceLists(nextPriceLists);
     setSelectedPriceListId(nextPriceListId);
     setProducts(productData.products || []);
     setPartners((partnerData.partners || []).map((partner) => ({ ...partner, originalId: partner.id })));
+    setBaskets(basketData.baskets || []);
     setDirtyProductIds([]);
     setDirtyPartnerIds([]);
     setSummary(summaryData);
+  }
+
+  function editBasket(basket) {
+    setBasketDraft({
+      id: basket.id,
+      name: basket.name,
+      partnerId: basket.partnerId,
+      active: basket.active !== false,
+      items: Object.fromEntries(basket.items.map((item) => [item.productId, String(item.quantity)]))
+    });
+  }
+
+  async function saveBasket() {
+    const items = Object.entries(basketDraft.items)
+      .map(([productId, quantity]) => ({ productId, quantity: Number(quantity) }))
+      .filter((item) => item.quantity > 0);
+    setSavingBasket(true);
+    const response = await fetch("/api/baskets", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...basketDraft, items })
+    });
+    const data = await response.json();
+    setSavingBasket(false);
+    if (!response.ok) return setMessage(data.error || "Enregistrement du panier refusé.");
+    setBasketDraft(emptyBasket);
+    setMessage("Panier enregistré.");
+    await loadAdminData();
+  }
+
+  async function removeBasket(basket) {
+    if (!window.confirm(`Supprimer le panier « ${basket.name} » ?`)) return;
+    const response = await fetch("/api/baskets", { method: "DELETE", headers, body: JSON.stringify({ id: basket.id }) });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Suppression du panier refusée.");
+    if (basketDraft.id === basket.id) setBasketDraft(emptyBasket);
+    setMessage("Panier supprimé.");
+    await loadAdminData();
   }
 
   async function loadAvailability(partnerId, pass = password) {
@@ -610,6 +655,41 @@ export default function Admin() {
         </div>
           </section>
         )) : <p>Aucune commande en cours.</p>}
+      </section>
+
+      <section className="panel no-print basket-admin-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Composition automatique</p>
+            <h2>Paniers</h2>
+            <p className="section-note">Créez un panier type et affectez-le au client qui pourra le commander par quantité.</p>
+          </div>
+          <button className="primary" type="button" disabled={savingBasket} onClick={saveBasket}>
+            {savingBasket ? "Enregistrement..." : basketDraft.id ? "Mettre à jour le panier" : "Créer le panier"}
+          </button>
+        </div>
+        <div className="basket-admin-form">
+          <label>Nom du panier<input value={basketDraft.name} onChange={(event) => setBasketDraft((current) => ({ ...current, name: event.target.value }))} placeholder="Ex. Panier tomate" /></label>
+          <label>Client<select value={basketDraft.partnerId} onChange={(event) => setBasketDraft((current) => ({ ...current, partnerId: event.target.value }))}>
+            <option value="">Choisir un client</option>
+            {partners.filter((partner) => partner.active).map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
+          </select></label>
+          <label className="toggle"><input type="checkbox" checked={basketDraft.active} onChange={(event) => setBasketDraft((current) => ({ ...current, active: event.target.checked }))} />Actif</label>
+        </div>
+        <div className="basket-product-editor">
+          {[...products].sort((a, b) => a.name.localeCompare(b.name, "fr")).map((product) => (
+            <label key={product.id}>
+              <span>{product.name}<small>{unitLabel(product.unit)} par panier</small></span>
+              <input type="number" min="0" step={product.unit === "kg" ? "0.01" : "1"} value={basketDraft.items[product.id] || ""} onChange={(event) => setBasketDraft((current) => ({ ...current, items: { ...current.items, [product.id]: event.target.value } }))} />
+            </label>
+          ))}
+        </div>
+        {baskets.length > 0 && <div className="basket-admin-list">
+          {baskets.map((basket) => <article key={basket.id}>
+            <div><strong>{basket.name}</strong><span>{partners.find((partner) => partner.id === basket.partnerId)?.name || basket.partnerId} · {basket.items.length} produit(s) · {basket.active ? "Actif" : "Inactif"}</span></div>
+            <div className="actions"><button className="ghost" type="button" onClick={() => editBasket(basket)}>Modifier</button><button className="danger" type="button" onClick={() => removeBasket(basket)}>Supprimer</button></div>
+          </article>)}
+        </div>}
       </section>
 
       <section className="panel no-print availability-panel">

@@ -48,6 +48,21 @@ create table if not exists product_allocations (
   primary key (delivery_date, partner_id, product_id)
 );
 
+create table if not exists basket_templates (
+  id text primary key,
+  name text not null,
+  partner_id text not null references partners(id) on delete cascade,
+  active boolean not null default true
+);
+
+create table if not exists basket_template_items (
+  basket_id text not null references basket_templates(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  quantity numeric(10, 2) not null,
+  sort_order integer not null default 0,
+  primary key (basket_id, product_id)
+);
+
 create table if not exists orders (
   id uuid primary key,
   partner_id text not null references partners(id),
