@@ -95,9 +95,13 @@ export default function ClientPortal({ initialSession }) {
   }
 
   async function loadBaskets(nextPartnerId, nextCode) {
-    const response = await fetch(`/api/baskets?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
-    const data = await response.json();
-    setBaskets(response.ok ? (data.baskets || []) : []);
+    try {
+      const response = await fetch(`/api/baskets?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+      const data = await response.json();
+      setBaskets(response.ok ? (data.baskets || []) : []);
+    } catch {
+      setBaskets([]);
+    }
   }
 
   async function login(event) {

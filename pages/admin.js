@@ -104,24 +104,30 @@ export default function Admin() {
     const sessionData = await sessionRes.json();
     const nextPriceLists = sessionData.priceLists || [];
     const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";
-    const [productRes, summaryRes, partnerRes, basketRes] = await Promise.all([
+    const [productRes, summaryRes, partnerRes] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(nextPriceListId)}`, { headers: adminHeaders }),
       fetch("/api/summary", { headers: adminHeaders }),
-      fetch("/api/partners", { headers: adminHeaders }),
-      fetch("/api/baskets", { headers: adminHeaders })
+      fetch("/api/partners", { headers: adminHeaders })
     ]);
     const productData = await productRes.json();
     const summaryData = await summaryRes.json();
     const partnerData = await partnerRes.json();
-    const basketData = await basketRes.json();
     setPriceLists(nextPriceLists);
     setSelectedPriceListId(nextPriceListId);
     setProducts(productData.products || []);
     setPartners((partnerData.partners || []).map((partner) => ({ ...partner, originalId: partner.id })));
-    setBaskets(basketData.baskets || []);
     setDirtyProductIds([]);
     setDirtyPartnerIds([]);
     setSummary(summaryData);
+    try {
+      const basketRes = await fetch("/api/baskets", { headers: adminHeaders });
+      const basketData = await basketRes.json();
+      setBaskets(basketRes.ok ? (basketData.baskets || []) : []);
+      if (!basketRes.ok) setMessage(basketData.error || "Les paniers ne peuvent pas être chargés pour le moment.");
+    } catch {
+      setBaskets([]);
+      setMessage("Les paniers ne peuvent pas être chargés pour le moment. Les autres données restent disponibles.");
+    }
   }
 
   function editBasket(basket) {
