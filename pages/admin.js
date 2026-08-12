@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
+const { getProductSeasons, isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import Image from "next/image";
 
@@ -16,6 +17,8 @@ export default function Admin() {
   const [baskets, setBaskets] = useState([]);
   const [basketDraft, setBasketDraft] = useState(emptyBasket);
   const [savingBasket, setSavingBasket] = useState(false);
+  const [basketSeason, setBasketSeason] = useState("ete");
+  const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
@@ -78,6 +81,17 @@ export default function Admin() {
       return indexA - indexB;
     });
   }, [products]);
+  const basketProducts = useMemo(() => {
+    const search = basketSearch.trim().toLocaleLowerCase("fr");
+    return products
+      .filter(isFreshProduce)
+      .filter((product) => {
+        if (basketSeason === "selectionnes") return Number(basketDraft.items[product.id] || 0) > 0;
+        if (basketSeason !== "tous" && !getProductSeasons(product).includes(basketSeason)) return false;
+        return !search || product.name.toLocaleLowerCase("fr").includes(search);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base", numeric: true }));
+  }, [products, basketDraft.items, basketSeason, basketSearch]);
 
   useEffect(() => {
     const saved = localStorage.getItem("atc-admin-password");
@@ -682,13 +696,25 @@ export default function Admin() {
           </select></label>
           <label className="toggle"><input type="checkbox" checked={basketDraft.active} onChange={(event) => setBasketDraft((current) => ({ ...current, active: event.target.checked }))} />Actif</label>
         </div>
+        <div className="basket-product-toolbar">
+          <div className="basket-season-tabs" aria-label="Filtrer les légumes par saison">
+            {[
+              ["printemps", "Printemps"], ["ete", "Été"], ["automne", "Automne"], ["hiver", "Hiver"],
+              ["tous", "Tous les légumes"], ["selectionnes", "Sélectionnés"]
+            ].map(([value, label]) => (
+              <button className={basketSeason === value ? "active" : ""} type="button" key={value} onClick={() => setBasketSeason(value)}>{label}</button>
+            ))}
+          </div>
+          <input type="search" value={basketSearch} onChange={(event) => setBasketSearch(event.target.value)} placeholder="Rechercher un légume" aria-label="Rechercher un légume" />
+        </div>
         <div className="basket-product-editor">
-          {[...products].sort((a, b) => a.name.localeCompare(b.name, "fr")).map((product) => (
+          {basketProducts.map((product) => (
             <label key={product.id}>
               <span>{product.name}<small>{unitLabel(product.unit)} par panier</small></span>
               <input type="number" min="0" step={product.unit === "kg" ? "0.01" : "1"} value={basketDraft.items[product.id] || ""} onChange={(event) => setBasketDraft((current) => ({ ...current, items: { ...current.items, [product.id]: event.target.value } }))} />
             </label>
           ))}
+          {!basketProducts.length && <p className="basket-empty">Aucun légume dans cette sélection.</p>}
         </div>
         {baskets.length > 0 && <div className="basket-admin-list">
           {baskets.map((basket) => <article key={basket.id}>

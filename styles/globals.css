@@ -1460,6 +1460,13 @@ form {
   background: var(--surface-soft, #f8faf7);
 }
 
+.basket-product-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .75rem; }
+.basket-product-toolbar > input { width: min(280px, 100%); }
+.basket-season-tabs { display: flex; flex-wrap: wrap; gap: .45rem; }
+.basket-season-tabs button { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 999px; padding: .55rem .8rem; font-weight: 700; cursor: pointer; }
+.basket-season-tabs button.active { background: var(--green, #164b2b); color: #fff; border-color: var(--green, #164b2b); }
+.basket-empty { grid-column: 1 / -1; color: var(--muted); text-align: center; padding: 1rem; }
+
 .basket-product-editor label {
   display: grid;
   grid-template-columns: 1fr 90px;
@@ -1485,4 +1492,6 @@ form {
 @media (max-width: 760px) {
   .basket-admin-form { grid-template-columns: 1fr; }
   .basket-admin-list article { align-items: flex-start; flex-direction: column; }
+  .basket-product-toolbar { align-items: stretch; flex-direction: column; }
+  .basket-product-toolbar > input { width: 100%; }
 }
