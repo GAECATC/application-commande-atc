@@ -17,6 +17,8 @@ export default function Admin() {
   const [baskets, setBaskets] = useState([]);
   const [basketDraft, setBasketDraft] = useState(emptyBasket);
   const [savingBasket, setSavingBasket] = useState(false);
+  const [basketCatalog, setBasketCatalog] = useState([]);
+  const [loadingBasketCatalog, setLoadingBasketCatalog] = useState(false);
   const [basketSeason, setBasketSeason] = useState("ete");
   const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
@@ -83,7 +85,7 @@ export default function Admin() {
   }, [products]);
   const basketProducts = useMemo(() => {
     const search = basketSearch.trim().toLocaleLowerCase("fr");
-    return products
+    return basketCatalog
       .filter(isFreshProduce)
       .filter((product) => {
         if (basketSeason === "selectionnes") return Number(basketDraft.items[product.id] || 0) > 0;
@@ -91,12 +93,44 @@ export default function Admin() {
         return !search || product.name.toLocaleLowerCase("fr").includes(search);
       })
       .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base", numeric: true }));
-  }, [products, basketDraft.items, basketSeason, basketSearch]);
+  }, [basketCatalog, basketDraft.items, basketSeason, basketSearch]);
+  const basketEstimatedPrice = useMemo(() => basketCatalog.reduce(
+    (sum, product) => sum + Number(basketDraft.items[product.id] || 0) * Number(product.price || 0),
+    0
+  ), [basketCatalog, basketDraft.items]);
 
   useEffect(() => {
     const saved = localStorage.getItem("atc-admin-password");
     if (saved) queueMicrotask(() => setPassword(saved));
   }, []);
+
+  useEffect(() => {
+    const selectedPartner = partners.find((partner) => partner.id === basketDraft.partnerId);
+    if (!selectedPartner || !authenticated) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setBasketCatalog([]);
+        setLoadingBasketCatalog(true);
+      }
+    });
+    fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(selectedPartner.priceListId)}`, {
+      headers: { "x-admin-password": password }
+    })
+      .then(async (response) => ({ response, data: await response.json() }))
+      .then(({ response, data }) => {
+        if (cancelled) return;
+        setBasketCatalog(response.ok ? (data.products || []) : []);
+        if (!response.ok) setMessage(data.error || "Tarifs du client impossibles à charger.");
+      })
+      .catch(() => {
+        if (!cancelled) setMessage("Tarifs du client impossibles à charger.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingBasketCatalog(false);
+      });
+    return () => { cancelled = true; };
+  }, [authenticated, basketDraft.partnerId, partners, password]);
 
   async function login(event) {
     event.preventDefault();
@@ -707,14 +741,20 @@ export default function Admin() {
           </div>
           <input type="search" value={basketSearch} onChange={(event) => setBasketSearch(event.target.value)} placeholder="Rechercher un légume" aria-label="Rechercher un légume" />
         </div>
+        {basketDraft.partnerId && (
+          <div className="basket-price-summary">
+            <span>Tarifs appliqués : <strong>{partners.find((partner) => partner.id === basketDraft.partnerId)?.name}</strong></span>
+            <strong>Prix estimé du panier : {currency.format(basketEstimatedPrice)}</strong>
+          </div>
+        )}
         <div className="basket-product-editor">
           {basketProducts.map((product) => (
             <label key={product.id}>
-              <span>{product.name}<small>{unitLabel(product.unit)} par panier</small></span>
+              <span>{product.name}<small>{currency.format(product.price)} / {unitLabel(product.unit)}</small></span>
               <input type="number" min="0" step={product.unit === "kg" ? "0.01" : "1"} value={basketDraft.items[product.id] || ""} onChange={(event) => setBasketDraft((current) => ({ ...current, items: { ...current.items, [product.id]: event.target.value } }))} />
             </label>
           ))}
-          {!basketProducts.length && <p className="basket-empty">Aucun légume dans cette sélection.</p>}
+          {!basketProducts.length && <p className="basket-empty">{loadingBasketCatalog ? "Chargement des tarifs..." : basketDraft.partnerId ? "Aucun légume dans cette sélection." : "Choisissez d’abord un client pour afficher ses légumes et ses tarifs."}</p>}
         </div>
         {baskets.length > 0 && <div className="basket-admin-list">
           {baskets.map((basket) => <article key={basket.id}>

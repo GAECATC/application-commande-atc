@@ -1462,6 +1462,7 @@ form {
 
 .basket-product-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .75rem; }
 .basket-product-toolbar > input { width: min(280px, 100%); }
+.basket-price-summary { display: flex; justify-content: space-between; gap: 1rem; margin: 0 0 .75rem; padding: .7rem .9rem; border-radius: 10px; background: #eef6df; color: var(--text); }
 .basket-season-tabs { display: flex; flex-wrap: wrap; gap: .45rem; }
 .basket-season-tabs button { border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 999px; padding: .55rem .8rem; font-weight: 700; cursor: pointer; }
 .basket-season-tabs button.active { background: var(--green, #164b2b); color: #fff; border-color: var(--green, #164b2b); }
@@ -1494,4 +1495,5 @@ form {
   .basket-admin-list article { align-items: flex-start; flex-direction: column; }
   .basket-product-toolbar { align-items: stretch; flex-direction: column; }
   .basket-product-toolbar > input { width: 100%; }
+  .basket-price-summary { flex-direction: column; }
 }
