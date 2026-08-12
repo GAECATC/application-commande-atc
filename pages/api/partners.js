@@ -1,4 +1,4 @@
-const { getPartners, upsertPartner } = require("@/lib/db");
+const { deletePartner, getPartners, upsertPartner } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
 
 function isValidEmail(value) {
@@ -6,7 +6,7 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (!requireAdmin(req, res)) return;
 
   if (req.method === "GET") {
@@ -25,6 +25,7 @@ module.exports = async function handler(req, res) {
 
     const saved = await upsertPartner({
       id: partner.id,
+      originalId: partner.originalId || partner.id,
       name: partner.name,
       code: partner.code,
       email: partner.email || "",
@@ -38,6 +39,19 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ partner: saved });
   }
 
-  res.setHeader("Allow", "GET, POST");
+  if (req.method === "DELETE") {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: "Client requis" });
+    try {
+      const deleted = await deletePartner(id);
+      return res.status(200).json({ partner: deleted });
+    } catch (error) {
+      return res.status(error.code === "CLIENT_HAS_ORDERS" ? 409 : 400).json({
+        error: error.message || "Suppression refusée"
+      });
+    }
+  }
+
+  res.setHeader("Allow", "GET, POST, DELETE");
   return res.status(405).json({ error: "Methode non autorisee" });
 };

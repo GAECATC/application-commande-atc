@@ -39,6 +39,15 @@ create table if not exists product_prices (
   primary key (price_list_id, product_id)
 );
 
+create table if not exists product_allocations (
+  delivery_date date not null,
+  partner_id text not null references partners(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  quantity numeric(10, 2) not null default 0,
+  visible boolean not null default true,
+  primary key (delivery_date, partner_id, product_id)
+);
+
 create table if not exists orders (
   id uuid primary key,
   partner_id text not null references partners(id),
@@ -46,7 +55,8 @@ create table if not exists orders (
   harvest_day text not null check (harvest_day in ('lundi', 'jeudi')),
   status text not null default 'active',
   created_at timestamptz not null default now(),
-  total numeric(10, 2) not null default 0
+  total numeric(10, 2) not null default 0,
+  comment text not null default ''
 );
 
 create table if not exists order_items (

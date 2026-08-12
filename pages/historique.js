@@ -64,7 +64,7 @@ function OrderList({ orders }) {
       {orders.map((order) => (
         <article className="order-card" key={order.id}>
           <div>
-            <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR")}</strong>
+            <strong>Commande du {new Date(order.createdAt).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })}</strong>
             <span>Livraison {formatDate(order.deliveryDate)}</span>
             <span className={`status-pill ${order.status}`}>{statusLabel(order.status)}</span>
           </div>
@@ -73,6 +73,7 @@ function OrderList({ orders }) {
               <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
             ))}
           </ul>
+          {order.comment && <p className="order-comment"><strong>Commentaire :</strong> {order.comment}</p>}
           <strong>{currency.format(order.total)}</strong>
         </article>
       ))}

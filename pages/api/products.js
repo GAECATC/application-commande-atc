@@ -1,5 +1,6 @@
-const { getPartnerByCredentials, getProducts, upsertProduct } = require("@/lib/db");
+const { deleteProduct, getOrders, getPartnerByCredentials, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
+const { getNextPartnerDelivery } = require("@/lib/schedule");
 
 function slugify(value) {
   return String(value)
@@ -10,20 +11,51 @@ function slugify(value) {
     .replace(/^-|-$/g, "");
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method === "GET") {
     const includeHidden = req.query.includeHidden === "true";
     if (includeHidden && !requireAdmin(req, res)) return;
 
     let priceListId = req.query.priceListId;
+    let partner;
     if (!includeHidden && req.query.partnerId) {
-      const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+      partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       priceListId = partner.priceListId;
     }
 
-    const products = await getProducts({ includeHidden, priceListId });
-    return res.status(200).json({ products });
+    let products = await getProducts({ includeHidden, priceListId });
+    let delivery;
+    if (partner) {
+      delivery = getNextPartnerDelivery(partner.id);
+      const deliveryDate = delivery.deliveryDate;
+      const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate });
+      if (allocations.length) {
+        const orders = await getOrders({ partnerId: partner.id, deliveryDate });
+        const orderedByProduct = new Map();
+        for (const order of orders) {
+          for (const item of order.items) {
+            orderedByProduct.set(item.productId, (orderedByProduct.get(item.productId) || 0) + Number(item.quantity));
+          }
+        }
+        const allocationByProduct = new Map(allocations.map((item) => [item.productId, item]));
+        products = products
+          .filter((product) => allocationByProduct.get(product.id)?.visible !== false && allocationByProduct.has(product.id))
+          .map((product) => {
+            const allocationQuantity = Number(allocationByProduct.get(product.id).quantity);
+            return {
+              ...product,
+              stock: allocationQuantity > 0
+                ? Math.max(0, allocationQuantity - (orderedByProduct.get(product.id) || 0))
+                : 0,
+              clientAllocation: true,
+              clientUnlimited: allocationQuantity <= 0
+            };
+          })
+          .filter((product) => product.clientUnlimited || product.stock > 0);
+      }
+    }
+    return res.status(200).json({ products, delivery });
   }
 
   if (req.method === "POST") {
@@ -47,6 +79,18 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ product: saved });
   }
 
-  res.setHeader("Allow", "GET, POST");
+  if (req.method === "DELETE") {
+    if (!requireAdmin(req, res)) return;
+    const { id } = req.body || {};
+    try {
+      const deleted = await deleteProduct(id);
+      return res.status(200).json({ product: deleted });
+    } catch (error) {
+      const status = error.message === "Produit introuvable" ? 404 : 400;
+      return res.status(status).json({ error: error.message || "Suppression refusee" });
+    }
+  }
+
+  res.setHeader("Allow", "GET, POST, DELETE");
   return res.status(405).json({ error: "Methode non autorisee" });
 };
