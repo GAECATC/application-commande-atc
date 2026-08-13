@@ -90,8 +90,12 @@ async function main() {
   if (checkOnly) return;
 
   const existingLists = await db.getPriceLists();
-  const targetPriceList = existingLists.find((item) => normalize(item.name) === normalize(TARGET_PRICE_LIST_NAME));
-  if (!targetPriceList) throw new Error("Grille tarifaire existante « Panier » introuvable");
+  const saintGenixPartners = partners.filter((partner) => normalize(partner.name).includes("panier saint genix"));
+  const targetPriceList = existingLists.find((item) => normalize(item.name) === normalize(TARGET_PRICE_LIST_NAME))
+    || existingLists.find((item) => saintGenixPartners.some((partner) => partner.priceListId === item.id));
+  if (!targetPriceList) {
+    throw new Error(`Grille « Panier » introuvable. Grilles présentes : ${existingLists.map((item) => `${item.name} [${item.id}]`).join(", ")}`);
+  }
   for (const item of matched) await db.upsertProductPrice(targetPriceList.id, item.product.id, item.price);
   for (const row of missing) {
     const product = await db.upsertProduct({
@@ -109,7 +113,7 @@ async function main() {
   }
 
   const targetPartners = partners.filter((partner) =>
-    partner.priceListId === targetPriceList.id || normalize(partner.name).includes("panier saint genix")
+    partner.priceListId === targetPriceList.id || saintGenixPartners.some((target) => target.id === partner.id)
   );
   for (const partner of targetPartners) {
     if (partner.priceListId !== targetPriceList.id) {
