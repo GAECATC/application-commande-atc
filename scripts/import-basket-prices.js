@@ -3,7 +3,8 @@ const { loadEnvConfig } = require("@next/env");
 
 loadEnvConfig(process.cwd());
 
-const PRICE_LIST = { id: "tarif-panier", name: "Tarif panier" };
+const TARGET_PRICE_LIST_NAME = "Panier";
+const OBSOLETE_PRICE_LIST_ID = "tarif-panier";
 
 // Feuille 1, complétée par les corrections de la Feuille 2 du fichier
 // « tarifs vente directe.ods ». En cas de doublon, la dernière valeur gagne.
@@ -89,8 +90,9 @@ async function main() {
   if (checkOnly) return;
 
   const existingLists = await db.getPriceLists();
-  if (!existingLists.some((item) => item.id === PRICE_LIST.id)) await db.createPriceList(PRICE_LIST);
-  for (const item of matched) await db.upsertProductPrice(PRICE_LIST.id, item.product.id, item.price);
+  const targetPriceList = existingLists.find((item) => normalize(item.name) === normalize(TARGET_PRICE_LIST_NAME));
+  if (!targetPriceList) throw new Error("Grille tarifaire existante « Panier » introuvable");
+  for (const item of matched) await db.upsertProductPrice(targetPriceList.id, item.product.id, item.price);
   for (const row of missing) {
     const product = await db.upsertProduct({
       id: normalize(row.name).replace(/\s+/g, "-") + `-${row.unit}`,
@@ -100,16 +102,32 @@ async function main() {
       stock: 0,
       active: true,
       sortOrder: 1000,
-      priceListId: PRICE_LIST.id,
+      priceListId: targetPriceList.id,
       price: row.price
     });
-    await db.upsertProductPrice(PRICE_LIST.id, product.id, row.price);
+    await db.upsertProductPrice(targetPriceList.id, product.id, row.price);
   }
 
-  const targetPartners = partners.filter((partner) => normalize(partner.name).includes("panier saint genix"));
-  if (!targetPartners.length) throw new Error("Client Panier Saint-Genix introuvable");
-  for (const partner of targetPartners) await db.upsertPartner({ ...partner, originalId: partner.id, priceListId: PRICE_LIST.id });
-  console.log(`Grille « ${PRICE_LIST.name} » appliquée à : ${targetPartners.map((partner) => partner.name).join(", ")}.`);
+  const targetPartners = partners.filter((partner) =>
+    partner.priceListId === targetPriceList.id || normalize(partner.name).includes("panier saint genix")
+  );
+  for (const partner of targetPartners) {
+    if (partner.priceListId !== targetPriceList.id) {
+      await db.upsertPartner({ ...partner, originalId: partner.id, priceListId: targetPriceList.id });
+    }
+  }
+
+  // Nettoie uniquement la grille créée par la première version erronée de ce script, si elle existe.
+  const obsoleteList = existingLists.find((item) => item.id === OBSOLETE_PRICE_LIST_ID && item.id !== targetPriceList.id);
+  if (obsoleteList) {
+    const remainingPartners = (await db.getPartners()).filter((partner) => partner.priceListId === obsoleteList.id);
+    for (const partner of remainingPartners) {
+      await db.upsertPartner({ ...partner, originalId: partner.id, priceListId: targetPriceList.id });
+    }
+    await db.deletePriceList(obsoleteList.id);
+  }
+
+  console.log(`Tarifs importés dans la grille existante « ${targetPriceList.name} » (${targetPriceList.id}).`);
 }
 
 main().catch((error) => {
