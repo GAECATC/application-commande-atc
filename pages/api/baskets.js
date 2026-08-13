@@ -2,6 +2,7 @@ const {
   deleteBasketTemplate,
   getBasketTemplates,
   getPartnerByCredentials,
+  getPartners,
   getProducts,
   upsertBasketTemplate
 } = require("@/lib/db");
@@ -12,7 +13,20 @@ export default async function handler(req, res) {
     try {
       if (isAdmin(req)) {
         const baskets = await getBasketTemplates({ includeInactive: true });
-        return res.status(200).json({ baskets });
+        const partners = await getPartners();
+        const partnerById = new Map(partners.map((partner) => [partner.id, partner]));
+        const catalogs = new Map();
+        await Promise.all(partners.map(async (partner) => {
+          if (!catalogs.has(partner.priceListId)) catalogs.set(partner.priceListId, await getProducts({ includeHidden: true, priceListId: partner.priceListId }));
+        }));
+        return res.status(200).json({ baskets: baskets.map((basket) => {
+          const partner = partnerById.get(basket.partnerId);
+          const productById = new Map((catalogs.get(partner?.priceListId) || []).map((product) => [product.id, product]));
+          return { ...basket, items: basket.items.map((item) => {
+            const product = productById.get(item.productId);
+            return { ...item, productName: product?.name || item.productId, unit: product?.unit || inferUnitFromProductId(item.productId), unitPrice: Number(product?.price || 0) };
+          }) };
+        }) });
       }
       const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });

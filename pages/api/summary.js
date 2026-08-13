@@ -1,4 +1,4 @@
-const { getOrders, getPartners } = require("@/lib/db");
+const { getBasketTemplates, getOrders, getPartners, getProducts } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { requireAdmin } = require("@/lib/auth");
 
@@ -14,9 +14,17 @@ export default async function handler(req, res) {
   const orders = await getOrders({ deliveryDate: requestedDeliveryDate || undefined });
   const partners = await getPartners();
   const partnerById = new Map(partners.map((partner) => [partner.id, partner.name]));
-  const namedOrders = orders.map((order) => ({
-    ...order,
-    partnerName: partnerById.get(order.partnerId) || order.partnerId
+  const legacyBasketCache = new Map();
+  const namedOrders = await Promise.all(orders.map(async (order) => {
+    let baskets = order.baskets || [];
+    if (!baskets.length) {
+      if (!legacyBasketCache.has(order.partnerId)) {
+        const partner = partners.find((entry) => entry.id === order.partnerId);
+        legacyBasketCache.set(order.partnerId, partner ? await loadBasketCatalog(partner) : null);
+      }
+      baskets = inferLegacyBaskets(order, legacyBasketCache.get(order.partnerId));
+    }
+    return { ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId };
   }));
   const ordersByDeliveryDate = new Map();
   for (const order of namedOrders) {
@@ -29,7 +37,8 @@ export default async function handler(req, res) {
     .map(([groupDeliveryDate, groupOrders]) => ({
       deliveryDate: groupDeliveryDate,
       orders: groupOrders,
-      totals: buildTotals(groupOrders)
+      totals: buildTotals(groupOrders),
+      baskets: buildBasketTotals(groupOrders)
     }));
 
   return res.status(200).json({
@@ -58,4 +67,43 @@ function buildTotals(orders) {
   }
   return Array.from(totals.values())
     .sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
+}
+
+async function loadBasketCatalog(partner) {
+  const [templates, products] = await Promise.all([
+    getBasketTemplates({ partnerId: partner.id, includeInactive: true }),
+    getProducts({ includeHidden: true, priceListId: partner.priceListId })
+  ]);
+  return { templates, productById: new Map(products.map((product) => [product.id, product])) };
+}
+
+function inferLegacyBaskets(order, catalog) {
+  if (!catalog?.templates?.length) return [];
+  const orderQuantity = new Map(order.items.map((item) => [item.productId, Number(item.quantity)]));
+  const usageCount = new Map();
+  for (const template of catalog.templates) for (const item of template.items) usageCount.set(item.productId, (usageCount.get(item.productId) || 0) + 1);
+  return catalog.templates.flatMap((template) => {
+    const ratios = template.items
+      .filter((item) => usageCount.get(item.productId) === 1 && orderQuantity.has(item.productId) && Number(item.quantity) > 0)
+      .map((item) => orderQuantity.get(item.productId) / Number(item.quantity));
+    const count = ratios[0];
+    if (!count || count <= 0 || Math.abs(count - Math.round(count)) >= 0.0001 || ratios.some((ratio) => Math.abs(ratio - count) >= 0.0001)) return [];
+    const items = template.items.map((item) => {
+      const product = catalog.productById.get(item.productId);
+      return { productName: product?.name || item.productId, unit: product?.unit || "", quantity: Number(item.quantity), unitPrice: Number(product?.price || 0) };
+    });
+    return [{ basketId: template.id, name: template.name, quantity: Math.round(count), items, unitPrice: items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) }];
+  });
+}
+
+function buildBasketTotals(orders) {
+  const totals = new Map();
+  for (const order of orders) {
+    for (const basket of order.baskets || []) {
+      const current = totals.get(basket.basketId) || { ...basket, quantity: 0 };
+      current.quantity += Number(basket.quantity);
+      totals.set(basket.basketId, current);
+    }
+  }
+  return Array.from(totals.values()).sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }

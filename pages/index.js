@@ -149,11 +149,14 @@ export default function ClientPortal({ initialSession }) {
       }
     }
     const items = Object.entries(mergedQuantities).map(([productId, quantity]) => ({ productId, quantity }));
+    const basketSelections = baskets
+      .map((basket) => ({ basketId: basket.id, quantity: Number(basketQuantities[basket.id] || 0) }))
+      .filter((basket) => basket.quantity > 0);
     const isEditing = Boolean(editingOrder);
     const response = await fetch("/api/orders", {
       method: isEditing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items, comment })
+      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items, comment, basketSelections })
     });
     const data = await response.json();
     setLoading(false);

@@ -15,6 +15,7 @@ export default function Admin() {
   const [products, setProducts] = useState([]);
   const [partners, setPartners] = useState([]);
   const [baskets, setBaskets] = useState([]);
+  const [openBasketId, setOpenBasketId] = useState(null);
   const [basketDraft, setBasketDraft] = useState(emptyBasket);
   const [savingBasket, setSavingBasket] = useState(false);
   const [basketCatalog, setBasketCatalog] = useState([]);
@@ -662,6 +663,22 @@ export default function Admin() {
           ))}
         </div>
 
+        {deliverySummary.baskets?.length > 0 && <div className="harvest-baskets">
+          <h3>Paniers à préparer</h3>
+          <div className="harvest-basket-grid">
+            {deliverySummary.baskets.map((basket) => <article className="harvest-basket-card" key={basket.basketId}>
+              <header><strong>{basket.name}</strong><span>{formatNumber(basket.quantity)} panier{Number(basket.quantity) > 1 ? "s" : ""}</span></header>
+              <div className="basket-detail-table">
+                {basket.items.map((item, index) => <div className="basket-detail-row harvest-basket-row" key={`${item.productName}-${index}`}>
+                  <span>{item.productName}</span>
+                  <span>{formatNumber(item.quantity)} {unitLabel(item.unit)} / panier</span>
+                  <span>{formatNumber(item.quantity * basket.quantity)} {unitLabel(item.unit)} au total</span>
+                </div>)}
+              </div>
+            </article>)}
+          </div>
+        </div>}
+
         <h3>Commandes par client</h3>
         <div className="orders-list">
           {deliverySummary.orders.map((order) => (
@@ -757,9 +774,18 @@ export default function Admin() {
           {!basketProducts.length && <p className="basket-empty">{loadingBasketCatalog ? "Chargement des tarifs..." : basketDraft.partnerId ? "Aucun légume dans cette sélection." : "Choisissez d’abord un client pour afficher ses légumes et ses tarifs."}</p>}
         </div>
         {baskets.length > 0 && <div className="basket-admin-list">
-          {baskets.map((basket) => <article key={basket.id}>
-            <div><strong>{basket.name}</strong><span>{partners.find((partner) => partner.id === basket.partnerId)?.name || basket.partnerId} · {basket.items.length} produit(s) · {basket.active ? "Actif" : "Inactif"}</span></div>
-            <div className="actions"><button className="ghost" type="button" onClick={() => editBasket(basket)}>Modifier</button><button className="danger" type="button" onClick={() => removeBasket(basket)}>Supprimer</button></div>
+          {baskets.map((basket) => <article key={basket.id} className="basket-admin-card">
+            <div className="basket-admin-card-heading">
+              <div><strong>{basket.name}</strong><span>{partners.find((partner) => partner.id === basket.partnerId)?.name || basket.partnerId} · {basket.items.length} produit(s) · {basket.active ? "Actif" : "Inactif"}</span></div>
+              <div className="actions"><button className="ghost" type="button" onClick={() => setOpenBasketId((current) => current === basket.id ? null : basket.id)}>{openBasketId === basket.id ? "Masquer la composition" : "Voir la composition"}</button><button className="ghost" type="button" onClick={() => editBasket(basket)}>Modifier</button><button className="danger" type="button" onClick={() => removeBasket(basket)}>Supprimer</button></div>
+            </div>
+            {openBasketId === basket.id && <div className="basket-detail-table basket-admin-preview">
+              <div className="basket-detail-row basket-detail-header"><span>Produit</span><span>Quantité</span><span>Prix unitaire</span><span>Total</span></div>
+              {basket.items.map((item) => <div className="basket-detail-row" key={item.productId}>
+                <span>{item.productName}</span><span>{formatNumber(item.quantity)} {unitLabel(item.unit)}</span><span>{currency.format(item.unitPrice)} / {unitLabel(item.unit)}</span><strong>{currency.format(Number(item.quantity) * Number(item.unitPrice))}</strong>
+              </div>)}
+              <div className="basket-detail-total"><span>Prix estimé du panier</span><strong>{currency.format(basket.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice), 0))}</strong></div>
+            </div>}
           </article>)}
         </div>}
       </section>

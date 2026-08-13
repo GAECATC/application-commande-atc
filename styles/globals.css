@@ -1494,7 +1494,21 @@ form {
 }
 
 .basket-admin-list { display: grid; gap: .65rem; margin-top: 1rem; }
-.basket-admin-list article { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: 12px; }
+.basket-admin-list .basket-admin-card { display: block; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: 12px; }
+.basket-admin-card-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.basket-detail-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.basket-detail-row { display: grid; grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(120px, 1fr)); }
+.basket-detail-row > * { padding: .65rem .75rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.basket-detail-row > *:last-child { border-right: 0; }
+.basket-detail-row:last-child > * { border-bottom: 0; }
+.basket-detail-header { background: var(--soft); font-weight: 800; }
+.basket-detail-total { display: flex; justify-content: flex-end; gap: 2rem; padding: .8rem; background: var(--soft); }
+.basket-admin-preview { margin-top: .85rem; }
+.harvest-baskets { margin: 1.5rem 0; }
+.harvest-basket-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1rem; }
+.harvest-basket-card { border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
+.harvest-basket-card header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.basket-detail-row.harvest-basket-row { grid-template-columns: 1.3fr 1fr 1fr; }
 .basket-client-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 .basket-client-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.1rem; padding: 1.15rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-soft, #f8faf7); }
 .basket-client-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: .8rem; border-bottom: 2px solid #dce9cf; }
@@ -1511,7 +1525,9 @@ form {
 
 @media (max-width: 760px) {
   .basket-admin-form { grid-template-columns: 1fr; }
-  .basket-admin-list article { align-items: flex-start; flex-direction: column; }
+  .basket-admin-card-heading { align-items: flex-start; flex-direction: column; }
+  .basket-detail-table { overflow-x: auto; }
+  .basket-detail-row { min-width: 650px; }
   .basket-product-toolbar { align-items: stretch; flex-direction: column; }
   .basket-product-toolbar > input { width: 100%; }
   .basket-price-summary { flex-direction: column; }
