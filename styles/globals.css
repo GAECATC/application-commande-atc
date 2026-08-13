@@ -1450,11 +1450,11 @@ form {
 
 .basket-product-editor {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: .65rem;
+  grid-template-columns: repeat(3, minmax(250px, 1fr));
+  gap: 0;
   max-height: 430px;
   overflow: auto;
-  padding: .75rem;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface-soft, #f8faf7);
@@ -1473,7 +1473,18 @@ form {
   grid-template-columns: 1fr 90px;
   gap: .75rem;
   align-items: center;
+  min-height: 86px;
+  margin: 0;
+  padding: .75rem;
+  border-right: 1px solid #dce5d4;
+  border-bottom: 1px solid #dce5d4;
+  background: rgba(255, 255, 255, .42);
 }
+
+.basket-product-editor label:nth-child(3n) { border-right: 0; }
+.basket-product-editor label:hover,
+.basket-product-editor label:focus-within { background: #f2f8e9; }
+.basket-product-editor label input { width: 100%; background: #fff; }
 
 .basket-product-editor small,
 .basket-admin-list span {
@@ -1507,4 +1518,13 @@ form {
   .basket-client-heading, .basket-client-order-row { align-items: stretch; flex-direction: column; }
   .basket-client-item { grid-template-columns: 1fr auto; gap: .25rem .75rem; }
   .basket-item-quantity, .basket-item-unit-price { font-size: .9rem; }
+  .basket-product-editor { grid-template-columns: 1fr; }
+  .basket-product-editor label,
+  .basket-product-editor label:nth-child(3n) { border-right: 0; }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .basket-product-editor { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+  .basket-product-editor label:nth-child(3n) { border-right: 1px solid #dce5d4; }
+  .basket-product-editor label:nth-child(2n) { border-right: 0; }
 }
