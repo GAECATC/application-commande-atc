@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "db:import:mysql": "node scripts/import-json-to-mysql.js",
+    "db:import:basket-prices": "node scripts/import-basket-prices.js",
     "start": "next start",
     "lint": "eslint ."
   },
