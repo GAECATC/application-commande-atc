@@ -1485,10 +1485,18 @@ form {
 .basket-admin-list { display: grid; gap: .65rem; margin-top: 1rem; }
 .basket-admin-list article { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: 12px; }
 .basket-client-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-.basket-client-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-soft, #f8faf7); }
-.basket-client-card h3 { margin-top: 0; }
-.basket-client-card ul { padding-left: 1.2rem; }
+.basket-client-card { display: flex; flex-direction: column; justify-content: space-between; gap: 1.1rem; padding: 1.15rem; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-soft, #f8faf7); }
+.basket-client-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: .8rem; border-bottom: 2px solid #dce9cf; }
+.basket-client-card h3 { margin: 0; }
+.basket-client-heading > strong { white-space: nowrap; color: var(--green, #164b2b); }
+.basket-client-items { display: grid; }
+.basket-client-item { display: grid; grid-template-columns: minmax(150px, 1.4fr) .65fr .9fr auto; gap: .75rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid #e2e9dc; }
+.basket-client-item:last-child { border-bottom: 0; }
+.basket-item-name { font-weight: 750; }
+.basket-item-quantity, .basket-item-unit-price { color: var(--muted); }
+.basket-client-order-row { display: flex; align-items: end; justify-content: space-between; gap: 1rem; padding-top: .9rem; border-top: 2px solid #dce9cf; }
 .basket-client-card label { max-width: 180px; }
+.basket-client-subtotal { padding-bottom: .65rem; color: var(--green, #164b2b); }
 
 @media (max-width: 760px) {
   .basket-admin-form { grid-template-columns: 1fr; }
@@ -1496,4 +1504,7 @@ form {
   .basket-product-toolbar { align-items: stretch; flex-direction: column; }
   .basket-product-toolbar > input { width: 100%; }
   .basket-price-summary { flex-direction: column; }
+  .basket-client-heading, .basket-client-order-row { align-items: stretch; flex-direction: column; }
+  .basket-client-item { grid-template-columns: 1fr auto; gap: .25rem .75rem; }
+  .basket-item-quantity, .basket-item-unit-price { font-size: .9rem; }
 }

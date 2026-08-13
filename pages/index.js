@@ -61,7 +61,7 @@ export default function ClientPortal({ initialSession }) {
     const count = Number(basketQuantities[basket.id] || 0);
     return sum + count * basket.items.reduce((basketSum, item) => {
       const product = products.find((entry) => entry.id === item.productId);
-      return basketSum + Number(item.quantity) * Number(product?.price || 0);
+      return basketSum + Number(item.quantity) * Number(item.unitPrice ?? product?.price ?? 0);
     }, 0);
   }, 0);
   const total = products.reduce((sum, product) => sum + (Number(quantities[product.id]) || 0) * product.price, 0) + basketTotal;
@@ -314,25 +314,32 @@ export default function ClientPortal({ initialSession }) {
               <div className="basket-client-grid">
                 {baskets.map((basket) => (
                   <article className="basket-client-card" key={basket.id}>
-                    <div>
-                      <h3>{basket.name}</h3>
-                      <ul>
+                    <div className="basket-client-content">
+                      <div className="basket-client-heading">
+                        <h3>{basket.name}</h3>
+                        <strong>{currency.format(basket.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice || 0), 0))} / panier</strong>
+                      </div>
+                      <div className="basket-client-items">
                         {basket.items.map((item) => {
                           const product = products.find((entry) => entry.id === item.productId);
-                          return <li key={item.productId}>{formatNumber(item.quantity)} {unitLabel(product?.unit)} — {product?.name || item.productId}</li>;
+                          const unit = item.unit || product?.unit;
+                          const unitPrice = Number(item.unitPrice ?? product?.price ?? 0);
+                          return <div className="basket-client-item" key={item.productId}>
+                            <span className="basket-item-name">{item.productName || product?.name || item.productId}</span>
+                            <span className="basket-item-quantity">{formatNumber(item.quantity)} {unitLabel(unit)}</span>
+                            <span className="basket-item-unit-price">{currency.format(unitPrice)} / {unitLabel(unit)}</span>
+                            <strong>{currency.format(Number(item.quantity) * unitPrice)}</strong>
+                          </div>;
                         })}
-                      </ul>
+                      </div>
                     </div>
-                    <label>
-                      Nombre de paniers
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={basketQuantities[basket.id] || ""}
-                        onChange={(event) => setBasketQuantities((current) => ({ ...current, [basket.id]: event.target.value }))}
-                      />
-                    </label>
+                    <div className="basket-client-order-row">
+                      <label>
+                        Nombre de paniers
+                        <input type="number" min="0" step="1" value={basketQuantities[basket.id] || ""} onChange={(event) => setBasketQuantities((current) => ({ ...current, [basket.id]: event.target.value }))} />
+                      </label>
+                      {Number(basketQuantities[basket.id] || 0) > 0 && <strong className="basket-client-subtotal">Sous-total : {currency.format(Number(basketQuantities[basket.id]) * basket.items.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice || 0), 0))}</strong>}
+                    </div>
                   </article>
                 ))}
               </div>
