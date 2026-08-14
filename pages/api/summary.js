@@ -23,6 +23,12 @@ export default async function handler(req, res) {
         legacyBasketCache.set(order.partnerId, partner ? await loadBasketCatalog(partner) : null);
       }
       baskets = inferLegacyBaskets(order, legacyBasketCache.get(order.partnerId));
+    } else if (baskets.some((basket) => basket.items?.some((item) => !item.productId))) {
+      if (!legacyBasketCache.has(order.partnerId)) {
+        const partner = partners.find((entry) => entry.id === order.partnerId);
+        legacyBasketCache.set(order.partnerId, partner ? await loadBasketCatalog(partner) : null);
+      }
+      baskets = enrichBasketProductIds(baskets, legacyBasketCache.get(order.partnerId));
     }
     return completeOrderFromBaskets({ ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId });
   }));
@@ -94,6 +100,19 @@ function normalizeName(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("fr");
 }
 
+function enrichBasketProductIds(baskets, catalog) {
+  if (!catalog) return baskets;
+  const products = Array.from(catalog.productById.values());
+  return baskets.map((basket) => ({
+    ...basket,
+    items: (basket.items || []).map((item) => {
+      if (item.productId) return item;
+      const product = products.find((entry) => normalizeName(entry.name) === normalizeName(item.productName) && entry.unit === item.unit);
+      return product ? { ...item, productId: product.id } : item;
+    })
+  }));
+}
+
 function completeOrderFromBaskets(order) {
   const items = [...order.items];
   const actual = new Map();
@@ -143,7 +162,7 @@ function inferLegacyBaskets(order, catalog) {
     if (!count || count <= 0 || Math.abs(count - Math.round(count)) >= 0.0001 || ratios.some((ratio) => Math.abs(ratio - count) >= 0.0001)) return [];
     const items = template.items.map((item) => {
       const product = catalog.productById.get(item.productId);
-      return { productName: product?.name || item.productId, unit: product?.unit || "", quantity: Number(item.quantity), unitPrice: Number(product?.price || 0) };
+      return { productId: item.productId, productName: product?.name || item.productId, unit: product?.unit || "", quantity: Number(item.quantity), unitPrice: Number(product?.price || 0) };
     });
     return [{ basketId: template.id, name: template.name, quantity: Math.round(count), items, unitPrice: items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0) }];
   });

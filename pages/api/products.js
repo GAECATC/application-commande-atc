@@ -1,5 +1,5 @@
-const { deleteProduct, getOrders, getPartnerByCredentials, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
-const { requireAdmin } = require("@/lib/auth");
+const { deleteProduct, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
+const { isAdmin, requireAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 
 function slugify(value) {
@@ -20,7 +20,12 @@ export default async function handler(req, res) {
     let priceListId = req.query.priceListId;
     let partner;
     if (!includeHidden && req.query.partnerId) {
-      partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+      if (isAdmin(req)) {
+        const partners = await getPartners();
+        partner = partners.find((item) => item.id === req.query.partnerId && item.active);
+      } else {
+        partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+      }
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       priceListId = partner.priceListId;
     }

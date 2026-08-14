@@ -28,6 +28,9 @@ export default function Admin() {
   const [draft, setDraft] = useState(emptyProduct);
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [orderDraft, setOrderDraft] = useState({});
+  const [orderEditProducts, setOrderEditProducts] = useState([]);
+  const [orderProductToAdd, setOrderProductToAdd] = useState("");
+  const [orderProductSearch, setOrderProductSearch] = useState("");
   const [dirtyProductIds, setDirtyProductIds] = useState([]);
   const [dirtyPartnerIds, setDirtyPartnerIds] = useState([]);
   const [savingCatalog, setSavingCatalog] = useState(false);
@@ -552,16 +555,23 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  function startEditOrder(order) {
+  async function startEditOrder(order) {
     setEditingOrderId(order.id);
     setOrderDraft(Object.fromEntries(order.items.map((item) => [item.productId, String(item.quantity)])));
+    setOrderProductToAdd("");
+    setOrderProductSearch("");
+    setOrderEditProducts(order.items.map((item) => ({ id: item.productId, name: item.productName, unit: item.unit, price: item.unitPrice, category: item.category })));
+    const response = await fetch(`/api/products?partnerId=${encodeURIComponent(order.partnerId)}`, { headers });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Le catalogue de ce client ne peut pas être chargé.");
+    setOrderEditProducts(Array.from(new Map([
+      ...order.items.map((item) => [item.productId, { id: item.productId, name: item.productName, unit: item.unit, price: item.unitPrice, category: item.category }]),
+      ...(data.products || []).map((product) => [product.id, product])
+    ]).values()));
   }
 
   async function saveOrder(order) {
-    const items = order.items.map((item) => ({
-      productId: item.productId,
-      quantity: Number(orderDraft[item.productId] || 0)
-    }));
+    const items = Object.entries(orderDraft).map(([productId, quantity]) => ({ productId, quantity: Number(quantity || 0) }));
     const response = await fetch("/api/orders", {
       method: "PUT",
       headers,
@@ -571,6 +581,8 @@ export default function Admin() {
     if (!response.ok) return setMessage(data.error || "Modification refusee.");
     setEditingOrderId(null);
     setOrderDraft({});
+    setOrderEditProducts([]);
+    setOrderProductToAdd("");
     setMessage("Commande modifiee.");
     await loadAdminData();
   }
@@ -720,21 +732,37 @@ export default function Admin() {
               {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
               {editingOrderId === order.id ? (
                 <div className="order-edit no-print">
-                  {order.items.map((item) => (
-                    <label key={item.id}>
-                      {item.productName}
+                  <div className="order-edit-lines">
+                  {Object.keys(orderDraft).map((productId) => {
+                    const item = orderEditProducts.find((product) => product.id === productId) || order.items.find((product) => product.productId === productId);
+                    if (!item) return null;
+                    const unit = item.unit;
+                    return <label key={productId}>
+                      <span><strong>{item.name || item.productName}</strong><small>{currency.format(Number(item.price ?? item.unitPrice ?? 0))} / {unitLabel(unit)}</small></span>
                       <input
                         type="number"
                         min="0"
-                        step={item.unit === "kg" ? "0.5" : "1"}
-                        value={orderDraft[item.productId] || ""}
-                        onChange={(event) => setOrderDraft((current) => ({ ...current, [item.productId]: event.target.value }))}
+                        step={unit === "kg" ? "0.1" : "1"}
+                        value={orderDraft[productId] || ""}
+                        onChange={(event) => setOrderDraft((current) => ({ ...current, [productId]: event.target.value }))}
                       />
-                    </label>
-                  ))}
+                      <span className="order-edit-unit">{unitLabel(unit)}</span>
+                      <button className="order-line-remove" type="button" aria-label={`Retirer ${item.name || item.productName}`} onClick={() => setOrderDraft((current) => { const next = { ...current }; delete next[productId]; return next; })}>×</button>
+                    </label>;
+                  })}
+                  </div>
+                  <div className="order-add-product">
+                    <div><strong>Ajouter un produit</strong><span>Catalogue disponible pour ce client</span></div>
+                    <input type="search" value={orderProductSearch} onChange={(event) => setOrderProductSearch(event.target.value)} placeholder="Rechercher un produit" aria-label="Rechercher un produit à ajouter" />
+                    <select value={orderProductToAdd} onChange={(event) => setOrderProductToAdd(event.target.value)}>
+                      <option value="">Choisir un produit</option>
+                      {orderEditProducts.filter((product) => !Object.hasOwn(orderDraft, product.id) && product.name.toLocaleLowerCase("fr").includes(orderProductSearch.trim().toLocaleLowerCase("fr"))).sort((a, b) => a.name.localeCompare(b.name, "fr")).map((product) => <option key={product.id} value={product.id}>{product.name} · {currency.format(Number(product.price || 0))} / {unitLabel(product.unit)}</option>)}
+                    </select>
+                    <button className="ghost" type="button" disabled={!orderProductToAdd} onClick={() => { setOrderDraft((current) => ({ ...current, [orderProductToAdd]: "1" })); setOrderProductToAdd(""); setOrderProductSearch(""); }}>Ajouter</button>
+                  </div>
                   <div className="order-actions">
                     <button className="primary" type="button" onClick={() => saveOrder(order)}>Enregistrer</button>
-                    <button className="ghost" type="button" onClick={() => setEditingOrderId(null)}>Annuler</button>
+                    <button className="ghost" type="button" onClick={() => { setEditingOrderId(null); setOrderDraft({}); setOrderEditProducts([]); }}>Annuler</button>
                   </div>
                 </div>
               ) : (

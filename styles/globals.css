@@ -616,14 +616,32 @@ form {
 
 .order-edit {
   display: grid;
-  gap: 10px;
-  min-width: 260px;
+  gap: 14px;
+  width: min(100%, 720px);
+  min-width: 360px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfdf7;
 }
 
-.order-edit label {
-  grid-template-columns: minmax(140px, 1fr) 100px;
+.order-edit-lines { display: grid; gap: 7px; }
+.order-edit-lines label {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) 100px 55px 34px;
+  gap: 8px;
   align-items: center;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
 }
+.order-edit-lines label span:first-child { display: grid; gap: 2px; }
+.order-edit-lines small, .order-add-product span { color: var(--muted); font-size: .78rem; }
+.order-edit-unit { color: var(--muted); font-weight: 750; }
+.order-line-remove { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #efcaca; border-radius: 50%; background: #fff; color: var(--danger); font-size: 1.25rem; }
+.order-add-product { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(150px, 1fr) minmax(200px, 1.35fr) auto; gap: 8px; align-items: end; padding-top: 12px; border-top: 1px solid var(--line); }
+.order-add-product > div { display: grid; gap: 2px; align-self: center; }
 
 .admin-products {
   display: grid;
@@ -1436,9 +1454,9 @@ form {
     flex-direction: column;
   }
 
-  .order-edit label {
-    grid-template-columns: 1fr;
-  }
+  .order-edit { width: 100%; min-width: 0; padding: 10px; }
+  .order-edit-lines label { grid-template-columns: minmax(0, 1fr) 82px auto 30px; }
+  .order-add-product { grid-template-columns: 1fr; }
 
   .delivery-note-header,
   .delivery-note-meta,
