@@ -36,6 +36,7 @@ export default function Admin() {
   const [savingCatalog, setSavingCatalog] = useState(false);
   const [savingPartners, setSavingPartners] = useState(false);
   const [message, setMessage] = useState("");
+  const [emailNotice, setEmailNotice] = useState(null);
   const [clientsOpen, setClientsOpen] = useState(false);
   const [newPartner, setNewPartner] = useState(emptyPartner);
   const [availabilityPartnerId, setAvailabilityPartnerId] = useState("");
@@ -556,6 +557,7 @@ export default function Admin() {
   }
 
   async function startEditOrder(order) {
+    setEmailNotice(null);
     setEditingOrderId(order.id);
     setOrderDraft(Object.fromEntries(order.items.map((item) => [item.productId, String(item.quantity)])));
     setOrderProductToAdd("");
@@ -583,7 +585,18 @@ export default function Admin() {
     setOrderDraft({});
     setOrderEditProducts([]);
     setOrderProductToAdd("");
-    setMessage("Commande modifiee.");
+    if (data.email?.sent) {
+      setEmailNotice({ type: "success", text: `Commande modifiée et e-mail envoyé à ${order.partnerName}.` });
+    } else {
+      const reason = data.email?.reason;
+      const detail = reason === "missing-recipient"
+        ? "aucune adresse e-mail n’est renseignée pour ce client"
+        : reason === "missing-smtp-config"
+          ? "le service d’envoi d’e-mails n’est pas configuré"
+          : "l’envoi de l’e-mail a échoué";
+      setEmailNotice({ type: "warning", text: `Commande modifiée, mais ${detail}.` });
+    }
+    setMessage("");
     await loadAdminData();
   }
 
@@ -678,6 +691,12 @@ export default function Admin() {
           ["catalog", "Catalogue", products.length]
         ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
       </nav>
+
+      {emailNotice && <div className={`email-status-notice ${emailNotice.type}`} role="status">
+        <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
+        <strong>{emailNotice.text}</strong>
+        <button type="button" aria-label="Fermer le message" onClick={() => setEmailNotice(null)}>×</button>
+      </div>}
 
       <section className={`print-report admin-workspace ${adminView === "orders" ? "active" : ""}`}>
         {summary?.groups?.length ? summary.groups.map((deliverySummary) => (

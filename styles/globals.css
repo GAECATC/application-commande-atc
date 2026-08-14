@@ -113,6 +113,14 @@ button:disabled {
 .admin-shell > .panel,
 .admin-shell > .print-report { border-radius: 14px; box-shadow: 0 8px 24px rgba(16, 61, 35, .06); }
 
+.email-status-notice { display: grid; grid-template-columns: 32px minmax(0, 1fr) 30px; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid; border-radius: 12px; }
+.email-status-notice > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-weight: 900; }
+.email-status-notice.success { border-color: #9ec66c; background: #f1f8e8; }
+.email-status-notice.success > span { background: var(--primary); }
+.email-status-notice.warning { border-color: #efb36e; background: #fff5e9; }
+.email-status-notice.warning > span { background: var(--accent); }
+.email-status-notice button { width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
+
 .brand-lockup {
   display: flex;
   align-items: center;
