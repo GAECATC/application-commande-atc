@@ -24,7 +24,7 @@ export default async function handler(req, res) {
       }
       baskets = inferLegacyBaskets(order, legacyBasketCache.get(order.partnerId));
     }
-    return { ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId };
+    return completeOrderFromBaskets({ ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId });
   }));
   const ordersByDeliveryDate = new Map();
   for (const order of namedOrders) {
@@ -52,6 +52,7 @@ export default async function handler(req, res) {
 function buildTotals(orders) {
   const totals = new Map();
   for (const order of orders) {
+    const actualByNameAndUnit = new Map();
     for (const item of order.items) {
       const key = `${item.productId}:${item.unit}`;
       const current = totals.get(key) || {
@@ -63,10 +64,62 @@ function buildTotals(orders) {
       };
       current.quantity += Number(item.quantity);
       totals.set(key, current);
+      const nameKey = `${normalizeName(item.productName)}:${item.unit}`;
+      actualByNameAndUnit.set(nameKey, (actualByNameAndUnit.get(nameKey) || 0) + Number(item.quantity));
+    }
+    const expectedByNameAndUnit = new Map();
+    for (const basket of order.baskets || []) {
+      for (const item of basket.items || []) {
+        const nameKey = `${normalizeName(item.productName)}:${item.unit}`;
+        const expected = Number(item.quantity) * Number(basket.quantity);
+        const current = expectedByNameAndUnit.get(nameKey) || { ...item, quantity: 0 };
+        current.quantity += expected;
+        expectedByNameAndUnit.set(nameKey, current);
+      }
+    }
+    for (const [nameKey, expected] of expectedByNameAndUnit) {
+      const missing = expected.quantity - Number(actualByNameAndUnit.get(nameKey) || 0);
+      if (missing <= 0.000001) continue;
+      const key = `${expected.productId || `basket:${nameKey}`}:${expected.unit}`;
+      const current = totals.get(key) || { productId: expected.productId || `basket:${nameKey}`, productName: expected.productName, category: "Composition des paniers", unit: expected.unit, quantity: 0 };
+      current.quantity += missing;
+      totals.set(key, current);
     }
   }
   return Array.from(totals.values())
     .sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
+}
+
+function normalizeName(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("fr");
+}
+
+function completeOrderFromBaskets(order) {
+  const items = [...order.items];
+  const actual = new Map();
+  for (const item of items) {
+    const key = `${normalizeName(item.productName)}:${item.unit}`;
+    actual.set(key, (actual.get(key) || 0) + Number(item.quantity));
+  }
+  const expected = new Map();
+  for (const basket of order.baskets || []) for (const item of basket.items || []) {
+    const key = `${normalizeName(item.productName)}:${item.unit}`;
+    const current = expected.get(key) || { ...item, quantity: 0 };
+    current.quantity += Number(item.quantity) * Number(basket.quantity);
+    expected.set(key, current);
+  }
+  let total = Number(order.total || 0);
+  for (const [key, item] of expected) {
+    const missing = item.quantity - Number(actual.get(key) || 0);
+    if (missing <= 0.000001) continue;
+    items.push({
+      id: `basket-recovery:${order.id}:${key}`, productId: item.productId || `basket:${key}`,
+      productName: item.productName, category: "Composition des paniers", unit: item.unit,
+      quantity: missing, unitPrice: Number(item.unitPrice || 0)
+    });
+    total += missing * Number(item.unitPrice || 0);
+  }
+  return { ...order, items, total };
 }
 
 async function loadBasketCatalog(partner) {
