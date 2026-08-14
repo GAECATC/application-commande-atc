@@ -53,6 +53,7 @@ export default function Admin() {
   const [catalogCategory, setCatalogCategory] = useState("");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState({});
+  const [adminView, setAdminView] = useState("orders");
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -656,7 +657,17 @@ export default function Admin() {
         </div>
       </header>
 
-      <section className="print-report">
+      <nav className="admin-workspace-nav no-print" aria-label="Navigation de l’administration">
+        {[
+          ["orders", "Commandes", summary?.orders?.length || 0],
+          ["baskets", "Paniers", baskets.length],
+          ["availability", "Disponibilités", null],
+          ["clients", "Clients", partners.length],
+          ["catalog", "Catalogue", products.length]
+        ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
+      </nav>
+
+      <section className={`print-report admin-workspace ${adminView === "orders" ? "active" : ""}`}>
         {summary?.groups?.length ? summary.groups.map((deliverySummary) => (
           <section className="delivery-summary" key={deliverySummary.deliveryDate}>
         <div className="section-heading">
@@ -742,7 +753,7 @@ export default function Admin() {
         )) : <p>Aucune commande en cours.</p>}
       </section>
 
-      <section className="panel no-print basket-admin-panel">
+      <section className={`panel no-print basket-admin-panel admin-workspace ${adminView === "baskets" ? "active" : ""}`}>
         <div className="section-heading">
           <div>
             <p className="eyebrow">Composition automatique</p>
@@ -804,7 +815,7 @@ export default function Admin() {
         </div>}
       </section>
 
-      <section className="panel no-print availability-panel">
+      <section className={`panel no-print availability-panel admin-workspace ${adminView === "availability" ? "active" : ""}`}>
         <div className="section-heading">
           <div>
             <p className="eyebrow">Livraison du {availabilityDeliveryDate ? formatDate(availabilityDeliveryDate) : "prochain créneau du client"}</p>
@@ -895,7 +906,7 @@ export default function Admin() {
         )}
       </section>
 
-      <section className="panel no-print">
+      <section className={`panel no-print admin-workspace ${adminView === "clients" ? "active" : ""}`}>
         <div className="section-heading">
           <div>
             <button
@@ -960,7 +971,7 @@ export default function Admin() {
         )}
       </section>
 
-      <section className="panel no-print">
+      <section className={`panel no-print admin-workspace catalog-workspace ${adminView === "catalog" ? "active" : ""}`}>
         <div className="section-heading">
           <div>
             <h2>Catalogue</h2>
@@ -1069,7 +1080,7 @@ export default function Admin() {
         </aside>
       </section>
 
-      <section className="panel no-print">
+      <section className={`panel no-print admin-workspace catalog-workspace ${adminView === "catalog" ? "active" : ""}`}>
         <h2>Ajouter un produit</h2>
         <form className="new-category-form" onSubmit={addCustomCategory}>
           <label>

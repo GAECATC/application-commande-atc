@@ -72,6 +72,47 @@ button:disabled {
   border-bottom: 3px solid var(--brand-light);
 }
 
+.admin-workspace-nav {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 10px 25px rgba(16, 61, 35, .08);
+  backdrop-filter: blur(10px);
+}
+
+.admin-workspace-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.admin-workspace-nav button:hover { background: #f1f6e6; color: var(--primary); }
+.admin-workspace-nav button.active { background: var(--primary); color: #fff; box-shadow: 0 5px 14px rgba(16, 61, 35, .18); }
+.admin-workspace-nav small { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: #eef5de; color: var(--primary); font-size: .72rem; }
+.admin-workspace-nav button.active small { background: rgba(255,255,255,.18); color: #fff; }
+.admin-workspace { display: none; }
+.admin-workspace.active { display: block; }
+.admin-workspace.panel { margin-top: 0; }
+.catalog-workspace + .catalog-workspace.active { margin-top: 16px; }
+.admin-shell > .panel,
+.admin-shell > .print-report { border-radius: 14px; box-shadow: 0 8px 24px rgba(16, 61, 35, .06); }
+
 .brand-lockup {
   display: flex;
   align-items: center;
@@ -1189,6 +1230,21 @@ form {
     flex-direction: column;
   }
 
+  .shell { width: min(100% - 20px, 1120px); padding-top: 12px; }
+  .topbar { gap: 12px; margin-bottom: 14px; padding-bottom: 12px; }
+  .topbar .brand-lockup { gap: 9px; }
+  .topbar .brand-logo { width: 58px; }
+  .topbar h1 { font-size: 1.7rem; }
+  .topbar .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
+  .topbar .actions > :first-child { grid-column: 1 / -1; }
+  .topbar .actions > * { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin: 0; text-align: center; }
+  .admin-workspace-nav { position: sticky; top: 6px; display: flex; gap: 6px; margin-bottom: 12px; padding: 6px; overflow-x: auto; scrollbar-width: none; border-radius: 12px; }
+  .admin-workspace-nav::-webkit-scrollbar { display: none; }
+  .admin-workspace-nav button { flex: 0 0 auto; min-height: 40px; padding: 8px 11px; }
+  .admin-workspace-nav small { min-width: 21px; height: 21px; font-size: .67rem; }
+  .admin-shell > .panel,
+  .admin-shell > .print-report { padding: 14px; border-radius: 12px; }
+
   .checkout {
     gap: 10px;
   }
@@ -1412,6 +1468,7 @@ form {
   }
 
   .print-report {
+    display: block !important;
     padding: 0;
     border: 0;
     box-shadow: none;
