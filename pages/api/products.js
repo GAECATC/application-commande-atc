@@ -13,6 +13,7 @@ function slugify(value) {
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
+    res.setHeader("Cache-Control", "no-store, max-age=0");
     const includeHidden = req.query.includeHidden === "true";
     if (includeHidden && !requireAdmin(req, res)) return;
 
@@ -31,6 +32,9 @@ export default async function handler(req, res) {
       const deliveryDate = delivery.deliveryDate;
       const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate });
       if (allocations.length) {
+        // Une liste personnelle remplace la visibilité générale et doit aussi inclure
+        // les produits qui n'ont pas encore de prix explicite dans cette grille.
+        products = await getProducts({ includeHidden: true, priceListId: partner.priceListId });
         const orders = await getOrders({ partnerId: partner.id, deliveryDate });
         const orderedByProduct = new Map();
         for (const order of orders) {

@@ -8,6 +8,7 @@ const { isAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   const partnerId = req.query.partnerId || req.body?.partnerId;
   if (!partnerId) return res.status(400).json({ error: "Client requis" });
   const deliveryDate = req.query.deliveryDate

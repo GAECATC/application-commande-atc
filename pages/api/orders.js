@@ -1,4 +1,4 @@
-const { cancelOrder, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
+const { cancelOrder, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
@@ -51,6 +51,8 @@ export default async function handler(req, res) {
     const delivery = getNextPartnerDelivery(partner.id);
     const cleanItems = Array.isArray(items) ? items : [];
     const basketSnapshots = await buildBasketSnapshots(partner, basketSelections);
+    const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate });
+    const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
     await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
     const order = await createOrder({
       partnerId: partner.id,
@@ -58,7 +60,8 @@ export default async function handler(req, res) {
       harvestDay: delivery.harvestDay,
       items: cleanItems,
       comment: normalizeOrderComment(comment),
-      basketSnapshots
+      basketSnapshots,
+      allowedProductIds
     });
     const email = await notifyOrder(partner, order, "created");
     const adminEmail = await notifyAdmin(partner, order, "created");
@@ -89,6 +92,8 @@ export default async function handler(req, res) {
       const previousOrder = previousOrders.find((order) => order.id === orderId);
       if (!previousOrder) return res.status(404).json({ error: "Commande introuvable" });
       const cleanItems = Array.isArray(items) ? items : [];
+      const allocations = await getProductAllocations({ partnerId: nextPartnerId, deliveryDate: previousOrder.deliveryDate });
+      const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
       await validateProductAllocations({
         partnerId: nextPartnerId,
         deliveryDate: previousOrder.deliveryDate,
@@ -99,7 +104,8 @@ export default async function handler(req, res) {
         orderId,
         partnerId: nextPartnerId,
         items: cleanItems,
-        comment: comment === undefined ? undefined : normalizeOrderComment(comment)
+        comment: comment === undefined ? undefined : normalizeOrderComment(comment),
+        allowedProductIds
       });
       if (!partnerForEmail) {
         const partners = await getPartners();
