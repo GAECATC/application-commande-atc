@@ -50,6 +50,9 @@ export default function Admin() {
   const [savingPriceList, setSavingPriceList] = useState(false);
   const [categoryActionsOpen, setCategoryActionsOpen] = useState(false);
   const [priceListActionsOpen, setPriceListActionsOpen] = useState(false);
+  const [catalogCategory, setCatalogCategory] = useState("");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [mobileCatalogOpen, setMobileCatalogOpen] = useState({});
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -84,6 +87,17 @@ export default function Admin() {
       return indexA - indexB;
     });
   }, [products]);
+  const filteredCatalogGroups = useMemo(() => {
+    const search = catalogSearch.trim().toLocaleLowerCase("fr");
+    if (!search) return catalogGroups;
+    return catalogGroups
+      .map(([category, categoryProducts]) => [category, categoryProducts.filter((product) => product.name.toLocaleLowerCase("fr").includes(search))])
+      .filter(([, categoryProducts]) => categoryProducts.length);
+  }, [catalogGroups, catalogSearch]);
+  useEffect(() => {
+    if (!catalogGroups.length) return;
+    if (catalogCategory !== "__all__" && !catalogGroups.some(([category]) => category === catalogCategory)) setCatalogCategory(catalogGroups[0][0]);
+  }, [catalogGroups, catalogCategory]);
   const basketProducts = useMemo(() => {
     const search = basketSearch.trim().toLocaleLowerCase("fr");
     return basketCatalog
@@ -1003,8 +1017,16 @@ export default function Admin() {
           <span>Visible</span>
           <span>Action</span>
         </div>
-        <div className="catalog-groups">
-          {catalogGroups.map(([category, categoryProducts]) => (
+        <div className="catalog-navigation">
+          <div className="catalog-tabs" role="tablist" aria-label="Catégories du catalogue">
+            {catalogGroups.map(([category, categoryProducts]) => <button type="button" role="tab" aria-selected={catalogCategory === category} className={catalogCategory === category ? "active" : ""} key={category} onClick={() => setCatalogCategory(category)}>{category}<span>{categoryProducts.length}</span></button>)}
+            <button type="button" role="tab" aria-selected={catalogCategory === "__all__"} className={catalogCategory === "__all__" ? "active" : ""} onClick={() => setCatalogCategory("__all__")}>Tous les produits<span>{products.length}</span></button>
+          </div>
+          <input className="catalog-search" type="search" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} placeholder="Rechercher un produit" aria-label="Rechercher un produit dans le catalogue" />
+        </div>
+        {catalogSearch && <p className="catalog-search-result">{filteredCatalogGroups.reduce((sum, [, categoryProducts]) => sum + categoryProducts.length, 0)} produit(s) trouvé(s)</p>}
+        <div className="catalog-groups catalog-groups-desktop">
+          {filteredCatalogGroups.filter(([category]) => catalogSearch || catalogCategory === "__all__" || category === catalogCategory).map(([category, categoryProducts]) => (
             <section className="catalog-admin-group" key={category}>
               <h3>{category}<span>{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span></h3>
               <div className="admin-products">
@@ -1020,6 +1042,21 @@ export default function Admin() {
               </div>
             </section>
           ))}
+          {!filteredCatalogGroups.length && <p className="catalog-empty">Aucun produit ne correspond à cette recherche.</p>}
+        </div>
+        <div className="catalog-groups catalog-groups-mobile">
+          {filteredCatalogGroups.map(([category, categoryProducts]) => {
+            const open = Boolean(catalogSearch) || Boolean(mobileCatalogOpen[category]);
+            return <section className={`catalog-admin-group ${open ? "open" : ""}`} key={category}>
+              <button className="catalog-accordion-button" type="button" aria-expanded={open} onClick={() => setMobileCatalogOpen((current) => ({ ...current, [category]: !current[category] }))}>
+                <strong>{category}</strong><span>{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span><i aria-hidden="true">⌄</i>
+              </button>
+              {open && <div className="admin-products">
+                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onDelete={() => deleteProduct(product)} />)}
+              </div>}
+            </section>;
+          })}
+          {!filteredCatalogGroups.length && <p className="catalog-empty">Aucun produit ne correspond à cette recherche.</p>}
         </div>
         <aside className="admin-savebar">
           <div>
