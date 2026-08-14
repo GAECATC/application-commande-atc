@@ -1059,8 +1059,10 @@ export default function Admin() {
           {filteredCatalogGroups.map(([category, categoryProducts]) => {
             const open = Boolean(catalogSearch) || Boolean(mobileCatalogOpen[category]);
             return <section className={`catalog-admin-group ${open ? "open" : ""}`} key={category}>
-              <button className="catalog-accordion-button" type="button" aria-expanded={open} onClick={() => setMobileCatalogOpen((current) => ({ ...current, [category]: !current[category] }))}>
-                <strong>{category}</strong><span>{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span><i aria-hidden="true">⌄</i>
+              <button className="section-toggle catalog-accordion-button" type="button" aria-expanded={open} onClick={() => setMobileCatalogOpen((current) => ({ ...current, [category]: !current[category] }))}>
+                <strong>{category}</strong>
+                <span className="clients-toggle-label">{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span>
+                <svg className={`clients-chevron ${open ? "open" : ""}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {open && <div className="admin-products">
                 {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onDelete={() => deleteProduct(product)} />)}
