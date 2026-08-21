@@ -8,6 +8,11 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
+const DEFAULT_AVAILABILITY_GROUP = ["epicerie du coin", "coquelicot", "fourmillienne", "fred", "auberge", "hall de chartreuse"];
+
+function normalizeClientName(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
+}
 
 export default function Admin() {
   const [password, setPassword] = useState("");
@@ -47,6 +52,9 @@ export default function Admin() {
   const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
+  const [availabilityInherited, setAvailabilityInherited] = useState(false);
+  const [availabilityTargets, setAvailabilityTargets] = useState([]);
+  const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [customCategories, setCustomCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -72,6 +80,10 @@ export default function Admin() {
       return indexA - indexB;
     });
   }, [products, customCategories]);
+  const defaultAvailabilityPartners = useMemo(() => partners.filter((partner) => {
+    const name = normalizeClientName(partner.name);
+    return partner.active && DEFAULT_AVAILABILITY_GROUP.some((groupName) => name === groupName || name.includes(groupName));
+  }), [partners]);
   const catalogGroups = useMemo(() => {
     const groups = products.reduce((result, product) => {
       const category = product.category || "Autres";
@@ -244,21 +256,31 @@ export default function Admin() {
     setSavedAllocationProductIds([]);
     setOrderedByProduct({});
     setAvailabilityConfigured(false);
+    setAvailabilityInherited(false);
+    setAvailabilityTargets([]);
+    setAvailabilityTargetIds([]);
     if (!partnerId) return setAvailabilityProducts([]);
 
-    const partner = partners.find((item) => item.id === partnerId);
-    if (!partner) return;
+    const targetPartners = partnerId === "__default_group__" ? defaultAvailabilityPartners : partners.filter((item) => item.id === partnerId);
+    const partner = targetPartners[0];
+    if (!partner) return setMessage("Aucun client du groupe principal n’a été trouvé.");
     const adminHeaders = { "x-admin-password": pass };
-    const [productRes, availabilityRes] = await Promise.all([
+    const [productRes, availabilityResults] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
-      fetch(`/api/availability?partnerId=${encodeURIComponent(partnerId)}`, { headers: adminHeaders })
+      Promise.all(targetPartners.map(async (target) => {
+        const response = await fetch(`/api/availability?partnerId=${encodeURIComponent(target.id)}`, { headers: adminHeaders });
+        return { target, response, data: await response.json() };
+      }))
     ]);
     const productData = await productRes.json();
-    const availabilityData = await availabilityRes.json();
-    if (!productRes.ok || !availabilityRes.ok) {
+    const sourceResult = availabilityResults[0];
+    const availabilityData = sourceResult?.data || {};
+    if (!productRes.ok || availabilityResults.some((result) => !result.response.ok)) {
       setMessage(productData.error || availabilityData.error || "Disponibilités impossibles à charger.");
       return;
     }
+    setAvailabilityTargets(availabilityResults.map(({ target, data }) => ({ id: target.id, name: target.name, deliveryDate: data.deliveryDate })));
+    setAvailabilityTargetIds(targetPartners.map((target) => target.id));
     setAvailabilityProducts(productData.products || []);
     setAvailabilityDeliveryDate(availabilityData.deliveryDate || "");
     const savedAllocations = availabilityData.allocations || [];
@@ -267,7 +289,7 @@ export default function Admin() {
       item.quantity > 0 ? String(item.quantity) : ""
     ])));
     setAllocationVisibilityDraft(
-      availabilityData.configured
+      (availabilityData.configured || availabilityData.inherited)
         ? Object.fromEntries((productData.products || []).map((product) => {
           const allocation = savedAllocations.find((item) => item.productId === product.id);
           return [product.id, Boolean(allocation && allocation.visible !== false)];
@@ -277,10 +299,11 @@ export default function Admin() {
     setSavedAllocationProductIds(savedAllocations.filter((item) => item.visible !== false).map((item) => item.productId));
     setOrderedByProduct(availabilityData.orderedByProduct || {});
     setAvailabilityConfigured(Boolean(availabilityData.configured));
+    setAvailabilityInherited(Boolean(availabilityData.inherited));
   }
 
   async function saveAvailability() {
-    if (!availabilityPartnerId || !availabilityDeliveryDate) return;
+    if (!availabilityPartnerId || !availabilityDeliveryDate || !availabilityTargetIds.length) return;
     const allocations = availabilityProducts.map((product) => ({
       productId: product.id,
       quantity: Number(allocationDraft[product.id] || 0),
@@ -288,15 +311,20 @@ export default function Admin() {
     }));
 
     setSavingAvailability(true);
-    const response = await fetch("/api/availability", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ partnerId: availabilityPartnerId, deliveryDate: availabilityDeliveryDate, allocations })
-    });
-    const data = await response.json();
+    const results = await Promise.all(availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map(async (target) => {
+      const response = await fetch("/api/availability", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ partnerId: target.id, deliveryDate: target.deliveryDate, allocations })
+      });
+      return { response, data: await response.json() };
+    }));
     setSavingAvailability(false);
-    if (!response.ok) return setMessage(data.error || "Enregistrement des disponibilités refusé.");
-    setMessage("Disponibilités client enregistrées.");
+    const failed = results.find((result) => !result.response.ok);
+    if (failed) return setMessage(failed.data.error || "Enregistrement des disponibilités refusé.");
+    setMessage(availabilityPartnerId === "__default_group__"
+      ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.`
+      : "Disponibilités client enregistrées.");
     await loadAvailability(availabilityPartnerId);
   }
 
@@ -692,6 +720,10 @@ export default function Admin() {
         ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
       </nav>
 
+      {message && <div className="general-status-notice no-print" role="status">
+        <strong>{message}</strong>
+        <button type="button" aria-label="Fermer le message" onClick={() => setMessage("")}>×</button>
+      </div>}
       {emailNotice && <div className={`email-status-notice ${emailNotice.type}`} role="status">
         <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
         <strong>{emailNotice.text}</strong>
@@ -869,7 +901,7 @@ export default function Admin() {
             <h2>Disponibilités par client</h2>
           </div>
           {availabilityPartnerId && (
-            <button className="primary" type="button" disabled={savingAvailability} onClick={saveAvailability}>
+            <button className="primary" type="button" disabled={savingAvailability || !availabilityTargetIds.length} onClick={saveAvailability}>
               {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
             </button>
           )}
@@ -878,6 +910,7 @@ export default function Admin() {
           Client
           <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
             <option value="">Choisir un client</option>
+            <option value="__default_group__">Groupe principal — {defaultAvailabilityPartners.length} client(s)</option>
             {partners.filter((partner) => partner.active).map((partner) => (
               <option key={partner.id} value={partner.id}>{partner.name}</option>
             ))}
@@ -885,8 +918,19 @@ export default function Admin() {
         </label>
         {availabilityPartnerId && (
           <>
+            {availabilityPartnerId === "__default_group__" && <div className="availability-group-targets">
+              <div><strong>Clients concernés par cette mise à jour</strong><span>La liste affichée prend {availabilityTargets[0]?.name || "le premier client"} comme modèle. Décochez un client pour préserver sa liste personnalisée ; ses tarifs ne seront jamais modifiés.</span></div>
+              <div className="availability-target-list">
+                {availabilityTargets.map((target) => <label key={target.id}>
+                  <input type="checkbox" checked={availabilityTargetIds.includes(target.id)} onChange={(event) => setAvailabilityTargetIds((current) => event.target.checked ? [...current, target.id] : current.filter((id) => id !== target.id))} />
+                  {target.name}
+                </label>)}
+              </div>
+            </div>}
             <p className="section-note">
-              {availabilityConfigured
+              {availabilityInherited
+                ? "La liste de la session précédente est reprise automatiquement. Enregistrez uniquement si vous souhaitez créer la liste de cette nouvelle session."
+                : availabilityConfigured
                 ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
                 : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
             </p>
@@ -1064,7 +1108,6 @@ export default function Admin() {
               <small>La nouvelle grille affichera tous les produits avec un prix initial de 0 €.</small>
             </form>
           </div>
-          {message && <p className="notice">{message}</p>}
         </div>
         <div className="product-editor product-editor-header">
           <span>Dénomination</span>

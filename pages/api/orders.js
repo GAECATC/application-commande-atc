@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     const delivery = getNextPartnerDelivery(partner.id);
     const cleanItems = Array.isArray(items) ? items : [];
     const basketSnapshots = await buildBasketSnapshots(partner, basketSelections);
-    const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate });
+    const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, inheritPrevious: true });
     const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
     await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
     const order = await createOrder({
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       const previousOrder = previousOrders.find((order) => order.id === orderId);
       if (!previousOrder) return res.status(404).json({ error: "Commande introuvable" });
       const cleanItems = Array.isArray(items) ? items : [];
-      const allocations = await getProductAllocations({ partnerId: nextPartnerId, deliveryDate: previousOrder.deliveryDate });
+      const allocations = await getProductAllocations({ partnerId: nextPartnerId, deliveryDate: previousOrder.deliveryDate, inheritPrevious: true });
       const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
       await validateProductAllocations({
         partnerId: nextPartnerId,

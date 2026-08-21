@@ -20,7 +20,10 @@ export default async function handler(req, res) {
       const partner = await getPartnerByCredentials(partnerId, req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
     }
-    const allocations = await getProductAllocations({ partnerId, deliveryDate });
+    const currentAllocations = await getProductAllocations({ partnerId, deliveryDate });
+    const allocations = currentAllocations.length
+      ? currentAllocations
+      : await getProductAllocations({ partnerId, deliveryDate, inheritPrevious: true });
     const orders = await getOrders({ partnerId, deliveryDate });
     const orderedByProduct = {};
     for (const order of orders) {
@@ -28,7 +31,13 @@ export default async function handler(req, res) {
         orderedByProduct[item.productId] = (orderedByProduct[item.productId] || 0) + Number(item.quantity);
       }
     }
-    return res.status(200).json({ deliveryDate, configured: allocations.length > 0, allocations, orderedByProduct });
+    return res.status(200).json({
+      deliveryDate,
+      configured: currentAllocations.length > 0,
+      inherited: currentAllocations.length === 0 && allocations.length > 0,
+      allocations,
+      orderedByProduct
+    });
   }
 
   if (req.method === "POST") {

@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     if (partner) {
       delivery = getNextPartnerDelivery(partner.id);
       const deliveryDate = delivery.deliveryDate;
-      const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate });
+      const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate, inheritPrevious: true });
       if (allocations.length) {
         // Une liste personnelle remplace la visibilité générale et doit aussi inclure
         // les produits qui n'ont pas encore de prix explicite dans cette grille.

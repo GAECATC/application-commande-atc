@@ -120,6 +120,8 @@ button:disabled {
 .email-status-notice.warning { border-color: #efb36e; background: #fff5e9; }
 .email-status-notice.warning > span { background: var(--accent); }
 .email-status-notice button { width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
+.general-status-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 11px 14px; border: 1px solid var(--brand-light); border-radius: 10px; background: #f4f9e9; }
+.general-status-notice button { width: 30px; height: 30px; flex: 0 0 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
 
 .brand-lockup {
   display: flex;
@@ -816,6 +818,13 @@ form {
   gap: 16px;
 }
 
+.availability-group-targets { display: grid; gap: 12px; margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbf2; }
+.availability-group-targets > div:first-child { display: grid; gap: 3px; }
+.availability-group-targets span { color: var(--muted); font-size: .85rem; font-weight: 700; }
+.availability-target-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.availability-target-list label { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-weight: 750; }
+.availability-target-list input { width: 17px; min-height: 17px; }
+
 .availability-group {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -1445,6 +1454,9 @@ form {
   .availability-groups {
     grid-template-columns: 1fr;
   }
+
+  .availability-target-list { display: grid; grid-template-columns: 1fr; }
+  .availability-target-list label { border-radius: 9px; }
 
   .availability-row {
     grid-template-columns: minmax(130px, 1fr) 90px 45px;
