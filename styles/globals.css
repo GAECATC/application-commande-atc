@@ -888,6 +888,17 @@ form {
   font-weight: 400;
 }
 
+.availability-row .availability-price {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.availability-row .availability-ordered {
+  margin-top: 4px;
+  font-size: .75rem;
+}
+
 .section-toggle {
   padding: 0;
   color: inherit;

@@ -965,7 +965,11 @@ export default function Admin() {
                     const isVisible = Boolean(allocationVisibilityDraft[product.id]);
                     return (
                       <div className={`availability-row ${isSaved ? "saved" : ""} ${isVisible ? "" : "hidden-product"}`} key={product.id}>
-                        <span>{product.name}<small>{ordered ? `${formatNumber(ordered)} ${unitLabel(product.unit)} déjà commandé` : "Aucune commande"}</small></span>
+                        <span>
+                          <strong>{product.name}</strong>
+                          <small className="availability-price">{currency.format(Number(product.price || 0))} / {unitLabel(product.unit)}</small>
+                          <small className="availability-ordered">{ordered ? `${formatNumber(ordered)} ${unitLabel(product.unit)} déjà commandé` : "Aucune commande"}</small>
+                        </span>
                         <input
                           type="number"
                           min="0"
