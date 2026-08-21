@@ -8,7 +8,14 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
-const DEFAULT_AVAILABILITY_GROUP = ["epicerie du coin", "coquelicot", "fourmillienne", "fred", "auberge", "hall de chartreuse"];
+const DEFAULT_AVAILABILITY_GROUP = [
+  ["epicerie du coin"],
+  ["coquelicot"],
+  ["fourmilliere", "fourmiliere", "fourmillienne"],
+  ["fred"],
+  ["auberge"],
+  ["ale de chartreuse", "hall de chartreuse", "hale de chartreuse"]
+];
 
 function normalizeClientName(value) {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
@@ -82,7 +89,7 @@ export default function Admin() {
   }, [products, customCategories]);
   const defaultAvailabilityPartners = useMemo(() => partners.filter((partner) => {
     const name = normalizeClientName(partner.name);
-    return partner.active && DEFAULT_AVAILABILITY_GROUP.some((groupName) => name === groupName || name.includes(groupName));
+    return DEFAULT_AVAILABILITY_GROUP.some((aliases) => aliases.some((alias) => name === alias || name.includes(alias)));
   }), [partners]);
   const catalogGroups = useMemo(() => {
     const groups = products.reduce((result, product) => {
