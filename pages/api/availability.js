@@ -1,9 +1,13 @@
 const {
   getOrders,
+  getAvailabilityMessage,
+  getPartners,
   getPartnerByCredentials,
   getProductAllocations,
-  replaceProductAllocations
+  replaceProductAllocations,
+  saveAvailabilityMessage
 } = require("@/lib/db");
+const { sendAvailabilityNotice } = require("@/lib/mailer");
 const { isAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 
@@ -25,6 +29,7 @@ export default async function handler(req, res) {
       ? currentAllocations
       : await getProductAllocations({ partnerId, deliveryDate, inheritPrevious: true });
     const orders = await getOrders({ partnerId, deliveryDate });
+    const message = await getAvailabilityMessage({ partnerId, deliveryDate });
     const orderedByProduct = {};
     for (const order of orders) {
       for (const item of order.items) {
@@ -36,6 +41,7 @@ export default async function handler(req, res) {
       configured: currentAllocations.length > 0,
       inherited: currentAllocations.length === 0 && allocations.length > 0,
       allocations,
+      message,
       orderedByProduct
     });
   }
@@ -52,7 +58,18 @@ export default async function handler(req, res) {
       }));
     try {
       const saved = await replaceProductAllocations({ partnerId, deliveryDate, allocations });
-      return res.status(200).json({ allocations: saved });
+      const message = String(req.body?.message || "").trim().slice(0, 2000);
+      await saveAvailabilityMessage({ partnerId, deliveryDate, message });
+      const partner = (await getPartners()).find((item) => item.id === partnerId);
+      let email = { sent: false, skipped: true };
+      if (req.body?.sendEmail !== false) {
+        try {
+          email = await sendAvailabilityNotice({ partner, deliveryDate, message });
+        } catch (mailError) {
+          email = { sent: false, skipped: false, error: mailError.message || "Envoi du mail impossible" };
+        }
+      }
+      return res.status(200).json({ allocations: saved, message, email });
     } catch (error) {
       const missingTable = error.code === "ER_NO_SUCH_TABLE";
       return res.status(400).json({ error: missingTable ? "Table des disponibilités non installée" : error.message });

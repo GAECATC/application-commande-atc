@@ -48,6 +48,13 @@ create table if not exists product_allocations (
   primary key (delivery_date, partner_id, product_id)
 );
 
+create table if not exists availability_messages (
+  delivery_date date not null,
+  partner_id text not null references partners(id) on delete cascade,
+  message text not null default '',
+  primary key (delivery_date, partner_id)
+);
+
 create table if not exists basket_templates (
   id text primary key,
   name text not null,

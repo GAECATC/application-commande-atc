@@ -47,6 +47,14 @@ create table if not exists product_allocations (
   constraint product_allocations_product_fk foreign key (product_id) references products(id) on delete cascade
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 
+create table if not exists availability_messages (
+  delivery_date date not null,
+  partner_id varchar(191) not null,
+  message text not null,
+  primary key (delivery_date, partner_id),
+  constraint availability_messages_partner_fk foreign key (partner_id) references partners(id) on delete cascade
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
+
 create table if not exists basket_templates (
   id varchar(191) primary key,
   name varchar(255) not null,

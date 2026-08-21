@@ -21,6 +21,7 @@ export default function ClientPortal({ initialSession }) {
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [viewMode, setViewMode] = useState("list");
   const catalogRef = useRef(null);
 
@@ -78,6 +79,7 @@ export default function ClientPortal({ initialSession }) {
       return;
     }
     setProducts(data.products || []);
+    setAvailabilityMessage(data.availabilityMessage || "");
     if (data.delivery) {
       setSession((current) => ({ ...(current || {}), delivery: data.delivery }));
     }
@@ -274,6 +276,11 @@ export default function ClientPortal({ initialSession }) {
               </button>
             </div>
           </div>
+
+          {availabilityMessage && <section className="panel client-availability-message">
+            <p className="eyebrow">Message de la ferme</p>
+            <p>{availabilityMessage}</p>
+          </section>}
 
           <section className="panel order-recap">
             <div className="section-heading">

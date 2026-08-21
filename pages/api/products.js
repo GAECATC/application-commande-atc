@@ -1,4 +1,4 @@
-const { deleteProduct, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
+const { deleteProduct, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
 const { isAdmin, requireAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 
@@ -64,7 +64,8 @@ export default async function handler(req, res) {
           .filter((product) => product.clientUnlimited || product.stock > 0);
       }
     }
-    return res.status(200).json({ products, delivery });
+    const availabilityMessage = partner && delivery ? await getAvailabilityMessage({ partnerId: partner.id, deliveryDate: delivery.deliveryDate }) : "";
+    return res.status(200).json({ products, delivery, availabilityMessage });
   }
 
   if (req.method === "POST") {

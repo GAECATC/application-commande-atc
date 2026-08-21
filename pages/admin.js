@@ -49,6 +49,8 @@ export default function Admin() {
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
   const [availabilityInherited, setAvailabilityInherited] = useState(false);
+  const [availabilityMessage, setAvailabilityMessage] = useState("");
+  const [sendAvailabilityEmail, setSendAvailabilityEmail] = useState(true);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
   const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
   const [clientGroups, setClientGroups] = useState([]);
@@ -296,6 +298,7 @@ export default function Admin() {
     setOrderedByProduct({});
     setAvailabilityConfigured(false);
     setAvailabilityInherited(false);
+    setAvailabilityMessage("");
     setAvailabilityTargets([]);
     setAvailabilityTargetIds([]);
     if (!partnerId) return setAvailabilityProducts([]);
@@ -344,6 +347,7 @@ export default function Admin() {
     setOrderedByProduct(availabilityData.orderedByProduct || {});
     setAvailabilityConfigured(Boolean(availabilityData.configured));
     setAvailabilityInherited(Boolean(availabilityData.inherited));
+    setAvailabilityMessage(availabilityData.message || "");
   }
 
   async function saveAvailability() {
@@ -359,16 +363,16 @@ export default function Admin() {
       const response = await fetch("/api/availability", {
         method: "POST",
         headers,
-        body: JSON.stringify({ partnerId: target.id, deliveryDate: target.deliveryDate, allocations })
+        body: JSON.stringify({ partnerId: target.id, deliveryDate: target.deliveryDate, allocations, message: availabilityMessage, sendEmail: sendAvailabilityEmail })
       });
       return { response, data: await response.json() };
     }));
     setSavingAvailability(false);
     const failed = results.find((result) => !result.response.ok);
     if (failed) return setMessage(failed.data.error || "Enregistrement des disponibilités refusé.");
-    setMessage(availabilityPartnerId.startsWith("group:")
-      ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.`
-      : "Disponibilités client enregistrées.");
+    const sentCount = results.filter((result) => result.data.email?.sent).length;
+    const emailFailureCount = sendAvailabilityEmail ? results.length - sentCount : 0;
+    setMessage(`${availabilityPartnerId.startsWith("group:") ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
     await loadAvailability(availabilityPartnerId);
   }
 
@@ -1020,6 +1024,13 @@ export default function Admin() {
                 ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
                 : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
             </p>
+            <div className="availability-message-editor">
+              <label>
+                Message pour le client <small>Facultatif — visible dans l’application et ajouté au mail</small>
+                <textarea maxLength="2000" rows="4" placeholder="Ex. Cette semaine, pensez à commander avant mercredi soir…" value={availabilityMessage} onChange={(event) => setAvailabilityMessage(event.target.value)} />
+              </label>
+              <label className="availability-email-option"><input type="checkbox" checked={sendAvailabilityEmail} onChange={(event) => setSendAvailabilityEmail(event.target.checked)} /> Envoyer la liste et ce message par mail lors de l’enregistrement</label>
+            </div>
             <div className="availability-actions">
               <button className="ghost" type="button" onClick={() => {
                 setAllocationDraft(Object.fromEntries(
