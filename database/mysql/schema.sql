@@ -65,6 +65,19 @@ create table if not exists basket_template_items (
   constraint basket_template_items_product_fk foreign key (product_id) references products(id) on delete cascade
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 
+create table if not exists client_groups (
+  id varchar(191) primary key,
+  name varchar(255) not null
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
+
+create table if not exists client_group_members (
+  group_id varchar(191) not null,
+  partner_id varchar(191) not null,
+  primary key (group_id, partner_id),
+  constraint client_group_members_group_fk foreign key (group_id) references client_groups(id) on delete cascade,
+  constraint client_group_members_partner_fk foreign key (partner_id) references partners(id) on delete cascade
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
+
 create table if not exists orders (
   id char(36) primary key,
   partner_id varchar(191) not null,

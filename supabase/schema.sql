@@ -63,6 +63,17 @@ create table if not exists basket_template_items (
   primary key (basket_id, product_id)
 );
 
+create table if not exists client_groups (
+  id text primary key,
+  name text not null
+);
+
+create table if not exists client_group_members (
+  group_id text not null references client_groups(id) on delete cascade,
+  partner_id text not null references partners(id) on delete cascade,
+  primary key (group_id, partner_id)
+);
+
 create table if not exists orders (
   id uuid primary key,
   partner_id text not null references partners(id),

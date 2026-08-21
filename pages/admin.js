@@ -8,18 +8,7 @@ const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
-const DEFAULT_AVAILABILITY_GROUP = [
-  ["epicerie du coin"],
-  ["coquelicot"],
-  ["fourmilliere", "fourmiliere", "fourmillienne"],
-  ["fred"],
-  ["auberge"],
-  ["ale de chartreuse", "hall de chartreuse", "hale de chartreuse"]
-];
-
-function normalizeClientName(value) {
-  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").replace(/[^a-z0-9]+/g, " ").trim();
-}
+const emptyClientGroup = { id: "", name: "", memberIds: [] };
 
 export default function Admin() {
   const [password, setPassword] = useState("");
@@ -62,6 +51,10 @@ export default function Admin() {
   const [availabilityInherited, setAvailabilityInherited] = useState(false);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
   const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
+  const [clientGroups, setClientGroups] = useState([]);
+  const [clientGroupDraft, setClientGroupDraft] = useState(emptyClientGroup);
+  const [clientGroupsOpen, setClientGroupsOpen] = useState(false);
+  const [savingClientGroup, setSavingClientGroup] = useState(false);
   const [savingAvailability, setSavingAvailability] = useState(false);
   const [customCategories, setCustomCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -87,10 +80,6 @@ export default function Admin() {
       return indexA - indexB;
     });
   }, [products, customCategories]);
-  const defaultAvailabilityPartners = useMemo(() => partners.filter((partner) => {
-    const name = normalizeClientName(partner.name);
-    return DEFAULT_AVAILABILITY_GROUP.some((aliases) => aliases.some((alias) => name === alias || name.includes(alias)));
-  }), [partners]);
   const catalogGroups = useMemo(() => {
     const groups = products.reduce((result, product) => {
       const category = product.category || "Autres";
@@ -207,14 +196,57 @@ export default function Admin() {
     setDirtyPartnerIds([]);
     setSummary(summaryData);
     try {
-      const basketRes = await fetch("/api/baskets", { headers: adminHeaders });
-      const basketData = await basketRes.json();
+      const [basketRes, groupRes] = await Promise.all([
+        fetch("/api/baskets", { headers: adminHeaders }),
+        fetch("/api/client-groups", { headers: adminHeaders })
+      ]);
+      const [basketData, groupData] = await Promise.all([basketRes.json(), groupRes.json()]);
       setBaskets(basketRes.ok ? (basketData.baskets || []) : []);
+      setClientGroups(groupRes.ok ? (groupData.groups || []) : []);
       if (!basketRes.ok) setMessage(basketData.error || "Les paniers ne peuvent pas être chargés pour le moment.");
+      else if (!groupRes.ok) setMessage(groupData.error || "Les groupes de clients ne peuvent pas être chargés pour le moment.");
     } catch {
       setBaskets([]);
-      setMessage("Les paniers ne peuvent pas être chargés pour le moment. Les autres données restent disponibles.");
+      setClientGroups([]);
+      setMessage("Les paniers ou les groupes ne peuvent pas être chargés pour le moment. Les autres données restent disponibles.");
     }
+  }
+
+  function editClientGroup(group) {
+    setClientGroupDraft({ id: group.id, name: group.name, memberIds: [...group.memberIds] });
+    setClientGroupsOpen(true);
+  }
+
+  async function saveClientGroup() {
+    const name = clientGroupDraft.name.trim();
+    if (!name) return setMessage("Donnez un nom au groupe.");
+    if (!clientGroupDraft.memberIds.length) return setMessage("Sélectionnez au moins un client.");
+    setSavingClientGroup(true);
+    const response = await fetch("/api/client-groups", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...clientGroupDraft, name })
+    });
+    const data = await response.json();
+    setSavingClientGroup(false);
+    if (!response.ok) return setMessage(data.error || "Enregistrement du groupe refusé.");
+    const groupRes = await fetch("/api/client-groups", { headers });
+    const groupData = await groupRes.json();
+    if (groupRes.ok) setClientGroups(groupData.groups || []);
+    setClientGroupDraft(emptyClientGroup);
+    setClientGroupsOpen(false);
+    setMessage(clientGroupDraft.id ? "Groupe modifié." : "Groupe créé.");
+  }
+
+  async function removeClientGroup(group) {
+    if (!window.confirm(`Supprimer le groupe « ${group.name} » ? Les clients et leurs disponibilités seront conservés.`)) return;
+    const response = await fetch("/api/client-groups", { method: "DELETE", headers, body: JSON.stringify({ id: group.id }) });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Suppression du groupe refusée.");
+    setClientGroups((current) => current.filter((item) => item.id !== group.id));
+    if (availabilityPartnerId === `group:${group.id}`) await loadAvailability("");
+    if (clientGroupDraft.id === group.id) setClientGroupDraft(emptyClientGroup);
+    setMessage("Groupe supprimé. Les clients et leurs disponibilités n’ont pas été modifiés.");
   }
 
   function editBasket(basket) {
@@ -268,9 +300,14 @@ export default function Admin() {
     setAvailabilityTargetIds([]);
     if (!partnerId) return setAvailabilityProducts([]);
 
-    const targetPartners = partnerId === "__default_group__" ? defaultAvailabilityPartners : partners.filter((item) => item.id === partnerId);
+    const selectedGroup = partnerId.startsWith("group:")
+      ? clientGroups.find((group) => group.id === partnerId.slice(6))
+      : null;
+    const targetPartners = selectedGroup
+      ? selectedGroup.memberIds.map((id) => partners.find((partner) => partner.id === id)).filter(Boolean)
+      : partners.filter((item) => item.id === partnerId);
     const partner = targetPartners[0];
-    if (!partner) return setMessage("Aucun client du groupe principal n’a été trouvé.");
+    if (!partner) return setMessage(selectedGroup ? "Aucun client actif n’a été trouvé dans ce groupe." : "Client introuvable.");
     const adminHeaders = { "x-admin-password": pass };
     const [productRes, availabilityResults] = await Promise.all([
       fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
@@ -329,7 +366,7 @@ export default function Admin() {
     setSavingAvailability(false);
     const failed = results.find((result) => !result.response.ok);
     if (failed) return setMessage(failed.data.error || "Enregistrement des disponibilités refusé.");
-    setMessage(availabilityPartnerId === "__default_group__"
+    setMessage(availabilityPartnerId.startsWith("group:")
       ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.`
       : "Disponibilités client enregistrées.");
     await loadAvailability(availabilityPartnerId);
@@ -907,25 +944,67 @@ export default function Admin() {
             <p className="eyebrow">Livraison du {availabilityDeliveryDate ? formatDate(availabilityDeliveryDate) : "prochain créneau du client"}</p>
             <h2>Disponibilités par client</h2>
           </div>
-          {availabilityPartnerId && (
-            <button className="primary" type="button" disabled={savingAvailability || !availabilityTargetIds.length} onClick={saveAvailability}>
-              {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
-            </button>
-          )}
+          <div className="actions">
+            <button className="ghost" type="button" onClick={() => {
+              setClientGroupsOpen((current) => !current);
+              setClientGroupDraft(emptyClientGroup);
+            }}>{clientGroupsOpen ? "Fermer les groupes" : "Créer / gérer les groupes"}</button>
+            {availabilityPartnerId && (
+              <button className="primary" type="button" disabled={savingAvailability || !availabilityTargetIds.length} onClick={saveAvailability}>
+                {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
+              </button>
+            )}
+          </div>
         </div>
+        {clientGroupsOpen && <div className="client-group-manager">
+          <div className="client-group-editor">
+            <label className="compact-label">Nom du groupe
+              <input type="text" placeholder="Ex. Épiceries" value={clientGroupDraft.name} onChange={(event) => setClientGroupDraft((current) => ({ ...current, name: event.target.value }))} />
+            </label>
+            <div>
+              <strong>Clients du groupe</strong>
+              <div className="client-group-members">
+                {partners.filter((partner) => partner.active).map((partner) => <label key={partner.id}>
+                  <input type="checkbox" checked={clientGroupDraft.memberIds.includes(partner.id)} onChange={(event) => setClientGroupDraft((current) => ({
+                    ...current,
+                    memberIds: event.target.checked
+                      ? [...current.memberIds, partner.id]
+                      : current.memberIds.filter((id) => id !== partner.id)
+                  }))} />
+                  {partner.name}
+                </label>)}
+              </div>
+            </div>
+            <div className="actions">
+              <button className="primary" type="button" disabled={savingClientGroup} onClick={saveClientGroup}>{savingClientGroup ? "Enregistrement..." : clientGroupDraft.id ? "Enregistrer les modifications" : "Créer le groupe"}</button>
+              {clientGroupDraft.id && <button className="ghost" type="button" onClick={() => setClientGroupDraft(emptyClientGroup)}>Annuler la modification</button>}
+            </div>
+          </div>
+          <div className="client-group-list">
+            {clientGroups.map((group) => <article key={group.id}>
+              <div><strong>{group.name}</strong><span>{group.memberIds.length} client(s) · {group.memberIds.map((id) => partners.find((partner) => partner.id === id)?.name).filter(Boolean).join(", ")}</span></div>
+              <div className="actions"><button className="ghost" type="button" onClick={() => editClientGroup(group)}>Modifier</button><button className="danger" type="button" onClick={() => removeClientGroup(group)}>Supprimer</button></div>
+            </article>)}
+            {!clientGroups.length && <p>Aucun groupe créé pour le moment.</p>}
+          </div>
+        </div>}
         <label className="compact-label availability-client-select">
           Client
           <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
             <option value="">Choisir un client</option>
-            <option value="__default_group__">Groupe principal — {defaultAvailabilityPartners.length} client(s)</option>
+            {clientGroups.length > 0 && <optgroup label="Groupes">
+              {clientGroups.map((group) => <option key={group.id} value={`group:${group.id}`}>{group.name} — {group.memberIds.length} client(s)</option>)}
+            </optgroup>}
+            <optgroup label="Clients">
             {partners.filter((partner) => partner.active).map((partner) => (
               <option key={partner.id} value={partner.id}>{partner.name}</option>
             ))}
+            </optgroup>
           </select>
         </label>
         {availabilityPartnerId && (
           <>
-            {availabilityPartnerId === "__default_group__" && <div className="availability-group-targets">
+            {availabilityPartnerId.startsWith("group:") && <div className="availability-group-targets">
               <div><strong>Clients concernés par cette mise à jour</strong><span>La liste affichée prend {availabilityTargets[0]?.name || "le premier client"} comme modèle. Décochez un client pour préserver sa liste personnalisée ; ses tarifs ne seront jamais modifiés.</span></div>
               <div className="availability-target-list">
                 {availabilityTargets.map((target) => <label key={target.id}>
