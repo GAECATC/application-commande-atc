@@ -74,7 +74,7 @@ function buildTotals(orders) {
       actualByNameAndUnit.set(nameKey, (actualByNameAndUnit.get(nameKey) || 0) + Number(item.quantity));
     }
     const expectedByNameAndUnit = new Map();
-    for (const basket of order.baskets || []) {
+    for (const basket of order.basketCompositionEdited ? [] : (order.baskets || [])) {
       for (const item of basket.items || []) {
         const nameKey = `${normalizeName(item.productName)}:${item.unit}`;
         const expected = Number(item.quantity) * Number(basket.quantity);
@@ -114,6 +114,7 @@ function enrichBasketProductIds(baskets, catalog) {
 }
 
 function completeOrderFromBaskets(order) {
+  if (order.basketCompositionEdited) return order;
   const items = [...order.items];
   const actual = new Map();
   for (const item of items) {
