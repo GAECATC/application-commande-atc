@@ -125,6 +125,8 @@ button:disabled {
 .order-save-toast { position: fixed; z-index: 1000; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 10px; max-width: min(430px, calc(100vw - 32px)); padding: 14px 18px; border: 1px solid #8fbd5d; border-radius: 12px; background: #f1f8e8; box-shadow: 0 14px 35px rgba(23, 77, 44, .2); color: var(--primary); animation: toast-in .2s ease-out; }
 .order-save-toast span { display: grid; place-items: center; width: 27px; height: 27px; flex: 0 0 27px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: 900; }
 .history-order-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.history-delivery-note-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 9px 14px; border: 1px solid var(--primary); border-radius: 8px; background: var(--primary); color: #fff; font-weight: 850; text-decoration: none; }
+.history-delivery-note-button:hover { background: #0d3d22; border-color: #0d3d22; color: #fff; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .brand-lockup {

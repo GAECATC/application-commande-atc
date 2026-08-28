@@ -155,7 +155,7 @@ export default function AdminHistory() {
                       {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
                       <div className="history-order-footer">
                         <strong>{currency.format(order.total)}</strong>
-                        {order.status === "validated" && <Link className="ghost no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">
+                        {order.status === "validated" && <Link className="history-delivery-note-button no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">
                           Réimprimer le bon de livraison
                         </Link>}
                       </div>
