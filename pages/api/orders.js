@@ -93,13 +93,17 @@ export default async function handler(req, res) {
       if (!previousOrder) return res.status(404).json({ error: "Commande introuvable" });
       const cleanItems = Array.isArray(items) ? items : [];
       const allocations = await getProductAllocations({ partnerId: nextPartnerId, deliveryDate: previousOrder.deliveryDate, inheritPrevious: true });
-      const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
-      await validateProductAllocations({
-        partnerId: nextPartnerId,
-        deliveryDate: previousOrder.deliveryDate,
-        items: cleanItems,
-        excludeOrderId: orderId
-      });
+      const allowedProductIds = adminRequest
+        ? cleanItems.map((item) => item.productId).filter(Boolean)
+        : allocations.filter((item) => item.visible !== false).map((item) => item.productId);
+      if (!adminRequest) {
+        await validateProductAllocations({
+          partnerId: nextPartnerId,
+          deliveryDate: previousOrder.deliveryDate,
+          items: cleanItems,
+          excludeOrderId: orderId
+        });
+      }
       const order = await updateOrder({
         orderId,
         partnerId: nextPartnerId,
