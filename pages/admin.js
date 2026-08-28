@@ -297,7 +297,7 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  async function loadAvailability(partnerId, pass = password) {
+  async function loadAvailability(partnerId, pass = password, selectedTargetIds = null) {
     setAvailabilityPartnerId(partnerId);
     setAvailabilityDeliveryDate("");
     setAllocationDraft({});
@@ -335,7 +335,10 @@ export default function Admin() {
       return;
     }
     setAvailabilityTargets(availabilityResults.map(({ target, data }) => ({ id: target.id, name: target.name, deliveryDate: data.deliveryDate })));
-    setAvailabilityTargetIds(targetPartners.map((target) => target.id));
+    const availableTargetIds = targetPartners.map((target) => target.id);
+    setAvailabilityTargetIds(Array.isArray(selectedTargetIds)
+      ? availableTargetIds.filter((id) => selectedTargetIds.includes(id))
+      : availableTargetIds);
     setAvailabilityProducts(productData.products || []);
     setAvailabilityDeliveryDate(availabilityData.deliveryDate || "");
     const savedAllocations = availabilityData.allocations || [];
@@ -380,8 +383,9 @@ export default function Admin() {
     if (failed) return setMessage(failed.data.error || "Enregistrement des disponibilités refusé.");
     const sentCount = results.filter((result) => result.data.email?.sent).length;
     const emailFailureCount = sendAvailabilityEmail ? results.length - sentCount : 0;
-    setMessage(`${availabilityPartnerId.startsWith("group:") ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
-    await loadAvailability(availabilityPartnerId);
+    const excludedTargets = availabilityTargets.filter((target) => !availabilityTargetIds.includes(target.id));
+    setMessage(`${availabilityPartnerId.startsWith("group:") ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
+    await loadAvailability(availabilityPartnerId, password, availabilityTargetIds);
   }
 
   async function saveProduct(product) {
