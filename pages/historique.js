@@ -20,7 +20,7 @@ export default function ClientHistory() {
       try {
         const session = JSON.parse(saved);
         setPartner(session.partner);
-        const response = await fetch(`/api/orders?history=true&partnerId=${encodeURIComponent(session.partnerId)}&code=${encodeURIComponent(session.code)}`);
+        const response = await fetch(`/api/orders?history=true&partnerId=${encodeURIComponent(session.partnerId)}`, { headers: { "x-partner-code": session.code } });
         const data = await response.json();
         if (!response.ok) {
           setOrders([]);

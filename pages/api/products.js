@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         const partners = await getPartners();
         partner = partners.find((item) => item.id === req.query.partnerId && item.active);
       } else {
-        partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+        partner = await getPartnerByCredentials(req.query.partnerId, req.headers["x-partner-code"] || req.query.code);
       }
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       priceListId = partner.priceListId;

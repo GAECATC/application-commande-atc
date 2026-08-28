@@ -23,6 +23,7 @@ async function notifyAdmin(partner, order, mode, previousOrder) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method === "GET") {
     const includeInactive = req.query.history === "true";
 
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+    const partner = await getPartnerByCredentials(req.query.partnerId, req.headers["x-partner-code"] || req.query.code);
     if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
     const orders = await getOrders({ deliveryDate: req.query.deliveryDate, partnerId: partner.id, includeInactive });

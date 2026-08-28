@@ -71,7 +71,7 @@ export default function ClientPortal({ initialSession }) {
     .filter((product) => product.quantity > 0);
 
   async function loadProducts(nextPartnerId, nextCode) {
-    const response = await fetch(`/api/products?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+    const response = await fetch(`/api/products?partnerId=${encodeURIComponent(nextPartnerId)}`, { headers: { "x-partner-code": nextCode } });
     const data = await response.json();
     if (!response.ok) {
       setProducts([]);
@@ -86,7 +86,7 @@ export default function ClientPortal({ initialSession }) {
   }
 
   async function loadOrders(nextPartnerId, nextCode) {
-    const response = await fetch(`/api/orders?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+    const response = await fetch(`/api/orders?partnerId=${encodeURIComponent(nextPartnerId)}`, { headers: { "x-partner-code": nextCode } });
     const data = await response.json();
     if (!response.ok) {
       setOrders([]);
@@ -98,7 +98,7 @@ export default function ClientPortal({ initialSession }) {
 
   async function loadBaskets(nextPartnerId, nextCode) {
     try {
-      const response = await fetch(`/api/baskets?partnerId=${encodeURIComponent(nextPartnerId)}&code=${encodeURIComponent(nextCode)}`);
+      const response = await fetch(`/api/baskets?partnerId=${encodeURIComponent(nextPartnerId)}`, { headers: { "x-partner-code": nextCode } });
       const data = await response.json();
       setBaskets(response.ok ? (data.baskets || []) : []);
     } catch {

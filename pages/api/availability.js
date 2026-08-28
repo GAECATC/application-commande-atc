@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     if (!isAdmin(req)) {
-      const partner = await getPartnerByCredentials(partnerId, req.query.code);
+      const partner = await getPartnerByCredentials(partnerId, req.headers["x-partner-code"] || req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
     }
     const currentAllocations = await getProductAllocations({ partnerId, deliveryDate });

@@ -9,6 +9,7 @@ const {
 const { isAdmin, requireAdmin } = require("@/lib/auth");
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method === "GET") {
     try {
       if (isAdmin(req)) {
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
           }) };
         }) });
       }
-      const partner = await getPartnerByCredentials(req.query.partnerId, req.query.code);
+      const partner = await getPartnerByCredentials(req.query.partnerId, req.headers["x-partner-code"] || req.query.code);
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
       const baskets = await getBasketTemplates({ partnerId: partner.id });
       const products = await getProducts({ includeHidden: true, priceListId: partner.priceListId });

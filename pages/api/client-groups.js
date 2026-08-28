@@ -2,6 +2,7 @@ const { deleteClientGroup, getClientGroups, upsertClientGroup } = require("@/lib
 const { requireAdmin } = require("@/lib/auth");
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   if (!requireAdmin(req, res)) return;
   try {
     if (req.method === "GET") return res.status(200).json({ groups: await getClientGroups() });

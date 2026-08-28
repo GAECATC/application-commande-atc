@@ -112,10 +112,9 @@ export default function Admin() {
       .map(([category, categoryProducts]) => [category, categoryProducts.filter((product) => product.name.toLocaleLowerCase("fr").includes(search))])
       .filter(([, categoryProducts]) => categoryProducts.length);
   }, [catalogGroups, catalogSearch]);
-  useEffect(() => {
-    if (!catalogGroups.length) return;
-    if (catalogCategory !== "__all__" && !catalogGroups.some(([category]) => category === catalogCategory)) setCatalogCategory(catalogGroups[0][0]);
-  }, [catalogGroups, catalogCategory]);
+  const effectiveCatalogCategory = catalogCategory === "__all__" || catalogGroups.some(([category]) => category === catalogCategory)
+    ? catalogCategory
+    : (catalogGroups[0]?.[0] || "");
   const basketProducts = useMemo(() => {
     const search = basketSearch.trim().toLocaleLowerCase("fr");
     return basketCatalog
@@ -1248,14 +1247,14 @@ export default function Admin() {
         </div>
         <div className="catalog-navigation">
           <div className="catalog-tabs" role="tablist" aria-label="Catégories du catalogue">
-            {catalogGroups.map(([category, categoryProducts]) => <button type="button" role="tab" aria-selected={catalogCategory === category} className={catalogCategory === category ? "active" : ""} key={category} onClick={() => setCatalogCategory(category)}>{category}<span>{categoryProducts.length}</span></button>)}
-            <button type="button" role="tab" aria-selected={catalogCategory === "__all__"} className={catalogCategory === "__all__" ? "active" : ""} onClick={() => setCatalogCategory("__all__")}>Tous les produits<span>{products.length}</span></button>
+            {catalogGroups.map(([category, categoryProducts]) => <button type="button" role="tab" aria-selected={effectiveCatalogCategory === category} className={effectiveCatalogCategory === category ? "active" : ""} key={category} onClick={() => setCatalogCategory(category)}>{category}<span>{categoryProducts.length}</span></button>)}
+            <button type="button" role="tab" aria-selected={effectiveCatalogCategory === "__all__"} className={effectiveCatalogCategory === "__all__" ? "active" : ""} onClick={() => setCatalogCategory("__all__")}>Tous les produits<span>{products.length}</span></button>
           </div>
           <input className="catalog-search" type="search" value={catalogSearch} onChange={(event) => setCatalogSearch(event.target.value)} placeholder="Rechercher un produit" aria-label="Rechercher un produit dans le catalogue" />
         </div>
         {catalogSearch && <p className="catalog-search-result">{filteredCatalogGroups.reduce((sum, [, categoryProducts]) => sum + categoryProducts.length, 0)} produit(s) trouvé(s)</p>}
         <div className="catalog-groups catalog-groups-desktop">
-          {filteredCatalogGroups.filter(([category]) => catalogSearch || catalogCategory === "__all__" || category === catalogCategory).map(([category, categoryProducts]) => (
+          {filteredCatalogGroups.filter(([category]) => catalogSearch || effectiveCatalogCategory === "__all__" || category === effectiveCatalogCategory).map(([category, categoryProducts]) => (
             <section className="catalog-admin-group" key={category}>
               <h3>{category}<span>{categoryProducts.length} produit{categoryProducts.length > 1 ? "s" : ""}</span></h3>
               <div className="admin-products">
