@@ -28,6 +28,8 @@ export default function Admin() {
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
   const [editingOrderId, setEditingOrderId] = useState(null);
+  const [savingOrderId, setSavingOrderId] = useState(null);
+  const [orderEditMessage, setOrderEditMessage] = useState("");
   const [orderDraft, setOrderDraft] = useState({});
   const [orderEditProducts, setOrderEditProducts] = useState([]);
   const [orderProductToAdd, setOrderProductToAdd] = useState("");
@@ -634,6 +636,7 @@ export default function Admin() {
 
   async function startEditOrder(order) {
     setEmailNotice(null);
+    setOrderEditMessage("");
     setEditingOrderId(order.id);
     setOrderDraft(Object.fromEntries(order.items.map((item) => [item.productId, String(item.quantity)])));
     setOrderProductToAdd("");
@@ -649,14 +652,25 @@ export default function Admin() {
   }
 
   async function saveOrder(order) {
+    if (savingOrderId) return;
+    setOrderEditMessage("");
+    setSavingOrderId(order.id);
     const items = Object.entries(orderDraft).map(([productId, quantity]) => ({ productId, quantity: Number(quantity || 0) }));
-    const response = await fetch("/api/orders", {
-      method: "PUT",
-      headers,
-      body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId, items })
-    });
-    const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Modification refusee.");
+    let response;
+    let data;
+    try {
+      response = await fetch("/api/orders", {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId, items })
+      });
+      data = await response.json();
+    } catch {
+      setSavingOrderId(null);
+      return setOrderEditMessage("La modification n’a pas pu être envoyée au serveur.");
+    }
+    setSavingOrderId(null);
+    if (!response.ok) return setOrderEditMessage(data.error || "Modification refusée.");
     setEditingOrderId(null);
     setOrderDraft({});
     setOrderEditProducts([]);
@@ -860,9 +874,10 @@ export default function Admin() {
                     <button className="ghost" type="button" disabled={!orderProductToAdd} onClick={() => { setOrderDraft((current) => ({ ...current, [orderProductToAdd]: "1" })); setOrderProductToAdd(""); setOrderProductSearch(""); }}>Ajouter</button>
                   </div>
                   <div className="order-actions">
-                    <button className="primary" type="button" onClick={() => saveOrder(order)}>Enregistrer</button>
+                    <button className="primary" type="button" disabled={savingOrderId === order.id} onClick={() => saveOrder(order)}>{savingOrderId === order.id ? "Enregistrement..." : "Enregistrer"}</button>
                     <button className="ghost" type="button" onClick={() => { setEditingOrderId(null); setOrderDraft({}); setOrderEditProducts([]); }}>Annuler</button>
                   </div>
+                  {orderEditMessage && <p className="notice order-edit-message">{orderEditMessage}</p>}
                 </div>
               ) : (
                 <div className="order-actions">
