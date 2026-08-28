@@ -122,6 +122,10 @@ button:disabled {
 .email-status-notice button { width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
 .general-status-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 11px 14px; border: 1px solid var(--brand-light); border-radius: 10px; background: #f4f9e9; }
 .general-status-notice button { width: 30px; height: 30px; flex: 0 0 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
+.order-save-toast { position: fixed; z-index: 1000; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 10px; max-width: min(430px, calc(100vw - 32px)); padding: 14px 18px; border: 1px solid #8fbd5d; border-radius: 12px; background: #f1f8e8; box-shadow: 0 14px 35px rgba(23, 77, 44, .2); color: var(--primary); animation: toast-in .2s ease-out; }
+.order-save-toast span { display: grid; place-items: center; width: 27px; height: 27px; flex: 0 0 27px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: 900; }
+.history-order-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .brand-lockup {
   display: flex;

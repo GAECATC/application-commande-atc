@@ -30,6 +30,7 @@ export default function Admin() {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [orderEditMessage, setOrderEditMessage] = useState("");
+  const [orderSaveNotice, setOrderSaveNotice] = useState("");
   const [orderDraft, setOrderDraft] = useState({});
   const [orderEditProducts, setOrderEditProducts] = useState([]);
   const [orderProductToAdd, setOrderProductToAdd] = useState("");
@@ -135,6 +136,12 @@ export default function Admin() {
     const saved = localStorage.getItem("atc-admin-password");
     if (saved) queueMicrotask(() => setPassword(saved));
   }, []);
+
+  useEffect(() => {
+    if (!orderSaveNotice) return undefined;
+    const timeoutId = window.setTimeout(() => setOrderSaveNotice(""), 3500);
+    return () => window.clearTimeout(timeoutId);
+  }, [orderSaveNotice]);
 
   useEffect(() => {
     const selectedPartner = partners.find((partner) => partner.id === basketDraft.partnerId);
@@ -688,6 +695,7 @@ export default function Admin() {
     }
     setMessage("");
     await loadAdminData();
+    setOrderSaveNotice("Votre modification a été enregistrée sur l’application.");
   }
 
   async function deleteOrder(order) {
@@ -785,6 +793,10 @@ export default function Admin() {
       {message && <div className="general-status-notice no-print" role="status">
         <strong>{message}</strong>
         <button type="button" aria-label="Fermer le message" onClick={() => setMessage("")}>×</button>
+      </div>}
+      {orderSaveNotice && <div className="order-save-toast no-print" role="status" aria-live="polite">
+        <span aria-hidden="true">✓</span>
+        <strong>{orderSaveNotice}</strong>
       </div>}
       {emailNotice && <div className={`email-status-notice ${emailNotice.type}`} role="status">
         <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
