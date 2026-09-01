@@ -559,6 +559,38 @@ form {
   color: var(--muted);
 }
 
+.harvest-total-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: 18px 0 24px;
+}
+
+.harvest-total-row {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) auto minmax(45px, 1fr);
+  gap: 10px;
+  align-items: end;
+  min-height: 34px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.harvest-total-row strong { white-space: nowrap; }
+.harvest-note-line { min-width: 45px; border-bottom: 1px dotted #8b9687; }
+
+.client-order-matrix-section { margin: 22px 0; }
+.client-order-matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.client-order-matrix { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.client-order-matrix th,
+.client-order-matrix td { padding: 9px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
+.client-order-matrix th:first-child { min-width: 170px; text-align: left; }
+.client-order-matrix thead th { background: #eaf4d8; }
+.client-order-matrix tbody tr:nth-child(even) { background: #fafcf7; }
+.client-order-matrix tr > :last-child { border-right: 0; }
+.client-order-matrix tbody tr:last-child > * { border-bottom: 0; }
+.order-management { margin-top: 26px; }
+
 .orders-list {
   display: grid;
   gap: 10px;
@@ -1306,6 +1338,7 @@ form {
   .topbar h1 { font-size: 1.7rem; }
   .topbar .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
   .topbar .actions > :first-child { grid-column: 1 / -1; }
+  .harvest-total-list { grid-template-columns: 1fr; }
   .topbar .actions > * { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin: 0; text-align: center; }
   .admin-workspace-nav { position: sticky; top: 6px; display: flex; gap: 6px; margin-bottom: 12px; padding: 6px; overflow-x: auto; scrollbar-width: none; border-radius: 12px; }
   .admin-workspace-nav::-webkit-scrollbar { display: none; }
@@ -1527,8 +1560,14 @@ form {
 }
 
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
   body {
     background: #fff;
+    font-size: 9pt;
   }
 
   .no-print,
@@ -1549,6 +1588,37 @@ form {
     border: 0;
     box-shadow: none;
   }
+
+  .delivery-summary { break-after: page; }
+  .delivery-summary:last-child { break-after: auto; }
+  .delivery-summary .section-heading { margin-bottom: 4mm; }
+  .delivery-summary h2 { margin: 0; font-size: 16pt; }
+  .delivery-summary h3 { margin: 4mm 0 2mm; font-size: 11pt; }
+
+  .harvest-total-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 6mm;
+    margin: 2mm 0 4mm;
+  }
+
+  .harvest-total-row {
+    grid-template-columns: minmax(28mm, auto) auto minmax(10mm, 1fr);
+    min-height: 7mm;
+    padding: 1mm 0;
+  }
+
+  .client-order-matrix-section { margin: 4mm 0; }
+  .client-order-matrix-wrap { overflow: visible; border-radius: 0; }
+  .client-order-matrix { table-layout: fixed; font-size: 7pt; }
+  .client-order-matrix th,
+  .client-order-matrix td { overflow-wrap: anywhere; padding: 1.4mm 1mm; }
+  .client-order-matrix th:first-child { width: 34mm; min-width: 0; }
+
+  .harvest-baskets { margin: 4mm 0 0; }
+  .harvest-basket-grid { display: flex; flex-wrap: wrap; gap: 3mm 8mm; }
+  .harvest-basket-card { padding: 0; border: 0; }
+  .harvest-basket-card header { gap: 3mm; margin: 0; }
+  .harvest-basket-card .basket-detail-table { display: none; }
 
   .delivery-note-shell {
     width: 100%;

@@ -10,6 +10,37 @@ const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", pr
 const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
 const emptyClientGroup = { id: "", name: "", memberIds: [] };
 
+function buildOrderMatrix(orders) {
+  const clients = [];
+  const clientsById = new Map();
+  const rowsByProduct = new Map();
+
+  for (const order of orders) {
+    const clientId = order.partnerId || order.partnerName;
+    if (!clientsById.has(clientId)) {
+      const client = { id: clientId, name: order.partnerName };
+      clientsById.set(clientId, client);
+      clients.push(client);
+    }
+    for (const item of order.items) {
+      const rowId = `${item.productId || item.productName}-${item.unit}`;
+      const row = rowsByProduct.get(rowId) || {
+        id: rowId,
+        name: item.productName,
+        unit: item.unit,
+        quantities: {}
+      };
+      row.quantities[clientId] = (row.quantities[clientId] || 0) + Number(item.quantity || 0);
+      rowsByProduct.set(rowId, row);
+    }
+  }
+
+  return {
+    clients,
+    rows: Array.from(rowsByProduct.values()).sort((itemA, itemB) => itemA.name.localeCompare(itemB.name, "fr", { sensitivity: "base", numeric: true }))
+  };
+}
+
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -808,7 +839,9 @@ export default function Admin() {
       </div>}
 
       <section className={`print-report admin-workspace ${adminView === "orders" ? "active" : ""}`}>
-        {summary?.groups?.length ? summary.groups.map((deliverySummary) => (
+        {summary?.groups?.length ? summary.groups.map((deliverySummary) => {
+          const orderMatrix = buildOrderMatrix(deliverySummary.orders);
+          return (
           <section className="delivery-summary" key={deliverySummary.deliveryDate}>
         <div className="section-heading">
           <div>
@@ -818,15 +851,28 @@ export default function Admin() {
           <span className="badge">{deliverySummary.orders.length} commandes</span>
         </div>
 
-        <div className="summary-grid">
+        <div className="harvest-total-list">
           {deliverySummary.totals.map((item) => (
-            <article className="summary-row" key={`${item.productId}-${item.unit}`}>
-              <span>{item.productName}</span>
+            <div className="harvest-total-row" key={`${item.productId}-${item.unit}`}>
+              <span>— {item.productName}</span>
               <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
-              <small>{item.category}</small>
-            </article>
+              <span className="harvest-note-line" aria-label="Espace pour annotation" />
+            </div>
           ))}
         </div>
+
+        <section className="client-order-matrix-section">
+          <h3>Quantités par client</h3>
+          <div className="client-order-matrix-wrap">
+            <table className="client-order-matrix">
+              <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
+              <tbody>{orderMatrix.rows.map((row) => <tr key={row.id}>
+                <th scope="row">{row.name}</th>
+                {orderMatrix.clients.map((client) => <td key={client.id}>{row.quantities[client.id] ? `${formatNumber(row.quantities[client.id])} ${unitLabel(row.unit)}` : "—"}</td>)}
+              </tr>)}</tbody>
+            </table>
+          </div>
+        </section>
 
         {deliverySummary.baskets?.length > 0 && <div className="harvest-baskets">
           <h3>Paniers à préparer</h3>
@@ -844,7 +890,8 @@ export default function Admin() {
           </div>
         </div>}
 
-        <h3>Commandes par client</h3>
+        <div className="order-management no-print">
+        <h3>Gestion des commandes</h3>
         <div className="orders-list">
           {deliverySummary.orders.map((order) => (
             <article className="order-card" key={order.id}>
@@ -906,8 +953,10 @@ export default function Admin() {
             </article>
           ))}
         </div>
+        </div>
           </section>
-        )) : <p>Aucune commande en cours.</p>}
+        );
+        }) : <p>Aucune commande en cours.</p>}
       </section>
 
       <section className={`panel no-print basket-admin-panel admin-workspace ${adminView === "baskets" ? "active" : ""}`}>
