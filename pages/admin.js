@@ -44,6 +44,7 @@ function buildOrderMatrix(orders) {
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
+  const [restoringSession, setRestoringSession] = useState(true);
   const [products, setProducts] = useState([]);
   const [partners, setPartners] = useState([]);
   const [baskets, setBaskets] = useState([]);
@@ -164,7 +165,33 @@ export default function Admin() {
 
   useEffect(() => {
     const saved = localStorage.getItem("atc-admin-password");
-    if (saved) queueMicrotask(() => setPassword(saved));
+    if (!saved) {
+      queueMicrotask(() => setRestoringSession(false));
+      return;
+    }
+    let cancelled = false;
+    async function restoreSession() {
+      try {
+        const response = await fetch("/api/session", { headers: { "x-admin-password": saved } });
+        if (cancelled) return;
+        if (!response.ok) {
+          localStorage.removeItem("atc-admin-password");
+          setRestoringSession(false);
+          return;
+        }
+        setPassword(saved);
+        setAuthenticated(true);
+        await loadAdminData(saved);
+      } catch {
+        if (!cancelled) setMessage("La connexion administrateur n’a pas pu être vérifiée.");
+      } finally {
+        if (!cancelled) setRestoringSession(false);
+      }
+    }
+    restoreSession();
+    return () => { cancelled = true; };
+    // La restauration doit s'exécuter une seule fois au chargement de la page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -771,6 +798,10 @@ export default function Admin() {
     await loadAdminData();
   }
 
+  if (restoringSession) {
+    return <main className="shell"><p>Vérification de la connexion administrateur…</p></main>;
+  }
+
   if (!authenticated) {
     return (
       <main className="shell">
@@ -854,7 +885,7 @@ export default function Admin() {
         <div className="harvest-total-list">
           {deliverySummary.totals.map((item) => (
             <div className="harvest-total-row" key={`${item.productId}-${item.unit}`}>
-              <span>— {item.productName}</span>
+              <span>{item.productName}</span>
               <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
               <span className="harvest-note-line" aria-label="Espace pour annotation" />
             </div>
