@@ -887,7 +887,6 @@ export default function Admin() {
             <div className="harvest-total-row" key={`${item.productId}-${item.unit}`}>
               <span>{item.productName}</span>
               <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
-              <span className="harvest-note-line" aria-label="Espace pour annotation" />
             </div>
           ))}
         </div>

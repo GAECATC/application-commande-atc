@@ -568,7 +568,7 @@ form {
 
 .harvest-total-row {
   display: grid;
-  grid-template-columns: minmax(140px, auto) auto minmax(45px, 1fr);
+  grid-template-columns: minmax(140px, 1fr) auto;
   gap: 10px;
   align-items: end;
   min-height: 34px;
@@ -577,7 +577,6 @@ form {
 }
 
 .harvest-total-row strong { white-space: nowrap; }
-.harvest-note-line { min-width: 45px; border-bottom: 1px dotted #8b9687; }
 
 .client-order-matrix-section { margin: 22px 0; }
 .client-order-matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
@@ -1602,7 +1601,7 @@ form {
   }
 
   .harvest-total-row {
-    grid-template-columns: minmax(28mm, auto) auto minmax(10mm, 1fr);
+    grid-template-columns: minmax(28mm, 1fr) auto;
     min-height: 7mm;
     padding: 1mm 0;
   }
