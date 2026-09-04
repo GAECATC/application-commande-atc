@@ -85,6 +85,15 @@ export default function ClientPortal({ initialSession }) {
     }
   }
 
+  function refreshPage() {
+    if (loading) return;
+    const hasDraft = Boolean(editingOrder || comment.trim())
+      || Object.values(quantities).some((quantity) => Number(quantity) > 0)
+      || Object.values(basketQuantities).some((quantity) => Number(quantity) > 0);
+    if (hasDraft && !window.confirm("Actualiser toute la page ? Les quantités et le commentaire non enregistrés seront effacés. Les commandes déjà enregistrées seront conservées.")) return;
+    window.location.reload();
+  }
+
   async function loadOrders(nextPartnerId, nextCode) {
     const response = await fetch(`/api/orders?partnerId=${encodeURIComponent(nextPartnerId)}`, { headers: { "x-partner-code": nextCode } });
     const data = await response.json();
@@ -270,6 +279,7 @@ export default function ClientPortal({ initialSession }) {
               <h2>{partner.name}</h2>
             </div>
             <div className="actions">
+              <button className="ghost" type="button" disabled={loading} onClick={refreshPage}>Actualiser toute la page</button>
               <Link className="link-button" href="/historique">Historique des commandes</Link>
               <button className="ghost" onClick={() => { localStorage.removeItem("atc-partner"); setPartner(null); setProducts([]); setOrders([]); clearDraft(); }}>
                 Déconnexion
@@ -362,7 +372,6 @@ export default function ClientPortal({ initialSession }) {
                 <p className="eyebrow">Commande enregistrée</p>
                 <h2>Vos commandes en cours</h2>
               </div>
-              <button className="ghost" type="button" onClick={() => loadOrders(partnerId, code)}>Actualiser</button>
             </div>
             {orders.length ? (
               <div className="orders-list">
