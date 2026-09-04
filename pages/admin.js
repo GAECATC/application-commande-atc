@@ -3,6 +3,7 @@ const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 const { getProductSeasons, isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import Image from "next/image";
+const { buildCrateSummary } = require("@/lib/crate-summary");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
@@ -872,6 +873,7 @@ export default function Admin() {
       <section className={`print-report admin-workspace ${adminView === "orders" ? "active" : ""}`}>
         {summary?.groups?.length ? summary.groups.map((deliverySummary) => {
           const orderMatrix = buildOrderMatrix(deliverySummary.orders);
+          const crateSummary = buildCrateSummary(deliverySummary.orders);
           return (
           <section className="delivery-summary" key={deliverySummary.deliveryDate}>
         <div className="section-heading">
@@ -890,6 +892,15 @@ export default function Admin() {
             </div>
           ))}
         </div>
+
+        {crateSummary.length > 0 && <section className="crate-summary">
+          <h3>Équivalent en caisses</h3>
+          <p>Quantités cumulées par produit et conditionnement, hors répartition par magasin. Les reliquats correspondent aux caisses incomplètes.</p>
+          <div className="crate-summary-list">{crateSummary.map((row) => <div key={row.id}>
+            <strong>{row.name} — {formatNumber(row.quantity)} {unitLabel(row.unit)}</strong>
+            <span>{row.fullCrates} caisse{row.fullCrates > 1 ? "s" : ""}{row.type !== "standard" ? ` ${row.type}${row.fullCrates > 1 ? "s" : ""}` : ""} de {row.capacity} {unitLabel(row.unit)}{row.remainder > 0 ? ` + ${formatNumber(row.remainder)} ${unitLabel(row.unit)}` : ""}{row.type === "rouge" ? " · Satoriz" : row.type === "verte" ? " · Autres clients" : ""}</span>
+          </div>)}</div>
+        </section>}
 
         <section className="client-order-matrix-section">
           <h3>Quantités par client</h3>
