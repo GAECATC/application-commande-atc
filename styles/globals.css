@@ -1564,6 +1564,11 @@ form {
     margin: 8mm;
   }
 
+  @page atc-summary {
+    size: A4 portrait;
+    margin: 9mm;
+  }
+
   body {
     background: #fff;
     font-size: 9pt;
@@ -1588,6 +1593,27 @@ form {
     box-shadow: none;
   }
 
+  .admin-shell > .print-report {
+    page: atc-summary;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9pt;
+    line-height: 1.2;
+    --line: #555;
+    --border: #555;
+  }
+
+  .admin-shell > .print-report,
+  .admin-shell > .print-report * {
+    color: #000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  .admin-shell > .print-report .badge {
+    background: #fff;
+    border: 1px solid #555;
+  }
+
   .delivery-summary { break-after: page; }
   .delivery-summary:last-child { break-after: auto; }
   .delivery-summary .section-heading { margin-bottom: 4mm; }
@@ -1595,23 +1621,29 @@ form {
   .delivery-summary h3 { margin: 4mm 0 2mm; font-size: 11pt; }
 
   .harvest-total-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0 6mm;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 5mm;
     margin: 2mm 0 4mm;
   }
 
   .harvest-total-row {
     grid-template-columns: minmax(28mm, 1fr) auto;
-    min-height: 7mm;
+    min-height: 5.5mm;
     padding: 1mm 0;
+    break-inside: avoid;
   }
 
   .client-order-matrix-section { margin: 4mm 0; }
   .client-order-matrix-wrap { overflow: visible; border-radius: 0; }
-  .client-order-matrix { table-layout: fixed; font-size: 7pt; }
+  .client-order-matrix { table-layout: fixed; font-size: 8pt; }
   .client-order-matrix th,
-  .client-order-matrix td { overflow-wrap: anywhere; padding: 1.4mm 1mm; }
+  .client-order-matrix td { overflow-wrap: anywhere; padding: 1.2mm .8mm; border-color: #555; }
   .client-order-matrix th:first-child { width: 34mm; min-width: 0; }
+  .client-order-matrix thead { display: table-header-group; }
+  .client-order-matrix tr { break-inside: avoid; }
+  .client-order-matrix td { font-weight: 600; }
+  .client-order-matrix thead th,
+  .client-order-matrix tbody tr:nth-child(even) { background: #fff; }
 
   .harvest-baskets { margin: 4mm 0 0; }
   .harvest-basket-grid { display: flex; flex-wrap: wrap; gap: 3mm 8mm; }
