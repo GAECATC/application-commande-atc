@@ -1605,12 +1605,15 @@ form {
     --border: #555;
   }
 
-  .admin-shell > .print-report,
-  .admin-shell > .print-report * {
+  .admin-shell,
+  .admin-shell * {
     color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
     text-shadow: none !important;
-    box-shadow: none !important;
   }
+
+  .admin-shell > .print-report,
+  .admin-shell > .print-report * { box-shadow: none !important; }
 
   .admin-shell > .print-report .badge {
     background: #fff;
