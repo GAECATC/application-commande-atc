@@ -1587,6 +1587,8 @@ form {
     font-size: 9pt;
   }
 
+  .mobile-prep-check { display: none !important; }
+
   .no-print,
   .checkout,
   .link-button {
