@@ -1,4 +1,4 @@
-const { cancelOrder, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
+const { cancelOrder, clearPreparationChecks, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
@@ -167,6 +167,8 @@ export default async function handler(req, res) {
 
     try {
       const order = await validateOrder({ orderId, partnerId });
+      const remainingOrders = await getOrders({ deliveryDate: order.deliveryDate });
+      if (!remainingOrders.length) await clearPreparationChecks(order.deliveryDate);
       const partners = await getPartners();
       const partnerForEmail = partners.find((partner) => partner.id === partnerId);
       const email = await notifyOrder(partnerForEmail, order, "validated");

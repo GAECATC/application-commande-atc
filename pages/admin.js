@@ -42,6 +42,8 @@ function buildOrderMatrix(orders) {
   };
 }
 
+const preparationStateKey = (deliveryDate, itemKey) => JSON.stringify([deliveryDate, itemKey]);
+
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -57,6 +59,7 @@ export default function Admin() {
   const [basketSeason, setBasketSeason] = useState("ete");
   const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
+  const [preparationChecks, setPreparationChecks] = useState({});
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
@@ -264,6 +267,9 @@ export default function Admin() {
     setDirtyProductIds([]);
     setDirtyPartnerIds([]);
     setSummary(summaryData);
+    setPreparationChecks(Object.fromEntries((summaryData.groups || []).flatMap((group) =>
+      (group.checkedKeys || []).map((itemKey) => [preparationStateKey(group.deliveryDate, itemKey), true])
+    )));
     try {
       const [basketRes, groupRes] = await Promise.all([
         fetch("/api/baskets", { headers: adminHeaders }),
@@ -760,6 +766,22 @@ export default function Admin() {
     setOrderSaveNotice("Votre modification a été enregistrée sur l’application.");
   }
 
+  async function togglePreparationCheck(deliveryDate, itemKey, checked) {
+    const stateKey = preparationStateKey(deliveryDate, itemKey);
+    setPreparationChecks((current) => ({ ...current, [stateKey]: checked }));
+    try {
+      const response = await fetch("/api/preparation-checklist", {
+        method: "POST", headers,
+        body: JSON.stringify({ deliveryDate, itemKey, checked })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Enregistrement refusé");
+    } catch (error) {
+      setPreparationChecks((current) => ({ ...current, [stateKey]: !checked }));
+      setMessage(error.message || "La coche n’a pas pu être enregistrée.");
+    }
+  }
+
   async function deleteOrder(order) {
     if (!window.confirm(`Supprimer la commande de ${order.partnerName} ?`)) return;
 
@@ -887,6 +909,7 @@ export default function Admin() {
         <div className="harvest-total-list">
           {deliverySummary.totals.map((item) => (
             <div className="harvest-total-row" key={`${item.productId}-${item.unit}`}>
+              <input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${item.productName}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `total:${item.productId}:${item.unit}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `total:${item.productId}:${item.unit}`, event.target.checked)} />
               <span>{item.productName}</span>
               <strong>{formatNumber(item.quantity)} {unitLabel(item.unit)}</strong>
             </div>
@@ -896,6 +919,7 @@ export default function Admin() {
         {crateSummary.length > 0 && <section className="crate-summary">
           <h3>Caisses à prévoir</h3>
           <div className="crate-summary-list">{crateSummary.map((row) => <div key={row.id}>
+            <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses de ${row.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
             <strong>{row.name}</strong>
             <span>{row.isSalad
               ? `${row.fullCrates} caisse${row.fullCrates === 1 ? "" : "s"} ${row.type}${row.fullCrates === 1 ? "" : "s"}${row.remainder > 0 ? ` + ${formatNumber(row.remainder)} salade${row.remainder === 1 ? "" : "s"}` : ""}`
@@ -910,7 +934,7 @@ export default function Admin() {
               <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
               <tbody>{orderMatrix.rows.map((row) => <tr key={row.id}>
                 <th scope="row">{row.name}</th>
-                {orderMatrix.clients.map((client) => <td key={client.id}>{row.quantities[client.id] ? `${formatNumber(row.quantities[client.id])} ${unitLabel(row.unit)}` : "—"}</td>)}
+                {orderMatrix.clients.map((client) => <td key={client.id}>{row.quantities[client.id] ? <label className="matrix-check-cell"><input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} pour ${client.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`, event.target.checked)} /><span>{formatNumber(row.quantities[client.id])} {unitLabel(row.unit)}</span></label> : "—"}</td>)}
               </tr>)}</tbody>
             </table>
           </div>

@@ -1,4 +1,4 @@
-const { getBasketTemplates, getOrders, getPartners, getProducts } = require("@/lib/db");
+const { getBasketTemplates, getOrders, getPartners, getPreparationChecks, getProducts } = require("@/lib/db");
 const { getNextDelivery } = require("@/lib/schedule");
 const { requireAdmin } = require("@/lib/auth");
 
@@ -39,14 +39,15 @@ export default async function handler(req, res) {
     group.push(order);
     ordersByDeliveryDate.set(order.deliveryDate, group);
   }
-  const groups = Array.from(ordersByDeliveryDate.entries())
+  const groups = await Promise.all(Array.from(ordersByDeliveryDate.entries())
     .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-    .map(([groupDeliveryDate, groupOrders]) => ({
+    .map(async ([groupDeliveryDate, groupOrders]) => ({
       deliveryDate: groupDeliveryDate,
       orders: groupOrders,
       totals: buildTotals(groupOrders),
-      baskets: buildBasketTotals(groupOrders)
-    }));
+      baskets: buildBasketTotals(groupOrders),
+      checkedKeys: await getPreparationChecks(groupDeliveryDate)
+    })));
 
   return res.status(200).json({
     deliveryDate,

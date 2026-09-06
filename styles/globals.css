@@ -592,6 +592,8 @@ form {
 .crate-summary { margin: 16px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .crate-summary-list > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .crate-summary-list > div:last-child { border-bottom: 0; }
+.mobile-prep-check { display: none; }
+.matrix-check-cell { display: block; }
 
 .orders-list {
   display: grid;
@@ -1341,6 +1343,14 @@ form {
   .topbar .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
   .topbar .actions > :first-child { grid-column: 1 / -1; }
   .harvest-total-list { grid-template-columns: 1fr; }
+  .mobile-prep-check { display: block; width: 22px; min-width: 22px; height: 22px; margin: 0; accent-color: var(--primary); }
+  .harvest-total-row { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+  .crate-summary-list > div { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+  .crate-summary-list > div > span { grid-column: 2; }
+  .harvest-total-row:has(.mobile-prep-check:checked),
+  .crate-summary-list > div:has(.mobile-prep-check:checked),
+  .matrix-check-cell:has(.mobile-prep-check:checked) { opacity: .55; text-decoration: line-through; }
+  .matrix-check-cell { display: flex; align-items: center; justify-content: center; gap: 5px; }
   .topbar .actions > * { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin: 0; text-align: center; }
   .admin-workspace-nav { position: sticky; top: 6px; display: flex; gap: 6px; margin-bottom: 12px; padding: 6px; overflow-x: auto; scrollbar-width: none; border-radius: 12px; }
   .admin-workspace-nav::-webkit-scrollbar { display: none; }

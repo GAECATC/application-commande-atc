@@ -55,6 +55,12 @@ create table if not exists availability_messages (
   primary key (delivery_date, partner_id)
 );
 
+create table if not exists preparation_checklist (
+  delivery_date date not null,
+  item_key text not null,
+  primary key (delivery_date, item_key)
+);
+
 create table if not exists basket_templates (
   id text primary key,
   name text not null,

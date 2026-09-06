@@ -55,6 +55,12 @@ create table if not exists availability_messages (
   constraint availability_messages_partner_fk foreign key (partner_id) references partners(id) on delete cascade
 ) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
 
+create table if not exists preparation_checklist (
+  delivery_date date not null,
+  item_key varchar(512) not null,
+  primary key (delivery_date, item_key)
+) engine=InnoDB default charset=utf8mb4 collate=utf8mb4_unicode_ci;
+
 create table if not exists basket_templates (
   id varchar(191) primary key,
   name varchar(255) not null,
