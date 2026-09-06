@@ -894,11 +894,10 @@ export default function Admin() {
         </div>
 
         {crateSummary.length > 0 && <section className="crate-summary">
-          <h3>Équivalent en caisses</h3>
-          <p>Quantités cumulées par produit et conditionnement, hors répartition par magasin. Les reliquats correspondent aux caisses incomplètes.</p>
+          <h3>Caisses à prévoir</h3>
           <div className="crate-summary-list">{crateSummary.map((row) => <div key={row.id}>
-            <strong>{row.name} — {formatNumber(row.quantity)} {unitLabel(row.unit)}</strong>
-            <span>{row.fullCrates} caisse{row.fullCrates > 1 ? "s" : ""}{row.type !== "standard" ? ` ${row.type}${row.fullCrates > 1 ? "s" : ""}` : ""} de {row.capacity} {unitLabel(row.unit)}{row.remainder > 0 ? ` + ${formatNumber(row.remainder)} ${unitLabel(row.unit)}` : ""}{row.type === "rouge" ? " · Satoriz" : row.type === "verte" ? " · Autres clients" : ""}</span>
+            <strong>{row.name}</strong>
+            <span>{formatNumber(row.crateEquivalent)} caisse{row.crateEquivalent === 1 ? "" : "s"}{row.isSalad ? ` ${row.type}${row.crateEquivalent === 1 ? "" : "s"} · ${formatNumber(row.quantity)} pièces` : ""}</span>
           </div>)}</div>
         </section>}
 

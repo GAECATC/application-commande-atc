@@ -590,7 +590,6 @@ form {
 .client-order-matrix tbody tr:last-child > * { border-bottom: 0; }
 .order-management { margin-top: 26px; }
 .crate-summary { margin: 16px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
-.crate-summary p { margin: 4px 0 8px; font-size: .8rem; }
 .crate-summary-list > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .crate-summary-list > div:last-child { border-bottom: 0; }
 
@@ -1639,7 +1638,6 @@ form {
 
   .client-order-matrix-section { margin: 4mm 0; }
   .crate-summary { margin: 3mm 0; padding: 2mm; border-radius: 0; }
-  .crate-summary p { font-size: 7pt; }
   .crate-summary-list > div { padding: .7mm 0; break-inside: avoid; }
   .client-order-matrix-wrap { overflow: visible; border-radius: 0; }
   .client-order-matrix { table-layout: fixed; font-size: 8pt; }
