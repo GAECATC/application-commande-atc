@@ -897,7 +897,9 @@ export default function Admin() {
           <h3>Caisses à prévoir</h3>
           <div className="crate-summary-list">{crateSummary.map((row) => <div key={row.id}>
             <strong>{row.name}</strong>
-            <span>{formatNumber(row.crateEquivalent)} caisse{row.crateEquivalent === 1 ? "" : "s"}{row.isSalad ? ` ${row.type}${row.crateEquivalent === 1 ? "" : "s"} · ${formatNumber(row.quantity)} pièces` : ""}</span>
+            <span>{row.isSalad
+              ? `${row.fullCrates} caisse${row.fullCrates === 1 ? "" : "s"} ${row.type}${row.fullCrates === 1 ? "" : "s"}${row.remainder > 0 ? ` + ${formatNumber(row.remainder)} salade${row.remainder === 1 ? "" : "s"}` : ""}`
+              : `${formatNumber(row.crateEquivalent)} caisse${row.crateEquivalent === 1 ? "" : "s"}`}</span>
           </div>)}</div>
         </section>}
 
