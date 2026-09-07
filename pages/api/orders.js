@@ -44,30 +44,25 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { partnerId, code, items, comment, basketSelections } = req.body || {};
-    if (String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
-    const partner = await getPartnerByCredentials(partnerId, code);
-    if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
+    try {
+      const { partnerId, code, items, comment, basketSelections } = req.body || {};
+      if (String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
+      const partner = await getPartnerByCredentials(partnerId, code);
+      if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
 
-    const delivery = getNextPartnerDelivery(partner.id);
-    const cleanItems = Array.isArray(items) ? items : [];
-    const basketSnapshots = await buildBasketSnapshots(partner, basketSelections);
-    const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, inheritPrevious: true });
-    const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
-    await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
-    const order = await createOrder({
-      partnerId: partner.id,
-      deliveryDate: delivery.deliveryDate,
-      harvestDay: delivery.harvestDay,
-      items: cleanItems,
-      comment: normalizeOrderComment(comment),
-      basketSnapshots,
-      allowedProductIds
-    });
-    const email = await notifyOrder(partner, order, "created");
-    const adminEmail = await notifyAdmin(partner, order, "created");
-
-    return res.status(201).json({ order, delivery, email, adminEmail });
+      const delivery = getNextPartnerDelivery(partner.id);
+      const cleanItems = Array.isArray(items) ? items : [];
+      const basketSnapshots = await buildBasketSnapshots(partner, basketSelections);
+      const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, inheritPrevious: true });
+      const allowedProductIds = allocations.filter((item) => item.visible !== false).map((item) => item.productId);
+      await validateProductAllocations({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, items: cleanItems });
+      const order = await createOrder({ partnerId: partner.id, deliveryDate: delivery.deliveryDate, harvestDay: delivery.harvestDay, items: cleanItems, comment: normalizeOrderComment(comment), basketSnapshots, allowedProductIds });
+      const [email, adminEmail] = await Promise.all([notifyOrder(partner, order, "created"), notifyAdmin(partner, order, "created")]);
+      return res.status(201).json({ order, delivery, email, adminEmail });
+    } catch (error) {
+      console.error("Order creation failed", error);
+      return res.status(400).json({ error: error.message || "Commande impossible à enregistrer" });
+    }
   }
 
   if (req.method === "PUT") {
@@ -117,8 +112,10 @@ export default async function handler(req, res) {
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
       const mode = adminRequest ? "updated" : "updated-by-client";
-      const email = await notifyOrder(partnerForEmail, order, mode, previousOrder);
-      const adminEmail = adminRequest ? null : await notifyAdmin(partnerForEmail, order, mode, previousOrder);
+      const [email, adminEmail] = await Promise.all([
+        notifyOrder(partnerForEmail, order, mode, previousOrder),
+        adminRequest ? Promise.resolve(null) : notifyAdmin(partnerForEmail, order, mode, previousOrder)
+      ]);
       return res.status(200).json({ order, email, adminEmail });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;

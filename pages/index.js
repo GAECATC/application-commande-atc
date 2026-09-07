@@ -149,37 +149,49 @@ export default function ClientPortal({ initialSession }) {
   }, []);
 
   async function submitOrder() {
+    if (loading) return;
     setLoading(true);
     setMessage("");
-    const mergedQuantities = Object.fromEntries(Object.entries(quantities).map(([productId, quantity]) => [productId, Number(quantity) || 0]));
-    for (const basket of baskets) {
-      const count = Number(basketQuantities[basket.id] || 0);
-      if (count <= 0) continue;
-      for (const item of basket.items) {
-        mergedQuantities[item.productId] = (mergedQuantities[item.productId] || 0) + Number(item.quantity) * count;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 25000);
+    try {
+      const mergedQuantities = Object.fromEntries(Object.entries(quantities).map(([productId, quantity]) => [productId, Number(quantity) || 0]));
+      for (const basket of baskets) {
+        const count = Number(basketQuantities[basket.id] || 0);
+        if (count <= 0) continue;
+        for (const item of basket.items) {
+          mergedQuantities[item.productId] = (mergedQuantities[item.productId] || 0) + Number(item.quantity) * count;
+        }
       }
+      const items = Object.entries(mergedQuantities).map(([productId, quantity]) => ({ productId, quantity }));
+      const basketSelections = baskets
+        .map((basket) => ({ basketId: basket.id, quantity: Number(basketQuantities[basket.id] || 0) }))
+        .filter((basket) => basket.quantity > 0);
+      const isEditing = Boolean(editingOrder);
+      const response = await fetch("/api/orders", {
+        method: isEditing ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items, comment, basketSelections }),
+        signal: controller.signal
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return setMessage(data.error || "La commande n’a pas pu être enregistrée.");
+      setQuantities({});
+      setBasketQuantities({});
+      setComment("");
+      setCommentOpen(false);
+      setEditingOrder(null);
+      await loadOrders(partnerId, code);
+      const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
+      setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.`);
+    } catch (error) {
+      setMessage(error.name === "AbortError"
+        ? "Le serveur met trop de temps à répondre. Actualisez toute la page avant de réessayer : la commande a peut-être déjà été enregistrée."
+        : "La confirmation n’a pas été reçue. Actualisez toute la page avant de réessayer.");
+    } finally {
+      window.clearTimeout(timeoutId);
+      setLoading(false);
     }
-    const items = Object.entries(mergedQuantities).map(([productId, quantity]) => ({ productId, quantity }));
-    const basketSelections = baskets
-      .map((basket) => ({ basketId: basket.id, quantity: Number(basketQuantities[basket.id] || 0) }))
-      .filter((basket) => basket.quantity > 0);
-    const isEditing = Boolean(editingOrder);
-    const response = await fetch("/api/orders", {
-      method: isEditing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: editingOrder?.id, partnerId, code, items, comment, basketSelections })
-    });
-    const data = await response.json();
-    setLoading(false);
-    if (!response.ok) return setMessage(data.error || "Commande refusee.");
-    setQuantities({});
-    setBasketQuantities({});
-    setComment("");
-    setCommentOpen(false);
-    setEditingOrder(null);
-    await loadOrders(partnerId, code);
-    const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
-    setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.`);
   }
 
   function editOrder(order) {
