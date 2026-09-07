@@ -399,10 +399,6 @@ form {
   display: none;
 }
 
-.checkout-toggle {
-  display: none;
-}
-
 .order-comment-editor {
   display: block;
 }
@@ -1382,55 +1378,38 @@ form {
   .admin-shell > .print-report { padding: 14px; border-radius: 12px; }
 
   .checkout {
-    width: fit-content;
-    max-width: 100%;
-    margin-left: auto;
-    padding: 7px;
-    gap: 7px;
-    bottom: 8px;
-    justify-content: flex-end;
-    border-radius: 999px;
-  }
-
-  .checkout .checkout-total,
-  .checkout > .primary {
-    display: none;
-  }
-
-  .checkout.checkout-open,
-  .checkout.comment-open {
     width: 100%;
-    border-radius: 12px;
-  }
-
-  .checkout.checkout-open .checkout-total {
-    display: grid;
-    min-width: 0;
-    margin-left: auto;
-  }
-
-  .checkout.checkout-open > .primary {
-    display: inline-flex;
-  }
-
-  .checkout-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 8px 13px;
+    padding: 6px 0;
+    gap: 8px;
+    bottom: 8px;
+    justify-content: space-between;
     border: 0;
-    border-radius: 999px;
-    background: var(--primary);
-    color: #fff;
-    font-weight: 900;
-    white-space: nowrap;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .checkout-toggle span {
-    display: inline;
-    margin: 0 6px 0 0;
-    font-size: 1rem;
+  .checkout-total {
+    min-width: 0;
+    gap: 0;
+    text-align: center;
+  }
+
+  .checkout-total strong {
+    font-size: .72rem;
+    line-height: 1;
+  }
+
+  .checkout .checkout-total span {
+    margin-top: 2px;
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .checkout > .primary {
+    min-height: 44px;
+    padding: 9px 13px;
+    white-space: nowrap;
   }
 
   .order-comment-field {
@@ -1439,6 +1418,10 @@ form {
 
   .checkout.comment-open .order-comment-field {
     width: 100%;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
   }
 
   .comment-toggle {
