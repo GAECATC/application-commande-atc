@@ -27,6 +27,7 @@ function buildOrderMatrix(orders) {
       const rowId = `${item.productId || item.productName}-${item.unit}`;
       const row = rowsByProduct.get(rowId) || {
         id: rowId,
+        productId: item.productId,
         name: item.productName,
         unit: item.unit,
         quantities: {}
@@ -43,6 +44,7 @@ function buildOrderMatrix(orders) {
 }
 
 const preparationStateKey = (deliveryDate, itemKey) => JSON.stringify([deliveryDate, itemKey]);
+const matrixValueKey = (rowId, clientId) => JSON.stringify([rowId, clientId]);
 
 export default function Admin() {
   const [password, setPassword] = useState("");
@@ -60,6 +62,9 @@ export default function Admin() {
   const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
   const [preparationChecks, setPreparationChecks] = useState({});
+  const [matrixEditingDate, setMatrixEditingDate] = useState("");
+  const [matrixDraft, setMatrixDraft] = useState({});
+  const [matrixSaving, setMatrixSaving] = useState(false);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
@@ -782,6 +787,51 @@ export default function Admin() {
     }
   }
 
+  function startMatrixEdit(deliverySummary, orderMatrix) {
+    setMatrixEditingDate(deliverySummary.deliveryDate);
+    setMatrixDraft(Object.fromEntries(orderMatrix.rows.flatMap((row) => orderMatrix.clients.map((client) => [
+      matrixValueKey(row.id, client.id),
+      row.quantities[client.id] ? String(row.quantities[client.id]) : ""
+    ]))));
+    setMessage("");
+  }
+
+  async function saveMatrixEdit(deliverySummary, orderMatrix) {
+    if (matrixSaving) return;
+    const changedClients = orderMatrix.clients.filter((client) => orderMatrix.rows.some((row) =>
+      Number(matrixDraft[matrixValueKey(row.id, client.id)] || 0) !== Number(row.quantities[client.id] || 0)
+    ));
+    if (!changedClients.length) {
+      setMatrixEditingDate("");
+      setMatrixDraft({});
+      return setMessage("Aucune quantité n’a été modifiée.");
+    }
+    setMatrixSaving(true);
+    const results = await Promise.all(changedClients.map(async (client) => {
+      const clientOrders = deliverySummary.orders.filter((order) => order.partnerId === client.id);
+      if (clientOrders.length !== 1) return { client, ok: false, error: `${clientOrders.length} commandes actives trouvées` };
+      const items = orderMatrix.rows.map((row) => ({
+        productId: row.productId,
+        quantity: Number(matrixDraft[matrixValueKey(row.id, client.id)] || 0)
+      })).filter((item) => item.quantity > 0);
+      try {
+        const response = await fetch("/api/orders", { method: "PUT", headers, body: JSON.stringify({ orderId: clientOrders[0].id, partnerId: client.id, items }) });
+        const data = await response.json().catch(() => ({}));
+        return { client, ok: response.ok, error: data.error, email: data.email };
+      } catch {
+        return { client, ok: false, error: "serveur inaccessible" };
+      }
+    }));
+    setMatrixSaving(false);
+    setMatrixEditingDate("");
+    setMatrixDraft({});
+    await loadAdminData();
+    const failed = results.filter((result) => !result.ok);
+    const emailFailures = results.filter((result) => result.ok && !result.email?.sent);
+    if (failed.length) return setMessage(`Modifications partielles. Échec pour ${failed.map((result) => `${result.client.name} (${result.error || "cause inconnue"})`).join(", ")}. Les autres commandes ont été enregistrées.`);
+    setOrderSaveNotice(`${changedClients.length} commande${changedClients.length > 1 ? "s" : ""} mise${changedClients.length > 1 ? "s" : ""} à jour.${emailFailures.length ? ` Courriel non envoyé pour ${emailFailures.map((result) => result.client.name).join(", ")}.` : " Les courriels ont été envoyés."}`);
+  }
+
   async function deleteOrder(order) {
     if (!window.confirm(`Supprimer la commande de ${order.partnerName} ?`)) return;
 
@@ -896,6 +946,9 @@ export default function Admin() {
         {summary?.groups?.length ? summary.groups.map((deliverySummary) => {
           const orderMatrix = buildOrderMatrix(deliverySummary.orders);
           const crateSummary = buildCrateSummary(deliverySummary.orders);
+          const saladCrates = crateSummary.filter((row) => row.isSalad);
+          const otherCrates = crateSummary.filter((row) => !row.isSalad);
+          const matrixEditing = matrixEditingDate === deliverySummary.deliveryDate;
           return (
           <section className="delivery-summary" key={deliverySummary.deliveryDate}>
         <div className="section-heading">
@@ -918,23 +971,31 @@ export default function Admin() {
 
         {crateSummary.length > 0 && <section className="crate-summary">
           <h3>Caisses à prévoir</h3>
-          <div className="crate-summary-list">{crateSummary.map((row) => <div key={row.id}>
+          {saladCrates.length > 0 && <div className="crate-salad-summary">
+            <strong>Laitues — {formatNumber(saladCrates.reduce((sum, row) => sum + row.quantity, 0))} pièces au total</strong>
+            {saladCrates.map((row) => <div key={row.id}>
+              <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses ${row.type}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
+              <span>Caisses {row.type}s : <strong>{row.fullCrates}</strong>{row.remainder > 0 ? ` + ${formatNumber(row.remainder)} laitue${row.remainder === 1 ? "" : "s"}` : ""}</span>
+            </div>)}
+          </div>}
+          <div className="crate-summary-list">{otherCrates.map((row) => <div key={row.id}>
             <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses de ${row.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
             <strong>{row.name}</strong>
-            <span>{row.isSalad
-              ? `${row.fullCrates} caisse${row.fullCrates === 1 ? "" : "s"} ${row.type}${row.fullCrates === 1 ? "" : "s"}${row.remainder > 0 ? ` + ${formatNumber(row.remainder)} salade${row.remainder === 1 ? "" : "s"}` : ""}`
-              : `${formatNumber(row.crateEquivalent)} caisse${row.crateEquivalent === 1 ? "" : "s"}`}</span>
+            <span>{formatNumber(row.crateEquivalent)} caisse{row.crateEquivalent === 1 ? "" : "s"}</span>
           </div>)}</div>
         </section>}
 
         <section className="client-order-matrix-section">
-          <h3>Quantités par client</h3>
+          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="ghost" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
           <div className="client-order-matrix-wrap">
             <table className="client-order-matrix">
               <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
               <tbody>{orderMatrix.rows.map((row) => <tr key={row.id}>
                 <th scope="row">{row.name}</th>
-                {orderMatrix.clients.map((client) => <td key={client.id}>{row.quantities[client.id] ? <label className="matrix-check-cell"><input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} pour ${client.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`, event.target.checked)} /><span>{formatNumber(row.quantities[client.id])} {unitLabel(row.unit)}</span></label> : "—"}</td>)}
+                {orderMatrix.clients.map((client) => {
+                  const quantity = matrixEditing ? Number(matrixDraft[matrixValueKey(row.id, client.id)] || 0) : Number(row.quantities[client.id] || 0);
+                  return <td key={client.id}>{matrixEditing || quantity > 0 ? <label className="matrix-check-cell"><input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} pour ${client.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`, event.target.checked)} />{matrixEditing ? <span className="matrix-quantity-editor"><input type="number" min="0" step={row.unit === "kg" ? "0.1" : "1"} value={matrixDraft[matrixValueKey(row.id, client.id)] || ""} onChange={(event) => setMatrixDraft((current) => ({ ...current, [matrixValueKey(row.id, client.id)]: event.target.value }))} /><small>{unitLabel(row.unit)}</small></span> : <span>{formatNumber(quantity)} {unitLabel(row.unit)}</span>}</label> : "—"}</td>;
+                })}
               </tr>)}</tbody>
             </table>
           </div>
