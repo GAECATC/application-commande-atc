@@ -592,12 +592,12 @@ form {
 .crate-summary { margin: 16px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .crate-summary-list > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .crate-summary-list > div:last-child { border-bottom: 0; }
-.crate-salad-summary { margin-bottom: 7px; padding-bottom: 7px; border-bottom: 2px solid var(--line); }
-.crate-salad-summary > strong { display: block; margin-bottom: 4px; }
-.crate-salad-summary > div { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.crate-salad-total { margin: 0 0 7px; padding-bottom: 7px; border-bottom: 2px solid var(--line); }
 .mobile-prep-check { display: none; }
 .matrix-check-cell { display: block; }
 .matrix-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.matrix-edit-button { background: #111; color: #fff; border-color: #111; }
+.matrix-edit-button:hover { background: #2b2b2b; color: #fff; }
 .matrix-quantity-editor { display: flex; align-items: center; justify-content: center; gap: 4px; }
 .matrix-quantity-editor input { width: 76px; min-height: 38px; padding: 5px; text-align: center; }
 .matrix-quantity-editor small { white-space: nowrap; }
@@ -609,7 +609,6 @@ form {
   .crate-summary-list > div > span { grid-column: 2; }
   .harvest-total-row:has(.mobile-prep-check:checked),
   .crate-summary-list > div:has(.mobile-prep-check:checked),
-  .crate-salad-summary > div:has(.mobile-prep-check:checked),
   .matrix-check-cell:has(.mobile-prep-check:checked) { opacity: .55; text-decoration: line-through; }
   .matrix-check-cell { display: flex; align-items: center; justify-content: center; gap: 5px; }
 }
@@ -1387,10 +1386,30 @@ form {
   }
 
   .comment-toggle {
-    display: block;
-    width: 100%;
-    padding: 9px 12px;
-    text-align: left;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 3px 10px rgba(12, 70, 39, .12);
+  }
+
+  .comment-toggle.has-comment::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 9px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--accent);
   }
 
   .order-comment-field:not(.open) .order-comment-editor {

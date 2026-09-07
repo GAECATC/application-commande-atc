@@ -480,8 +480,8 @@ export default function ClientPortal({ initialSession }) {
 
           <aside className="checkout">
             <div className={`order-comment-field ${commentOpen ? "open" : ""}`}>
-              <button className="comment-toggle ghost" type="button" onClick={() => setCommentOpen((current) => !current)}>
-                💬 {comment ? "Modifier le commentaire" : "Ajouter un commentaire"}
+              <button className={`comment-toggle${comment ? " has-comment" : ""}`} type="button" aria-label={commentOpen ? "Fermer le commentaire" : comment ? "Modifier le commentaire" : "Ajouter un commentaire"} title={comment ? "Modifier le commentaire" : "Ajouter un commentaire"} onClick={() => setCommentOpen((current) => !current)}>
+                💬
               </button>
               <label className="order-comment-editor">
                 Commentaire pour votre commande <small>(facultatif)</small>

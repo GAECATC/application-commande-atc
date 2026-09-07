@@ -971,13 +971,9 @@ export default function Admin() {
 
         {crateSummary.length > 0 && <section className="crate-summary">
           <h3>Caisses à prévoir</h3>
-          {saladCrates.length > 0 && <div className="crate-salad-summary">
-            <strong>Laitues — {formatNumber(saladCrates.reduce((sum, row) => sum + row.quantity, 0))} pièces au total</strong>
-            {saladCrates.map((row) => <div key={row.id}>
-              <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses ${row.type}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
-              <span>Caisses {row.type}s : <strong>{row.fullCrates}</strong>{row.remainder > 0 ? ` + ${formatNumber(row.remainder)} laitue${row.remainder === 1 ? "" : "s"}` : ""}</span>
-            </div>)}
-          </div>}
+          {saladCrates.length > 0 && <p className="crate-salad-total">
+            <strong>Caisses de laitues à charger :</strong> {formatSaladCrateTotal(saladCrates)}
+          </p>}
           <div className="crate-summary-list">{otherCrates.map((row) => <div key={row.id}>
             <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses de ${row.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
             <strong>{row.name}</strong>
@@ -986,7 +982,7 @@ export default function Admin() {
         </section>}
 
         <section className="client-order-matrix-section">
-          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="ghost" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
+          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="matrix-edit-button" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
           <div className="client-order-matrix-wrap">
             <table className="client-order-matrix">
               <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
@@ -1606,6 +1602,18 @@ function formatDate(value) {
 
 function formatNumber(value) {
   return new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(value);
+}
+
+function formatSaladCrateTotal(rows) {
+  return ["rouge", "verte"].map((type) => {
+    const row = rows.find((item) => item.type === type);
+    if (!row || row.quantity <= 0) return null;
+    const crateCount = Math.ceil(row.quantity / row.capacity);
+    const partial = row.remainder > 0
+      ? ` (dernière : ${formatNumber(row.remainder)} laitue${row.remainder === 1 ? "" : "s"})`
+      : "";
+    return `${crateCount} caisse${crateCount === 1 ? "" : "s"} ${type}${crateCount === 1 ? "" : "s"}${partial}`;
+  }).filter(Boolean).join(" · ");
 }
 
 function unitLabel(unit) {
