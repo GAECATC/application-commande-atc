@@ -1,7 +1,7 @@
 const { cancelOrder, clearPreparationChecks, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
-const { sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
+const { classifyMailError, sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
 const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
 
 async function notifyOrder(partner, order, mode, previousOrder) {
@@ -9,7 +9,7 @@ async function notifyOrder(partner, order, mode, previousOrder) {
     return await sendOrderConfirmation({ partner, order, mode, previousOrder });
   } catch (error) {
     console.error("Order email failed", error);
-    return { sent: false, skipped: false, reason: "send-error" };
+    return { sent: false, skipped: false, reason: classifyMailError(error) };
   }
 }
 
@@ -18,7 +18,7 @@ async function notifyAdmin(partner, order, mode, previousOrder) {
     return await sendAdminOrderAlert({ partner, order, mode, previousOrder });
   } catch (error) {
     console.error("Admin order email failed", error);
-    return { sent: false, skipped: false, reason: "send-error" };
+    return { sent: false, skipped: false, reason: classifyMailError(error) };
   }
 }
 

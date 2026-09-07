@@ -6,6 +6,21 @@ const { MAX_ORDER_COMMENT_LENGTH } = require("@/lib/order-comment");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
+function emailResultMessage(email) {
+  if (!email || email.sent) return "";
+  const messages = {
+    "missing-recipient": " Aucune confirmation par courriel n’a été envoyée : aucune adresse n’est renseignée pour ce compte.",
+    "missing-smtp-config": " La commande est enregistrée, mais l’envoi des courriels n’est pas configuré sur l’application.",
+    "smtp-timeout": " La commande est enregistrée, mais le serveur de messagerie n’a pas répondu dans le délai prévu. L’origine exacte du ralentissement ne peut pas être déterminée.",
+    "smtp-authentication": " La commande est enregistrée, mais le serveur de messagerie de la ferme a refusé l’authentification.",
+    "smtp-dns": " La commande est enregistrée, mais l’adresse du serveur de messagerie n’a pas pu être résolue.",
+    "recipient-rejected": " La commande est enregistrée, mais le serveur destinataire a refusé l’adresse de courriel.",
+    "smtp-connection": " La commande est enregistrée, mais la connexion au serveur de messagerie a échoué.",
+    "smtp-unknown": " La commande est enregistrée, mais le courriel n’a pas pu être envoyé. Le serveur n’a pas fourni de cause exploitable."
+  };
+  return messages[email.reason] || " La commande est enregistrée, mais aucun détail fiable n’est disponible sur l’échec du courriel.";
+}
+
 export default function ClientPortal({ initialSession }) {
   const [session, setSession] = useState(initialSession);
   const [products, setProducts] = useState([]);
@@ -183,11 +198,13 @@ export default function ClientPortal({ initialSession }) {
       setEditingOrder(null);
       await loadOrders(partnerId, code);
       const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
-      setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.`);
+      setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.${emailResultMessage(data.email)}`);
     } catch (error) {
-      setMessage(error.name === "AbortError"
+      setMessage(navigator.onLine === false
+        ? "La connexion internet de cet appareil est interrompue. Actualisez toute la page lorsque la connexion est revenue avant de réessayer."
+        : error.name === "AbortError"
         ? "Le serveur met trop de temps à répondre. Actualisez toute la page avant de réessayer : la commande a peut-être déjà été enregistrée."
-        : "La confirmation n’a pas été reçue. Actualisez toute la page avant de réessayer.");
+        : "La confirmation n’a pas été reçue. L’origine exacte n’a pas pu être déterminée. Actualisez toute la page avant de réessayer.");
     } finally {
       window.clearTimeout(timeoutId);
       setLoading(false);
