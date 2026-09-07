@@ -36,6 +36,7 @@ export default function ClientPortal({ initialSession }) {
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [viewMode, setViewMode] = useState("list");
   const catalogRef = useRef(null);
@@ -478,9 +479,9 @@ export default function ClientPortal({ initialSession }) {
             </section>
           ))}
 
-          <aside className="checkout">
+          <aside className={`checkout${checkoutOpen ? " checkout-open" : ""}${commentOpen ? " comment-open" : ""}`}>
             <div className={`order-comment-field ${commentOpen ? "open" : ""}`}>
-              <button className={`comment-toggle${comment ? " has-comment" : ""}`} type="button" aria-label={commentOpen ? "Fermer le commentaire" : comment ? "Modifier le commentaire" : "Ajouter un commentaire"} title={comment ? "Modifier le commentaire" : "Ajouter un commentaire"} onClick={() => setCommentOpen((current) => !current)}>
+              <button className={`comment-toggle${comment ? " has-comment" : ""}`} type="button" aria-label={commentOpen ? "Fermer le commentaire" : comment ? "Modifier le commentaire" : "Ajouter un commentaire"} title={comment ? "Modifier le commentaire" : "Ajouter un commentaire"} onClick={() => { setCheckoutOpen(false); setCommentOpen((current) => !current); }}>
                 💬
               </button>
               <label className="order-comment-editor">
@@ -495,6 +496,9 @@ export default function ClientPortal({ initialSession }) {
                 <small>{comment.length}/{MAX_ORDER_COMMENT_LENGTH} caractères</small>
               </label>
             </div>
+            <button className="checkout-toggle" type="button" aria-expanded={checkoutOpen} aria-label={checkoutOpen ? "Refermer le total de la commande" : "Afficher le total et valider la commande"} onClick={() => { setCommentOpen(false); setCheckoutOpen((current) => !current); }}>
+              <span aria-hidden="true">🛒</span> {currency.format(total)}
+            </button>
             <div className="checkout-total">
               <strong>Total estimé</strong>
               <span>{currency.format(total)}</span>

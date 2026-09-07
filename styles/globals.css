@@ -399,6 +399,10 @@ form {
   display: none;
 }
 
+.checkout-toggle {
+  display: none;
+}
+
 .order-comment-editor {
   display: block;
 }
@@ -1378,11 +1382,63 @@ form {
   .admin-shell > .print-report { padding: 14px; border-radius: 12px; }
 
   .checkout {
-    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    padding: 7px;
+    gap: 7px;
+    bottom: 8px;
+    justify-content: flex-end;
+    border-radius: 999px;
+  }
+
+  .checkout .checkout-total,
+  .checkout > .primary {
+    display: none;
+  }
+
+  .checkout.checkout-open,
+  .checkout.comment-open {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .checkout.checkout-open .checkout-total {
+    display: grid;
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .checkout.checkout-open > .primary {
+    display: inline-flex;
+  }
+
+  .checkout-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px 13px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .checkout-toggle span {
+    display: inline;
+    margin: 0 6px 0 0;
+    font-size: 1rem;
   }
 
   .order-comment-field {
     flex: none;
+  }
+
+  .checkout.comment-open .order-comment-field {
+    width: 100%;
   }
 
   .comment-toggle {
