@@ -310,6 +310,58 @@ form {
   font-weight: 700;
 }
 
+.client-error-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .38);
+}
+
+.client-error-dialog {
+  position: relative;
+  width: min(520px, 100%);
+  padding: 26px 52px 26px 26px;
+  border-radius: 12px;
+  background: #b42318;
+  color: #fff;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, .35);
+}
+
+.client-error-dialog strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+}
+
+.client-error-dialog p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.client-error-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.client-error-close:hover {
+  background: rgba(255, 255, 255, .14);
+}
+
 .section-note {
   margin: 0;
   color: var(--muted);

@@ -33,6 +33,7 @@ export default function ClientPortal({ initialSession }) {
   const [orders, setOrders] = useState([]);
   const [editingOrder, setEditingOrder] = useState(null);
   const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [commentOpen, setCommentOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function ClientPortal({ initialSession }) {
       const sessionData = await sessionRes.json();
       setSession(sessionData);
     }
-    load().catch(() => setMessage("Impossible de charger le catalogue."));
+    load().catch(() => setErrorMessage("Impossible de charger le catalogue."));
   }, [initialSession]);
 
   const grouped = useMemo(() => {
@@ -90,7 +91,7 @@ export default function ClientPortal({ initialSession }) {
     const data = await response.json();
     if (!response.ok) {
       setProducts([]);
-      setMessage(data.error || "Impossible de charger le catalogue.");
+      setErrorMessage(data.error || "Impossible de charger le catalogue.");
       return;
     }
     setProducts(data.products || []);
@@ -114,7 +115,7 @@ export default function ClientPortal({ initialSession }) {
     const data = await response.json();
     if (!response.ok) {
       setOrders([]);
-      setMessage(data.error || "Impossible de charger les commandes.");
+      setErrorMessage(data.error || "Impossible de charger les commandes.");
       return;
     }
     setOrders(data.orders || []);
@@ -133,13 +134,14 @@ export default function ClientPortal({ initialSession }) {
   async function login(event) {
     event.preventDefault();
     setMessage("");
+    setErrorMessage("");
     const response = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "partner", partnerId, code })
     });
     const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Connexion refusee.");
+    if (!response.ok) return setErrorMessage(data.error || "Connexion refusée.");
     setPartner(data.partner);
     localStorage.setItem("atc-partner", JSON.stringify({ partnerId, code, partner: data.partner }));
     await Promise.all([loadProducts(partnerId, code), loadOrders(partnerId, code), loadBaskets(partnerId, code)]);
@@ -167,6 +169,7 @@ export default function ClientPortal({ initialSession }) {
     if (loading) return;
     setLoading(true);
     setMessage("");
+    setErrorMessage("");
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 25000);
     try {
@@ -190,7 +193,7 @@ export default function ClientPortal({ initialSession }) {
         signal: controller.signal
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) return setMessage(data.error || "La commande n’a pas pu être enregistrée.");
+      if (!response.ok) return setErrorMessage(data.error || "La commande n’a pas pu être enregistrée.");
       setQuantities({});
       setBasketQuantities({});
       setComment("");
@@ -200,7 +203,7 @@ export default function ClientPortal({ initialSession }) {
       const deliveryDate = data.delivery?.deliveryDate || data.order?.deliveryDate;
       setMessage(`${isEditing ? "Commande modifiée" : "Commande enregistrée"} pour le ${formatDate(deliveryDate)}.${emailResultMessage(data.email)}`);
     } catch (error) {
-      setMessage(navigator.onLine === false
+      setErrorMessage(navigator.onLine === false
         ? "La connexion internet de cet appareil est interrompue. Actualisez toute la page lorsque la connexion est revenue avant de réessayer."
         : error.name === "AbortError"
         ? "Le serveur met trop de temps à répondre. Actualisez toute la page avant de réessayer : la commande a peut-être déjà été enregistrée."
@@ -233,6 +236,7 @@ export default function ClientPortal({ initialSession }) {
     setComment("");
     setCommentOpen(false);
     setMessage("");
+    setErrorMessage("");
   }
 
   async function deleteOrder(order) {
@@ -240,6 +244,7 @@ export default function ClientPortal({ initialSession }) {
 
     setLoading(true);
     setMessage("");
+    setErrorMessage("");
     const response = await fetch("/api/orders", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -247,7 +252,7 @@ export default function ClientPortal({ initialSession }) {
     });
     const data = await response.json();
     setLoading(false);
-    if (!response.ok) return setMessage(data.error || "Suppression refusee.");
+    if (!response.ok) return setErrorMessage(data.error || "Suppression refusée.");
 
     if (editingOrder?.id === order.id) clearDraft();
     await loadOrders(partnerId, code);
@@ -267,6 +272,14 @@ export default function ClientPortal({ initialSession }) {
         </div>
         <Link className="link-button" href="/admin">Admin</Link>
       </header>
+
+      {errorMessage && <div className="client-error-overlay" role="presentation">
+        <section className="client-error-dialog" role="alertdialog" aria-modal="true" aria-labelledby="client-error-title">
+          <button type="button" className="client-error-close" aria-label="Fermer le message d’erreur" onClick={() => setErrorMessage("")}>×</button>
+          <strong id="client-error-title">Une erreur est survenue</strong>
+          <p>{errorMessage}</p>
+        </section>
+      </div>}
 
       <section className="status-band">
         <div>
