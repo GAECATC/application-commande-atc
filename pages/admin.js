@@ -982,7 +982,7 @@ export default function Admin() {
         </section>}
 
         <section className="client-order-matrix-section">
-          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="matrix-edit-button" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
+          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="ghost matrix-edit-button" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
           <div className="client-order-matrix-wrap">
             <table className="client-order-matrix">
               <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
