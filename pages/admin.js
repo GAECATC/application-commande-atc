@@ -62,6 +62,7 @@ export default function Admin() {
   const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
   const [preparationChecks, setPreparationChecks] = useState({});
+  const [preparationError, setPreparationError] = useState("");
   const [matrixEditingDate, setMatrixEditingDate] = useState("");
   const [matrixDraft, setMatrixDraft] = useState({});
   const [matrixSaving, setMatrixSaving] = useState(false);
@@ -774,17 +775,32 @@ export default function Admin() {
   async function togglePreparationCheck(deliveryDate, itemKey, checked) {
     const stateKey = preparationStateKey(deliveryDate, itemKey);
     setPreparationChecks((current) => ({ ...current, [stateKey]: checked }));
-    try {
-      const response = await fetch("/api/preparation-checklist", {
-        method: "POST", headers,
-        body: JSON.stringify({ deliveryDate, itemKey, checked })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Enregistrement refusé");
-    } catch (error) {
-      setPreparationChecks((current) => ({ ...current, [stateKey]: !checked }));
-      setMessage(error.message || "La coche n’a pas pu être enregistrée.");
+    setPreparationError("");
+    let failure = "La coche n’a pas pu être enregistrée.";
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch("/api/preparation-checklist", {
+          method: "POST",
+          headers,
+          cache: "no-store",
+          body: JSON.stringify({ deliveryDate, itemKey, checked })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok) {
+          setPreparationChecks((current) => ({ ...current, [stateKey]: data.checked === true }));
+          return;
+        }
+        failure = data.error || `Le serveur a refusé l’enregistrement (erreur ${response.status}).`;
+        if (response.status === 401) break;
+      } catch (error) {
+        failure = navigator.onLine === false
+          ? "La tablette n’est plus connectée à Internet."
+          : `Le serveur n’a pas répondu${error?.message ? ` : ${error.message}` : "."}`;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
     }
+    setPreparationChecks((current) => ({ ...current, [stateKey]: !checked }));
+    setPreparationError(`${failure} La case a été remise dans son état précédent afin de ne pas afficher une validation non enregistrée.`);
   }
 
   function startMatrixEdit(deliverySummary, orderMatrix) {
@@ -940,6 +956,13 @@ export default function Admin() {
         <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
         <strong>{emailNotice.text}</strong>
         <button type="button" aria-label="Fermer le message" onClick={() => setEmailNotice(null)}>×</button>
+      </div>}
+      {preparationError && <div className="admin-error-overlay" role="presentation">
+        <section className="admin-error-dialog" role="alertdialog" aria-modal="true" aria-labelledby="preparation-error-title">
+          <button type="button" aria-label="Fermer le message d’erreur" onClick={() => setPreparationError("")}>×</button>
+          <strong id="preparation-error-title">La validation n’a pas été enregistrée</strong>
+          <p>{preparationError}</p>
+        </section>
       </div>}
 
       <section className={`print-report admin-workspace ${adminView === "orders" ? "active" : ""}`}>
