@@ -994,8 +994,15 @@ export default function Admin() {
 
         {crateSummary.length > 0 && <section className="crate-summary">
           <h3>Caisses à prévoir</h3>
+          {saladCrates.length > 0 && <div className="crate-salad-details">
+            {saladCrates.map((row) => <div key={row.id}>
+              <input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} en caisses ${row.type}s`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
+              <strong>{row.name}</strong>
+              <span>{row.fullCrates} caisse{row.fullCrates === 1 ? "" : "s"} {row.type}{row.fullCrates === 1 ? "" : "s"}{row.remainder > 0 ? ` + ${formatNumber(row.remainder)} laitue${row.remainder === 1 ? "" : "s"}` : ""}</span>
+            </div>)}
+          </div>}
           {saladCrates.length > 0 && <p className="crate-salad-total">
-            <strong>Caisses de laitues à charger :</strong> {formatSaladCrateTotal(saladCrates)}
+            <strong>Total des caisses de laitues à charger :</strong> {formatSaladCrateTotal(saladCrates)}
           </p>}
           <div className="crate-summary-list">{otherCrates.map((row) => <div key={row.id}>
             <input className="mobile-prep-check" type="checkbox" aria-label={`Valider les caisses de ${row.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `crate:${row.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `crate:${row.id}`, event.target.checked)} />
@@ -1629,13 +1636,11 @@ function formatNumber(value) {
 
 function formatSaladCrateTotal(rows) {
   return ["rouge", "verte"].map((type) => {
-    const row = rows.find((item) => item.type === type);
-    if (!row || row.quantity <= 0) return null;
-    const crateCount = Math.ceil(row.quantity / row.capacity);
-    const partial = row.remainder > 0
-      ? ` (dernière : ${formatNumber(row.remainder)} laitue${row.remainder === 1 ? "" : "s"})`
-      : "";
-    return `${crateCount} caisse${crateCount === 1 ? "" : "s"} ${type}${crateCount === 1 ? "" : "s"}${partial}`;
+    const crateCount = rows
+      .filter((item) => item.type === type)
+      .reduce((sum, item) => sum + Math.ceil(item.quantity / item.capacity), 0);
+    if (!crateCount) return null;
+    return `${crateCount} caisse${crateCount === 1 ? "" : "s"} ${type}${crateCount === 1 ? "" : "s"}`;
   }).filter(Boolean).join(" · ");
 }
 
