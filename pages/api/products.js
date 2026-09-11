@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         }
         const allocationByProduct = new Map(allocations.map((item) => [item.productId, item]));
         products = products
-          .filter((product) => allocationByProduct.get(product.id)?.visible !== false && allocationByProduct.has(product.id))
+          .filter((product) => product.active && allocationByProduct.get(product.id)?.visible !== false && allocationByProduct.has(product.id))
           .map((product) => {
             const allocationQuantity = Number(allocationByProduct.get(product.id).quantity);
             return {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
-const { getProductSeasons, isFreshProduce } = require("@/lib/product-seasons");
+const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import Image from "next/image";
 const { buildCrateSummary } = require("@/lib/crate-summary");
@@ -69,7 +69,7 @@ export default function Admin() {
   const [savingBasket, setSavingBasket] = useState(false);
   const [basketCatalog, setBasketCatalog] = useState([]);
   const [loadingBasketCatalog, setLoadingBasketCatalog] = useState(false);
-  const [basketSeason, setBasketSeason] = useState("ete");
+  const [basketCategory, setBasketCategory] = useState("tous");
   const [basketSearch, setBasketSearch] = useState("");
   const [summary, setSummary] = useState(null);
   const [preparationChecks, setPreparationChecks] = useState({});
@@ -173,12 +173,23 @@ export default function Admin() {
     return basketCatalog
       .filter(isFreshProduce)
       .filter((product) => {
-        if (basketSeason === "selectionnes") return Number(basketDraft.items[product.id] || 0) > 0;
-        if (basketSeason !== "tous" && !getProductSeasons(product).includes(basketSeason)) return false;
+        if (basketCategory === "selectionnes") return Number(basketDraft.items[product.id] || 0) > 0;
+        if (basketCategory !== "tous" && product.category !== basketCategory) return false;
         return !search || product.name.toLocaleLowerCase("fr").includes(search);
       })
       .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base", numeric: true }));
-  }, [basketCatalog, basketDraft.items, basketSeason, basketSearch]);
+  }, [basketCatalog, basketDraft.items, basketCategory, basketSearch]);
+  const basketCategories = useMemo(() => {
+    const present = new Set(basketCatalog.filter(isFreshProduce).map((product) => product.category).filter(Boolean));
+    return [...present].sort((categoryA, categoryB) => {
+      const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
+      const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
+      if (indexA === -1 && indexB === -1) return categoryA.localeCompare(categoryB, "fr");
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [basketCatalog]);
   const basketEstimatedPrice = useMemo(() => basketCatalog.reduce(
     (sum, product) => sum + Number(basketDraft.items[product.id] || 0) * Number(product.price || 0),
     0
@@ -342,6 +353,7 @@ export default function Admin() {
   }
 
   function editBasket(basket) {
+    setBasketCategory("selectionnes");
     setBasketDraft({
       id: basket.id,
       name: basket.name,
@@ -365,6 +377,7 @@ export default function Admin() {
     setSavingBasket(false);
     if (!response.ok) return setMessage(data.error || "Enregistrement du panier refusé.");
     setBasketDraft(emptyBasket);
+    setBasketCategory("tous");
     setMessage("Panier enregistré.");
     await loadAdminData();
   }
@@ -403,7 +416,7 @@ export default function Admin() {
     if (!partner) return setMessage(selectedGroup ? "Aucun client actif n’a été trouvé dans ce groupe." : "Client introuvable.");
     const adminHeaders = { "x-admin-password": pass };
     const [productRes, availabilityResults] = await Promise.all([
-      fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
+      fetch(`/api/products?priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
       Promise.all(targetPartners.map(async (target) => {
         const response = await fetch(`/api/availability?partnerId=${encodeURIComponent(target.id)}`, { headers: adminHeaders });
         return { target, response, data: await response.json() };
@@ -1136,19 +1149,16 @@ export default function Admin() {
         </div>
         <div className="basket-admin-form">
           <label>Nom du panier<input value={basketDraft.name} onChange={(event) => setBasketDraft((current) => ({ ...current, name: event.target.value }))} placeholder="Ex. Panier tomate" /></label>
-          <label>Client<select value={basketDraft.partnerId} onChange={(event) => setBasketDraft((current) => ({ ...current, partnerId: event.target.value }))}>
+          <label>Client<select value={basketDraft.partnerId} onChange={(event) => { setBasketCategory("tous"); setBasketDraft((current) => ({ ...current, partnerId: event.target.value })); }}>
             <option value="">Choisir un client</option>
             {partners.filter((partner) => partner.active).map((partner) => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
           </select></label>
           <label className="toggle"><input type="checkbox" checked={basketDraft.active} onChange={(event) => setBasketDraft((current) => ({ ...current, active: event.target.checked }))} />Actif</label>
         </div>
         <div className="basket-product-toolbar">
-          <div className="basket-season-tabs" aria-label="Filtrer les légumes par saison">
-            {[
-              ["printemps", "Printemps"], ["ete", "Été"], ["automne", "Automne"], ["hiver", "Hiver"],
-              ["tous", "Tous les légumes"], ["selectionnes", "Sélectionnés"]
-            ].map(([value, label]) => (
-              <button className={basketSeason === value ? "active" : ""} type="button" key={value} onClick={() => setBasketSeason(value)}>{label}</button>
+          <div className="basket-season-tabs" aria-label="Filtrer les légumes par catégorie">
+            {[["tous", "Tous les légumes"], ...basketCategories.map((category) => [category, category]), ["selectionnes", "Sélectionnés"]].map(([value, label]) => (
+              <button className={basketCategory === value ? "active" : ""} type="button" key={value} onClick={() => setBasketCategory(value)}>{label}</button>
             ))}
           </div>
           <input type="search" value={basketSearch} onChange={(event) => setBasketSearch(event.target.value)} placeholder="Rechercher un légume" aria-label="Rechercher un légume" />
