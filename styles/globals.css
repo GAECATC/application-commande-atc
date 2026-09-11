@@ -643,6 +643,8 @@ form {
 .client-order-matrix td { padding: 9px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
 .client-order-matrix th:first-child { min-width: 170px; text-align: left; }
 .client-order-matrix thead th { background: #eaf4d8; }
+.client-order-matrix th.client-column { background: var(--client-column-head); border-color: var(--client-column-border); }
+.client-order-matrix td.client-column { background: var(--client-column-bg); border-color: var(--client-column-border); }
 .client-order-matrix tbody tr:nth-child(even) { background: #fafcf7; }
 .client-order-matrix tr > :last-child { border-right: 0; }
 .client-order-matrix tbody tr:last-child > * { border-bottom: 0; }
@@ -673,6 +675,12 @@ form {
   .crate-salad-details > div:has(.mobile-prep-check:checked),
   .matrix-check-cell:has(.mobile-prep-check:checked) { opacity: .55; text-decoration: line-through; }
   .matrix-check-cell { display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .client-order-matrix-wrap { position: relative; max-height: min(68vh, 720px); overflow: auto; overscroll-behavior: contain; }
+  .client-order-matrix { width: max-content; min-width: 100%; }
+  .client-order-matrix thead th { position: sticky; top: 0; z-index: 4; min-width: 125px; box-shadow: 0 1px 0 var(--line); }
+  .client-order-matrix th:first-child { position: sticky; left: 0; z-index: 3; background: #f4f8ea; box-shadow: 1px 0 0 var(--line); }
+  .client-order-matrix thead th:first-child { z-index: 6; }
+  .client-order-matrix tbody tr:nth-child(even) th:first-child { background: #f8faf5; }
 }
 
 .orders-list {
@@ -1803,6 +1811,7 @@ form {
   .client-order-matrix td { font-weight: 600; }
   .client-order-matrix thead th,
   .client-order-matrix tbody tr:nth-child(even) { background: #fff; }
+  .client-order-matrix .client-column { background: #fff !important; }
 
   .harvest-baskets { margin: 4mm 0 0; }
   .harvest-basket-grid { display: flex; flex-wrap: wrap; gap: 3mm 8mm; }

@@ -38,8 +38,19 @@ function buildOrderMatrix(orders) {
   }
 
   return {
-    clients,
+    clients: clients.sort((clientA, clientB) => clientA.name.localeCompare(clientB.name, "fr", { sensitivity: "base", numeric: true })),
     rows: Array.from(rowsByProduct.values()).sort((itemA, itemB) => itemA.name.localeCompare(itemB.name, "fr", { sensitivity: "base", numeric: true }))
+  };
+}
+
+function clientColumnStyle(clientId) {
+  let hash = 0;
+  for (const character of String(clientId || "")) hash = ((hash * 31) + character.codePointAt(0)) >>> 0;
+  const hue = (hash * 137.508) % 360;
+  return {
+    "--client-column-bg": `hsl(${hue.toFixed(0)} 52% 95%)`,
+    "--client-column-head": `hsl(${hue.toFixed(0)} 50% 87%)`,
+    "--client-column-border": `hsl(${hue.toFixed(0)} 34% 76%)`
   };
 }
 
@@ -1015,12 +1026,12 @@ export default function Admin() {
           <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="ghost matrix-edit-button" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
           <div className="client-order-matrix-wrap">
             <table className="client-order-matrix">
-              <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
+              <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th className="client-column" style={clientColumnStyle(client.id)} scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
               <tbody>{orderMatrix.rows.map((row) => <tr key={row.id}>
                 <th scope="row">{row.name}</th>
                 {orderMatrix.clients.map((client) => {
                   const quantity = matrixEditing ? Number(matrixDraft[matrixValueKey(row.id, client.id)] || 0) : Number(row.quantities[client.id] || 0);
-                  return <td key={client.id}>{matrixEditing || quantity > 0 ? <label className="matrix-check-cell"><input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} pour ${client.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`, event.target.checked)} />{matrixEditing ? <span className="matrix-quantity-editor"><input type="number" min="0" step={row.unit === "kg" ? "0.1" : "1"} value={matrixDraft[matrixValueKey(row.id, client.id)] || ""} onChange={(event) => setMatrixDraft((current) => ({ ...current, [matrixValueKey(row.id, client.id)]: event.target.value }))} /><small>{unitLabel(row.unit)}</small></span> : <span>{formatNumber(quantity)} {unitLabel(row.unit)}</span>}</label> : "—"}</td>;
+                  return <td className="client-column" style={clientColumnStyle(client.id)} key={client.id}>{matrixEditing || quantity > 0 ? <label className="matrix-check-cell"><input className="mobile-prep-check" type="checkbox" aria-label={`Valider ${row.name} pour ${client.name}`} checked={Boolean(preparationChecks[preparationStateKey(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`)])} onChange={(event) => togglePreparationCheck(deliverySummary.deliveryDate, `client:${row.id}:${client.id}`, event.target.checked)} />{matrixEditing ? <span className="matrix-quantity-editor"><input type="number" min="0" step={row.unit === "kg" ? "0.1" : "1"} value={matrixDraft[matrixValueKey(row.id, client.id)] || ""} onChange={(event) => setMatrixDraft((current) => ({ ...current, [matrixValueKey(row.id, client.id)]: event.target.value }))} /><small>{unitLabel(row.unit)}</small></span> : <span>{formatNumber(quantity)} {unitLabel(row.unit)}</span>}</label> : "—"}</td>;
                 })}
               </tr>)}</tbody>
             </table>
