@@ -12,9 +12,13 @@ export default async function handler(req, res) {
 
   const requestedDeliveryDate = req.query.deliveryDate;
   const deliveryDate = requestedDeliveryDate || getNextDelivery().deliveryDate;
-  const orders = await getOrders({ deliveryDate: requestedDeliveryDate || undefined });
-  const partners = await getPartners();
+  const [orders, partners, catalogProducts] = await Promise.all([
+    getOrders({ deliveryDate: requestedDeliveryDate || undefined }),
+    getPartners(),
+    getProducts({ includeHidden: true })
+  ]);
   const partnerById = new Map(partners.map((partner) => [partner.id, partner.name]));
+  const currentProductNameById = new Map(catalogProducts.map((product) => [product.id, product.name]));
   const legacyBasketCache = new Map();
   const namedOrders = await Promise.all(orders.map(async (order) => {
     let baskets = order.baskets || [];
@@ -31,7 +35,14 @@ export default async function handler(req, res) {
       }
       baskets = enrichBasketProductIds(baskets, legacyBasketCache.get(order.partnerId));
     }
-    return completeOrderFromBaskets({ ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId });
+    const completedOrder = completeOrderFromBaskets({ ...order, baskets, partnerName: partnerById.get(order.partnerId) || order.partnerId });
+    return {
+      ...completedOrder,
+      items: completedOrder.items.map((item) => ({
+        ...item,
+        productName: currentProductNameById.get(item.productId) || item.productName
+      }))
+    };
   }));
   const ordersByDeliveryDate = new Map();
   for (const order of namedOrders) {
