@@ -11,7 +11,8 @@
     "db:import:mysql": "node scripts/import-json-to-mysql.js",
     "db:import:basket-prices": "node scripts/import-basket-prices.js",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "mysql2": "^3.24.2",

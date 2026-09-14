@@ -3,7 +3,7 @@ const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import Image from "next/image";
-const { buildCrateSummary } = require("@/lib/crate-summary");
+const { buildCrateSummary, countSaladCratesByType } = require("@/lib/crate-summary");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
@@ -1656,10 +1656,9 @@ function formatNumber(value) {
 }
 
 function formatSaladCrateTotal(rows) {
+  const counts = countSaladCratesByType(rows);
   return ["rouge", "verte"].map((type) => {
-    const crateCount = rows
-      .filter((item) => item.type === type)
-      .reduce((sum, item) => sum + Math.ceil(item.quantity / item.capacity), 0);
+    const crateCount = counts[type];
     if (!crateCount) return null;
     return `${crateCount} caisse${crateCount === 1 ? "" : "s"} ${type}${crateCount === 1 ? "" : "s"}`;
   }).filter(Boolean).join(" · ");

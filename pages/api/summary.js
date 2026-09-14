@@ -40,6 +40,7 @@ export default async function handler(req, res) {
       ...completedOrder,
       items: completedOrder.items.map((item) => ({
         ...item,
+        originalProductName: item.productName,
         productName: currentProductNameById.get(item.productId) || item.productName
       }))
     };
