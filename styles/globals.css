@@ -1430,6 +1430,7 @@ form {
   .topbar h1 { font-size: 1.7rem; }
   .topbar .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
   .topbar .actions > :first-child { grid-column: 1 / -1; }
+  .topbar .actions > .admin-logout-button { grid-column: 1 / -1; }
   .harvest-total-list { grid-template-columns: 1fr; }
   .mobile-prep-check { display: block; width: 22px; min-width: 22px; height: 22px; margin: 0; accent-color: var(--primary); }
   .harvest-total-row { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }

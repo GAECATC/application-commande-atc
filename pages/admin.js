@@ -274,6 +274,13 @@ export default function Admin() {
     await loadAdminData(password);
   }
 
+  function logout() {
+    localStorage.removeItem("atc-admin-password");
+    setPassword("");
+    setAuthenticated(false);
+    window.location.replace("/admin");
+  }
+
   async function loadAdminData(pass = password, forcedPriceListId = selectedPriceListId) {
     const adminHeaders = { "x-admin-password": pass };
     const sessionRes = await fetch("/api/session", { headers: adminHeaders });
@@ -955,6 +962,7 @@ export default function Admin() {
           <Link className="link-button" href="/admin/historique">Historique des commandes</Link>
           <button className="ghost" onClick={() => loadAdminData()}>Actualiser</button>
           <button className="primary" onClick={() => window.print()}>Imprimer / PDF</button>
+          <button className="ghost admin-logout-button" type="button" onClick={logout}>Déconnexion</button>
         </div>
       </header>
 
