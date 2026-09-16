@@ -1,4 +1,4 @@
-const { deleteProduct, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct } = require("@/lib/db");
+const { deleteProduct, deleteProductPrice, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct, upsertProductPrice } = require("@/lib/db");
 const { isAdmin, requireAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 
@@ -78,22 +78,30 @@ export default async function handler(req, res) {
       name: product.name,
       category: product.category,
       unit: product.unit,
-      price: Number(product.price || 0),
       stock: Number(product.stock || 0),
-      sortOrder: Number(product.sortOrder || 100),
-      priceListId: product.priceListId
+      sortOrder: Number(product.sortOrder || 100)
     };
-    if (Object.hasOwn(product, "active")) payload.active = Boolean(product.active);
+    // Dans l'administration, l'appartenance à une grille est portée par la ligne
+    // product_prices. Une référence ajoutée à une grille doit rester active dans le
+    // catalogue maître, sans qu'un retrait d'une autre grille puisse la désactiver.
+    if (product.priceListId && product.listed !== false) payload.active = true;
+    else if (!product.priceListId && Object.hasOwn(product, "active")) payload.active = Boolean(product.active);
 
     const saved = await upsertProduct(payload);
+    if (product.priceListId) {
+      if (product.listed === false) await deleteProductPrice(product.priceListId, id);
+      else await upsertProductPrice(product.priceListId, id, Number(product.price || 0));
+    }
     return res.status(200).json({ product: saved });
   }
 
   if (req.method === "DELETE") {
     if (!requireAdmin(req, res)) return;
-    const { id } = req.body || {};
+    const { id, priceListId } = req.body || {};
     try {
-      const deleted = await deleteProduct(id);
+      const deleted = priceListId
+        ? await deleteProductPrice(priceListId, id)
+        : await deleteProduct(id);
       return res.status(200).json({ product: deleted });
     } catch (error) {
       const status = error.message === "Produit introuvable" ? 404 : 400;

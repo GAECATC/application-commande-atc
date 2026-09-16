@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
@@ -109,6 +109,7 @@ export default function Admin() {
   const [sendAvailabilityEmail, setSendAvailabilityEmail] = useState(true);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
   const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
+  const [temporaryAvailabilityIds, setTemporaryAvailabilityIds] = useState([]);
   const [clientGroups, setClientGroups] = useState([]);
   const [clientGroupDraft, setClientGroupDraft] = useState(emptyClientGroup);
   const [clientGroupsOpen, setClientGroupsOpen] = useState(false);
@@ -124,6 +125,7 @@ export default function Admin() {
   const [catalogSearch, setCatalogSearch] = useState("");
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState({});
   const [adminView, setAdminView] = useState("orders");
+  const availabilityLoadRequest = useRef(0);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -399,7 +401,8 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  async function loadAvailability(partnerId, pass = password, selectedTargetIds = null) {
+  async function loadAvailability(partnerId, pass = password, selectedTargetIds = null, temporaryTargetIds = null) {
+    const requestId = ++availabilityLoadRequest.current;
     setAvailabilityPartnerId(partnerId);
     setAvailabilityDeliveryDate("");
     setAllocationDraft({});
@@ -416,11 +419,19 @@ export default function Admin() {
     const selectedGroup = partnerId.startsWith("group:")
       ? clientGroups.find((group) => group.id === partnerId.slice(6))
       : null;
-    const targetPartners = selectedGroup
-      ? selectedGroup.memberIds.map((id) => partners.find((partner) => partner.id === id)).filter(Boolean)
-      : partners.filter((item) => item.id === partnerId);
+    const temporaryIds = partnerId === "temporary"
+      ? (Array.isArray(temporaryTargetIds) ? temporaryTargetIds : temporaryAvailabilityIds)
+      : [];
+    const targetPartners = partnerId === "temporary"
+      ? temporaryIds.map((id) => partners.find((partner) => partner.id === id && partner.active)).filter(Boolean)
+      : selectedGroup
+        ? selectedGroup.memberIds.map((id) => partners.find((partner) => partner.id === id && partner.active)).filter(Boolean)
+        : partners.filter((item) => item.id === partnerId);
     const partner = targetPartners[0];
-    if (!partner) return setMessage(selectedGroup ? "Aucun client actif n’a été trouvé dans ce groupe." : "Client introuvable.");
+    if (!partner) {
+      if (partnerId === "temporary") return setAvailabilityProducts([]);
+      return setMessage(selectedGroup ? "Aucun client actif n’a été trouvé dans ce groupe." : "Client introuvable.");
+    }
     const adminHeaders = { "x-admin-password": pass };
     const [productRes, availabilityResults] = await Promise.all([
       fetch(`/api/products?priceListId=${encodeURIComponent(partner.priceListId)}`, { headers: adminHeaders }),
@@ -432,6 +443,7 @@ export default function Admin() {
     const productData = await productRes.json();
     const sourceResult = availabilityResults[0];
     const availabilityData = sourceResult?.data || {};
+    if (requestId !== availabilityLoadRequest.current) return;
     if (!productRes.ok || availabilityResults.some((result) => !result.response.ok)) {
       setMessage(productData.error || availabilityData.error || "Disponibilités impossibles à charger.");
       return;
@@ -486,8 +498,15 @@ export default function Admin() {
     const sentCount = results.filter((result) => result.data.email?.sent).length;
     const emailFailureCount = sendAvailabilityEmail ? results.length - sentCount : 0;
     const excludedTargets = availabilityTargets.filter((target) => !availabilityTargetIds.includes(target.id));
-    setMessage(`${availabilityPartnerId.startsWith("group:") ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s) du groupe.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
-    await loadAvailability(availabilityPartnerId, password, availabilityTargetIds);
+    const isSavedGroup = availabilityPartnerId.startsWith("group:");
+    const isTemporaryGroup = availabilityPartnerId === "temporary";
+    setMessage(`${isSavedGroup || isTemporaryGroup ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s)${isSavedGroup ? " du groupe" : " de la sélection ponctuelle"}.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
+    if (isTemporaryGroup) {
+      setTemporaryAvailabilityIds([]);
+      await loadAvailability("");
+    } else {
+      await loadAvailability(availabilityPartnerId, password, availabilityTargetIds);
+    }
   }
 
   async function saveProduct(product) {
@@ -647,20 +666,21 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  async function deleteProduct(product) {
-    if (!window.confirm(`Supprimer le produit "${product.name}" ?`)) return;
+  async function removeProductFromPriceList(product) {
+    const selectedPriceList = priceLists.find((priceList) => priceList.id === selectedPriceListId);
+    if (!selectedPriceList || !window.confirm(`Retirer « ${product.name} » uniquement de la grille « ${selectedPriceList.name} » ? Le produit et ses prix dans les autres grilles seront conservés.`)) return;
 
     const response = await fetch("/api/products", {
       method: "DELETE",
       headers,
-      body: JSON.stringify({ id: product.id })
+      body: JSON.stringify({ id: product.id, priceListId: selectedPriceListId })
     });
     const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Suppression refusee.");
+    if (!response.ok) return setMessage(data.error || "Retrait de la grille refusé.");
 
     setDirtyProductIds((current) => current.filter((id) => id !== product.id));
-    setMessage("Produit supprime.");
-    await loadAdminData();
+    setMessage(`« ${product.name} » a été retiré uniquement de la grille « ${selectedPriceList.name} ».`);
+    await loadAdminData(password, selectedPriceListId);
   }
 
   function updatePartnerDraft(partnerKey, nextPartner) {
@@ -1255,8 +1275,18 @@ export default function Admin() {
         </div>}
         <label className="compact-label availability-client-select">
           Client
-          <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
+          <select value={availabilityPartnerId} onChange={(event) => {
+            const nextValue = event.target.value;
+            if (nextValue === "temporary") {
+              setTemporaryAvailabilityIds([]);
+              loadAvailability(nextValue, password, [], []);
+            } else {
+              setTemporaryAvailabilityIds([]);
+              loadAvailability(nextValue);
+            }
+          }}>
             <option value="">Choisir un client</option>
+            <option value="temporary">Sélection ponctuelle — plusieurs clients</option>
             {clientGroups.length > 0 && <optgroup label="Groupes">
               {clientGroups.map((group) => <option key={group.id} value={`group:${group.id}`}>{group.name} — {group.memberIds.length} client(s)</option>)}
             </optgroup>}
@@ -1267,7 +1297,25 @@ export default function Admin() {
             </optgroup>
           </select>
         </label>
-        {availabilityPartnerId && (
+        {availabilityPartnerId === "temporary" && <div className="availability-group-targets temporary-availability-targets">
+          <div>
+            <strong>Sélection ponctuelle</strong>
+            <span>Cochez les clients qui recevront cette même liste. Cette sélection sera effacée juste après l’enregistrement.</span>
+          </div>
+          <div className="availability-target-list">
+            {partners.filter((partner) => partner.active).map((partner) => <label key={partner.id}>
+              <input type="checkbox" checked={temporaryAvailabilityIds.includes(partner.id)} onChange={(event) => {
+                const nextIds = event.target.checked
+                  ? [...temporaryAvailabilityIds, partner.id]
+                  : temporaryAvailabilityIds.filter((id) => id !== partner.id);
+                setTemporaryAvailabilityIds(nextIds);
+                loadAvailability("temporary", password, nextIds, nextIds);
+              }} />
+              {partner.name}
+            </label>)}
+          </div>
+        </div>}
+        {availabilityPartnerId && availabilityTargetIds.length > 0 && (
           <>
             {availabilityPartnerId.startsWith("group:") && <div className="availability-group-targets">
               <div><strong>Clients concernés par cette mise à jour</strong><span>La liste affichée prend {availabilityTargets[0]?.name || "le premier client"} comme modèle. Décochez un client pour préserver sa liste personnalisée ; ses tarifs ne seront jamais modifiés.</span></div>
@@ -1477,7 +1525,7 @@ export default function Admin() {
           <span>Unité</span>
           <span>Prix</span>
           <span>Volume disponible</span>
-          <span>Visible</span>
+          <span>Dans la grille</span>
           <span>Action</span>
         </div>
         <div className="catalog-navigation">
@@ -1499,7 +1547,7 @@ export default function Admin() {
                     product={product}
                     categories={categoryOptions}
                     onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
-                    onDelete={() => deleteProduct(product)}
+                    onDelete={product.listed !== false ? () => removeProductFromPriceList(product) : undefined}
                   />
                 ))}
               </div>
@@ -1517,7 +1565,7 @@ export default function Admin() {
                 <svg className={`clients-chevron ${open ? "open" : ""}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {open && <div className="admin-products">
-                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onDelete={() => deleteProduct(product)} />)}
+                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onDelete={product.listed !== false ? () => removeProductFromPriceList(product) : undefined} />)}
               </div>}
             </section>;
           })}
@@ -1646,10 +1694,10 @@ function ProductForm({ value, categories, onChange, onSubmit, onDelete, showSubm
         </span>
       </label>
       <label className="toggle product-visible-field">
-        <input type="checkbox" checked={value.active} onChange={(event) => patch("active", event.target.checked)} />
-        Visible
+        <input type="checkbox" checked={value.listed !== false} onChange={(event) => patch("listed", event.target.checked)} />
+        Dans cette grille
       </label>
-      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Supprimer</button>}
+      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Retirer de la grille</button>}
       {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );
