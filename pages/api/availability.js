@@ -1,4 +1,5 @@
 const {
+  DEFAULT_AVAILABILITY_DATE,
   getOrders,
   getAvailabilityMessage,
   getPartners,
@@ -10,6 +11,7 @@ const {
 const { sendAvailabilityNotice } = require("@/lib/mailer");
 const { isAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
+const { resolveAvailabilitySource } = require("@/lib/availability-scope");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -25,9 +27,11 @@ export default async function handler(req, res) {
       if (!partner) return res.status(401).json({ error: "Connexion partenaire requise" });
     }
     const currentAllocations = await getProductAllocations({ partnerId, deliveryDate });
-    const allocations = currentAllocations.length
-      ? currentAllocations
+    const habitualAllocations = await getProductAllocations({ partnerId, deliveryDate: DEFAULT_AVAILABILITY_DATE });
+    const previousAllocations = currentAllocations.length || habitualAllocations.length
+      ? []
       : await getProductAllocations({ partnerId, deliveryDate, inheritPrevious: true });
+    const { allocations, source } = resolveAvailabilitySource(currentAllocations, habitualAllocations, previousAllocations);
     const orders = await getOrders({ partnerId, deliveryDate });
     const message = await getAvailabilityMessage({ partnerId, deliveryDate });
     const orderedByProduct = {};
@@ -39,7 +43,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       deliveryDate,
       configured: currentAllocations.length > 0,
+      habitualConfigured: habitualAllocations.length > 0,
       inherited: currentAllocations.length === 0 && allocations.length > 0,
+      source,
       allocations,
       message,
       orderedByProduct
@@ -57,7 +63,12 @@ export default async function handler(req, res) {
         visible: item.visible !== false
       }));
     try {
-      const saved = await replaceProductAllocations({ partnerId, deliveryDate, allocations });
+      const scope = req.body?.scope === "habitual" ? "habitual" : "delivery";
+      const saved = await replaceProductAllocations({
+        partnerId,
+        deliveryDate: scope === "habitual" ? DEFAULT_AVAILABILITY_DATE : deliveryDate,
+        allocations
+      });
       const message = String(req.body?.message || "").trim().slice(0, 2000);
       await saveAvailabilityMessage({ partnerId, deliveryDate, message });
       const partner = (await getPartners()).find((item) => item.id === partnerId);
@@ -69,7 +80,7 @@ export default async function handler(req, res) {
           email = { sent: false, skipped: false, error: mailError.message || "Envoi du mail impossible" };
         }
       }
-      return res.status(200).json({ allocations: saved, message, email });
+      return res.status(200).json({ allocations: saved, message, email, scope });
     } catch (error) {
       const missingTable = error.code === "ER_NO_SUCH_TABLE";
       return res.status(400).json({ error: missingTable ? "Table des disponibilités non installée" : error.message });

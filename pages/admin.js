@@ -105,6 +105,9 @@ export default function Admin() {
   const [orderedByProduct, setOrderedByProduct] = useState({});
   const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
   const [availabilityInherited, setAvailabilityInherited] = useState(false);
+  const [availabilitySource, setAvailabilitySource] = useState("general");
+  const [availabilitySaveScope, setAvailabilitySaveScope] = useState("delivery");
+  const [availabilitySelectionMode, setAvailabilitySelectionMode] = useState("single");
   const [availabilityMessage, setAvailabilityMessage] = useState("");
   const [sendAvailabilityEmail, setSendAvailabilityEmail] = useState(true);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
@@ -411,6 +414,7 @@ export default function Admin() {
     setOrderedByProduct({});
     setAvailabilityConfigured(false);
     setAvailabilityInherited(false);
+    setAvailabilitySource("general");
     setAvailabilityMessage("");
     setAvailabilityTargets([]);
     setAvailabilityTargetIds([]);
@@ -448,11 +452,18 @@ export default function Admin() {
       setMessage(productData.error || availabilityData.error || "Disponibilités impossibles à charger.");
       return;
     }
-    setAvailabilityTargets(availabilityResults.map(({ target, data }) => ({ id: target.id, name: target.name, deliveryDate: data.deliveryDate })));
+    setAvailabilityTargets(availabilityResults.map(({ target, data }) => ({
+      id: target.id,
+      name: target.name,
+      deliveryDate: data.deliveryDate,
+      configuredForDelivery: Boolean(data.configured)
+    })));
     const availableTargetIds = targetPartners.map((target) => target.id);
     setAvailabilityTargetIds(Array.isArray(selectedTargetIds)
       ? availableTargetIds.filter((id) => selectedTargetIds.includes(id))
-      : availableTargetIds);
+      : selectedGroup
+        ? availabilityResults.filter(({ data }) => !data.configured).map(({ target }) => target.id)
+        : availableTargetIds);
     setAvailabilityProducts(productData.products || []);
     setAvailabilityDeliveryDate(availabilityData.deliveryDate || "");
     const savedAllocations = availabilityData.allocations || [];
@@ -472,6 +483,7 @@ export default function Admin() {
     setOrderedByProduct(availabilityData.orderedByProduct || {});
     setAvailabilityConfigured(Boolean(availabilityData.configured));
     setAvailabilityInherited(Boolean(availabilityData.inherited));
+    setAvailabilitySource(availabilityData.source || "general");
     setAvailabilityMessage(availabilityData.message || "");
   }
 
@@ -488,7 +500,14 @@ export default function Admin() {
       const response = await fetch("/api/availability", {
         method: "POST",
         headers,
-        body: JSON.stringify({ partnerId: target.id, deliveryDate: target.deliveryDate, allocations, message: availabilityMessage, sendEmail: sendAvailabilityEmail })
+        body: JSON.stringify({
+          partnerId: target.id,
+          deliveryDate: target.deliveryDate,
+          allocations,
+          message: availabilityMessage,
+          sendEmail: sendAvailabilityEmail,
+          scope: availabilitySelectionMode === "single" ? availabilitySaveScope : "delivery"
+        })
       });
       return { response, data: await response.json() };
     }));
@@ -500,7 +519,12 @@ export default function Admin() {
     const excludedTargets = availabilityTargets.filter((target) => !availabilityTargetIds.includes(target.id));
     const isSavedGroup = availabilityPartnerId.startsWith("group:");
     const isTemporaryGroup = availabilityPartnerId === "temporary";
-    setMessage(`${isSavedGroup || isTemporaryGroup ? `Disponibilités enregistrées pour ${availabilityTargetIds.length} client(s)${isSavedGroup ? " du groupe" : " de la sélection ponctuelle"}.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}` : "Disponibilités client enregistrées."}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
+    const savedScope = availabilitySelectionMode === "single" && availabilitySaveScope === "habitual"
+      ? "Liste habituelle enregistrée."
+      : isSavedGroup || isTemporaryGroup
+        ? `Disponibilités de cette livraison enregistrées pour ${availabilityTargetIds.length} client(s)${isSavedGroup ? " du groupe" : " de la sélection ponctuelle"}.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}`
+        : "Disponibilités de cette livraison enregistrées pour ce client.";
+    setMessage(`${savedScope}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
     if (isTemporaryGroup) {
       setTemporaryAvailabilityIds([]);
       await loadAvailability("");
@@ -1273,31 +1297,38 @@ export default function Admin() {
             {!clientGroups.length && <p>Aucun groupe créé pour le moment.</p>}
           </div>
         </div>}
-        <label className="compact-label availability-client-select">
-          Client
-          <select value={availabilityPartnerId} onChange={(event) => {
-            const nextValue = event.target.value;
-            if (nextValue === "temporary") {
+        <div className="availability-recipient-picker">
+          <strong>À qui appliquer cette liste ?</strong>
+          <div className="availability-mode-tabs" role="group" aria-label="Mode de sélection des clients">
+            {[
+              ["single", "Un client"],
+              ["multiple", "Plusieurs clients"],
+              ["saved", "Groupe enregistré"]
+            ].map(([mode, label]) => <button className={availabilitySelectionMode === mode ? "active" : ""} type="button" key={mode} onClick={() => {
+              setAvailabilitySelectionMode(mode);
+              setAvailabilitySaveScope("delivery");
               setTemporaryAvailabilityIds([]);
-              loadAvailability(nextValue, password, [], []);
-            } else {
-              setTemporaryAvailabilityIds([]);
-              loadAvailability(nextValue);
-            }
-          }}>
-            <option value="">Choisir un client</option>
-            <option value="temporary">Sélection ponctuelle — plusieurs clients</option>
-            {clientGroups.length > 0 && <optgroup label="Groupes">
+              loadAvailability("");
+            }}>{label}</button>)}
+          </div>
+          {availabilitySelectionMode === "single" && <label className="compact-label availability-client-select">
+            Client
+            <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
+              <option value="">Choisir un client</option>
+              {partners.filter((partner) => partner.active).map((partner) => (
+                <option key={partner.id} value={partner.id}>{partner.name}</option>
+              ))}
+            </select>
+          </label>}
+          {availabilitySelectionMode === "saved" && <label className="compact-label availability-client-select">
+            Groupe enregistré
+            <select value={availabilityPartnerId} onChange={(event) => loadAvailability(event.target.value)}>
+              <option value="">Choisir un groupe</option>
               {clientGroups.map((group) => <option key={group.id} value={`group:${group.id}`}>{group.name} — {group.memberIds.length} client(s)</option>)}
-            </optgroup>}
-            <optgroup label="Clients">
-            {partners.filter((partner) => partner.active).map((partner) => (
-              <option key={partner.id} value={partner.id}>{partner.name}</option>
-            ))}
-            </optgroup>
-          </select>
-        </label>
-        {availabilityPartnerId === "temporary" && <div className="availability-group-targets temporary-availability-targets">
+            </select>
+          </label>}
+        </div>
+        {availabilitySelectionMode === "multiple" && <div className="availability-group-targets temporary-availability-targets">
           <div>
             <strong>Sélection ponctuelle</strong>
             <span>Cochez les clients qui recevront cette même liste. Cette sélection sera effacée juste après l’enregistrement.</span>
@@ -1309,6 +1340,7 @@ export default function Admin() {
                   ? [...temporaryAvailabilityIds, partner.id]
                   : temporaryAvailabilityIds.filter((id) => id !== partner.id);
                 setTemporaryAvailabilityIds(nextIds);
+                setAvailabilityPartnerId("temporary");
                 loadAvailability("temporary", password, nextIds, nextIds);
               }} />
               {partner.name}
@@ -1322,13 +1354,31 @@ export default function Admin() {
               <div className="availability-target-list">
                 {availabilityTargets.map((target) => <label key={target.id}>
                   <input type="checkbox" checked={availabilityTargetIds.includes(target.id)} onChange={(event) => setAvailabilityTargetIds((current) => event.target.checked ? [...current, target.id] : current.filter((id) => id !== target.id))} />
-                  {target.name}
+                  {target.name}{target.configuredForDelivery ? " — déjà personnalisé pour cette livraison" : ""}
                 </label>)}
               </div>
             </div>}
+            {availabilitySelectionMode === "single" && <div className="availability-scope-picker">
+              <div>
+                <strong>Portée de l’enregistrement</strong>
+                <span>Choisissez si cette liste est exceptionnelle ou si elle devient la référence habituelle de ce client.</span>
+              </div>
+              <label className={availabilitySaveScope === "delivery" ? "active" : ""}>
+                <input type="radio" name="availability-scope" value="delivery" checked={availabilitySaveScope === "delivery"} onChange={() => setAvailabilitySaveScope("delivery")} />
+                Cette livraison uniquement
+              </label>
+              <label className={availabilitySaveScope === "habitual" ? "active" : ""}>
+                <input type="radio" name="availability-scope" value="habitual" checked={availabilitySaveScope === "habitual"} onChange={() => setAvailabilitySaveScope("habitual")} />
+                Enregistrer comme liste habituelle
+              </label>
+            </div>}
             <p className="section-note">
-              {availabilityInherited
-                ? "La liste de la session précédente est reprise automatiquement. Enregistrez uniquement si vous souhaitez créer la liste de cette nouvelle session."
+              {availabilitySource === "habitual"
+                ? "La liste habituelle de ce client est actuellement utilisée. Choisissez « Cette livraison uniquement » pour faire une exception sans modifier sa référence."
+                : availabilitySource === "previous"
+                ? "Ancien fonctionnement : la dernière liste connue est reprise. Enregistrez une liste habituelle pour fixer une référence durable."
+                : availabilityInherited
+                ? "Une liste antérieure est actuellement reprise."
                 : availabilityConfigured
                 ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
                 : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
