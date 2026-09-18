@@ -553,23 +553,43 @@ export default function Admin() {
   async function sendAvailabilityToClients() {
     if (!availabilityReadyToSend || availabilityDirty || !availabilityTargetIds.length) return;
     setSendingAvailability(true);
-    const results = await Promise.all(availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map(async (target) => {
-      const response = await fetch("/api/availability", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ action: "send-email", partnerId: target.id, deliveryDate: target.deliveryDate })
-      });
-      return { target, response, data: await response.json() };
-    }));
-    setSendingAvailability(false);
-    const failed = results.filter((result) => !result.response.ok);
-    if (failed.length) {
-      return setMessage(`Mail non envoyé à ${failed.map((result) => result.target.name).join(", ")} : ${failed[0].data.error || "erreur inconnue"}.`);
-    }
-    setMessage(`${results.length} mail${results.length > 1 ? "s" : ""} de disponibilité envoyé${results.length > 1 ? "s" : ""}.`);
-    if (availabilityPartnerId === "temporary") {
-      setTemporaryAvailabilityIds([]);
-      await loadAvailability("");
+    try {
+      const results = await Promise.all(availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map(async (target) => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 25000);
+        try {
+          const response = await fetch("/api/availability", {
+            method: "POST",
+            headers,
+            signal: controller.signal,
+            body: JSON.stringify({ action: "send-email", partnerId: target.id, deliveryDate: target.deliveryDate })
+          });
+          const responseText = await response.text();
+          let data = {};
+          try { data = responseText ? JSON.parse(responseText) : {}; } catch { data = { error: "Réponse du serveur illisible" }; }
+          return { target, response, data };
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      }));
+      const failed = results.filter((result) => !result.response.ok);
+      if (failed.length) {
+        setMessage(`Mail non envoyé à ${failed.map((result) => result.target.name).join(", ")} : ${failed[0].data.error || "erreur inconnue"}.`);
+        return;
+      }
+      setAvailabilitySaveNotice(`${results.length} mail${results.length > 1 ? "s" : ""} de disponibilité envoyé${results.length > 1 ? "s" : ""}.`);
+      setMessage(`${results.length} mail${results.length > 1 ? "s" : ""} de disponibilité envoyé${results.length > 1 ? "s" : ""}.`);
+      if (availabilityPartnerId === "temporary") {
+        setTemporaryAvailabilityIds([]);
+        await loadAvailability("");
+      }
+    } catch (error) {
+      const timedOut = error?.name === "AbortError";
+      setMessage(timedOut
+        ? "L’envoi a dépassé 25 secondes. Le serveur de messagerie n’a pas répondu à temps. Vérifiez avant de réessayer afin d’éviter un éventuel doublon."
+        : `Envoi impossible : ${error?.message || "connexion au serveur interrompue"}.`);
+    } finally {
+      setSendingAvailability(false);
     }
   }
 

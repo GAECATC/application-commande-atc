@@ -8,7 +8,7 @@ const {
   replaceProductAllocations,
   saveAvailabilityMessage
 } = require("@/lib/db");
-const { sendAvailabilityNotice } = require("@/lib/mailer");
+const { classifyMailError, sendAvailabilityNotice } = require("@/lib/mailer");
 const { isAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { resolveAvailabilitySource } = require("@/lib/availability-scope");
@@ -68,7 +68,16 @@ export default async function handler(req, res) {
         }
         return res.status(200).json({ email });
       } catch (error) {
-        return res.status(400).json({ error: error.message || "Envoi du mail impossible" });
+        const type = classifyMailError(error);
+        const errors = {
+          "smtp-timeout": "Le serveur de messagerie n’a pas répondu dans le délai prévu",
+          "smtp-authentication": "L’authentification auprès du serveur de messagerie a été refusée",
+          "smtp-dns": "L’adresse du serveur de messagerie est introuvable",
+          "recipient-rejected": "L’adresse email du client a été refusée",
+          "smtp-connection": "La connexion au serveur de messagerie a échoué",
+          "smtp-unknown": "Le serveur de messagerie a retourné une erreur non identifiée"
+        };
+        return res.status(400).json({ error: errors[type], type });
       }
     }
     const rawAllocations = Array.isArray(req.body?.allocations) ? req.body.allocations : [];
