@@ -944,6 +944,10 @@ form {
 .availability-scope-picker label { display: inline-flex; flex: 1 1 240px; align-items: center; gap: 8px; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .availability-scope-picker label.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16, 61, 35, .09); }
 .availability-scope-picker input { width: 18px; min-height: 18px; }
+.availability-send-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 16px; border: 1px solid var(--primary); border-radius: 6px; background: var(--primary); color: #fff; font-weight: 800; }
+.availability-send-button:hover { background: var(--primary-dark); }
+.availability-send-button:disabled { opacity: .5; }
+.availability-dirty-indicator { display: inline-flex; align-items: center; min-height: 38px; padding: 7px 10px; border-radius: 8px; background: #fff3e8; color: #9a4614; font-size: .83rem; font-weight: 800; }
 
 .availability-actions {
   display: flex;

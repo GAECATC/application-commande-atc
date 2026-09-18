@@ -54,6 +54,23 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     if (!isAdmin(req)) return res.status(401).json({ error: "Accès admin refusé" });
+    if (req.body?.action === "send-email") {
+      const partner = (await getPartners()).find((item) => item.id === partnerId);
+      if (!partner) return res.status(404).json({ error: "Client introuvable" });
+      try {
+        const message = await getAvailabilityMessage({ partnerId, deliveryDate });
+        const email = await sendAvailabilityNotice({ partner, deliveryDate, message });
+        if (!email.sent) {
+          const reason = email.reason === "missing-recipient"
+            ? "Adresse email du client manquante"
+            : "Configuration d’envoi des emails indisponible";
+          return res.status(400).json({ error: reason, email });
+        }
+        return res.status(200).json({ email });
+      } catch (error) {
+        return res.status(400).json({ error: error.message || "Envoi du mail impossible" });
+      }
+    }
     const rawAllocations = Array.isArray(req.body?.allocations) ? req.body.allocations : [];
     const allocations = rawAllocations
       .filter((item) => item.productId && Number.isFinite(Number(item.quantity)) && Number(item.quantity) >= 0)

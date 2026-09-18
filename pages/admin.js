@@ -109,7 +109,10 @@ export default function Admin() {
   const [availabilitySaveScope, setAvailabilitySaveScope] = useState("delivery");
   const [availabilitySelectionMode, setAvailabilitySelectionMode] = useState("single");
   const [availabilityMessage, setAvailabilityMessage] = useState("");
-  const [sendAvailabilityEmail, setSendAvailabilityEmail] = useState(true);
+  const [availabilityDirty, setAvailabilityDirty] = useState(false);
+  const [availabilityReadyToSend, setAvailabilityReadyToSend] = useState(false);
+  const [availabilitySaveNotice, setAvailabilitySaveNotice] = useState("");
+  const [sendingAvailability, setSendingAvailability] = useState(false);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
   const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
   const [temporaryAvailabilityIds, setTemporaryAvailabilityIds] = useState([]);
@@ -236,6 +239,22 @@ export default function Admin() {
     const timeoutId = window.setTimeout(() => setOrderSaveNotice(""), 3500);
     return () => window.clearTimeout(timeoutId);
   }, [orderSaveNotice]);
+
+  useEffect(() => {
+    if (!availabilitySaveNotice) return undefined;
+    const timeoutId = window.setTimeout(() => setAvailabilitySaveNotice(""), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [availabilitySaveNotice]);
+
+  useEffect(() => {
+    function warnBeforeLeaving(event) {
+      if (!availabilityDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [availabilityDirty]);
 
   useEffect(() => {
     const selectedPartner = partners.find((partner) => partner.id === basketDraft.partnerId);
@@ -415,6 +434,8 @@ export default function Admin() {
     setAvailabilityConfigured(false);
     setAvailabilityInherited(false);
     setAvailabilitySource("general");
+    setAvailabilityDirty(false);
+    setAvailabilityReadyToSend(false);
     setAvailabilityMessage("");
     setAvailabilityTargets([]);
     setAvailabilityTargetIds([]);
@@ -505,7 +526,7 @@ export default function Admin() {
           deliveryDate: target.deliveryDate,
           allocations,
           message: availabilityMessage,
-          sendEmail: sendAvailabilityEmail,
+          sendEmail: false,
           scope: availabilitySelectionMode === "single" ? availabilitySaveScope : "delivery"
         })
       });
@@ -514,8 +535,6 @@ export default function Admin() {
     setSavingAvailability(false);
     const failed = results.find((result) => !result.response.ok);
     if (failed) return setMessage(failed.data.error || "Enregistrement des disponibilités refusé.");
-    const sentCount = results.filter((result) => result.data.email?.sent).length;
-    const emailFailureCount = sendAvailabilityEmail ? results.length - sentCount : 0;
     const excludedTargets = availabilityTargets.filter((target) => !availabilityTargetIds.includes(target.id));
     const isSavedGroup = availabilityPartnerId.startsWith("group:");
     const isTemporaryGroup = availabilityPartnerId === "temporary";
@@ -524,12 +543,33 @@ export default function Admin() {
       : isSavedGroup || isTemporaryGroup
         ? `Disponibilités de cette livraison enregistrées pour ${availabilityTargetIds.length} client(s)${isSavedGroup ? " du groupe" : " de la sélection ponctuelle"}.${excludedTargets.length ? ` ${excludedTargets.map((target) => target.name).join(", ")} reste${excludedTargets.length > 1 ? "nt" : ""} en disponibilités individuelles.` : ""}`
         : "Disponibilités de cette livraison enregistrées pour ce client.";
-    setMessage(`${savedScope}${sendAvailabilityEmail ? ` ${sentCount} mail(s) envoyé(s).${emailFailureCount ? ` ${emailFailureCount} mail(s) non envoyé(s) : vérifiez les adresses et la configuration SMTP.` : ""}` : " Aucun mail envoyé."}`);
-    if (isTemporaryGroup) {
+    setAvailabilitySaveNotice("Les modifications ont bien été enregistrées.");
+    setMessage(`${savedScope} Aucun mail n’a été envoyé.`);
+    setAvailabilityDirty(false);
+    await loadAvailability(availabilityPartnerId, password, availabilityTargetIds, isTemporaryGroup ? temporaryAvailabilityIds : null);
+    setAvailabilityReadyToSend(true);
+  }
+
+  async function sendAvailabilityToClients() {
+    if (!availabilityReadyToSend || availabilityDirty || !availabilityTargetIds.length) return;
+    setSendingAvailability(true);
+    const results = await Promise.all(availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map(async (target) => {
+      const response = await fetch("/api/availability", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ action: "send-email", partnerId: target.id, deliveryDate: target.deliveryDate })
+      });
+      return { target, response, data: await response.json() };
+    }));
+    setSendingAvailability(false);
+    const failed = results.filter((result) => !result.response.ok);
+    if (failed.length) {
+      return setMessage(`Mail non envoyé à ${failed.map((result) => result.target.name).join(", ")} : ${failed[0].data.error || "erreur inconnue"}.`);
+    }
+    setMessage(`${results.length} mail${results.length > 1 ? "s" : ""} de disponibilité envoyé${results.length > 1 ? "s" : ""}.`);
+    if (availabilityPartnerId === "temporary") {
       setTemporaryAvailabilityIds([]);
       await loadAvailability("");
-    } else {
-      await loadAvailability(availabilityPartnerId, password, availabilityTargetIds);
     }
   }
 
@@ -1028,6 +1068,10 @@ export default function Admin() {
         <span aria-hidden="true">✓</span>
         <strong>{orderSaveNotice}</strong>
       </div>}
+      {availabilitySaveNotice && <div className="order-save-toast no-print" role="status" aria-live="polite">
+        <span aria-hidden="true">✓</span>
+        <strong>{availabilitySaveNotice}</strong>
+      </div>}
       {emailNotice && <div className={`email-status-notice ${emailNotice.type}`} role="status">
         <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
         <strong>{emailNotice.text}</strong>
@@ -1254,14 +1298,20 @@ export default function Admin() {
             <h2>Disponibilités par client</h2>
           </div>
           <div className="actions">
+            {availabilityDirty && <span className="availability-dirty-indicator">Modifications non enregistrées</span>}
             <button className="ghost" type="button" onClick={() => {
               setClientGroupsOpen((current) => !current);
               setClientGroupDraft(emptyClientGroup);
             }}>{clientGroupsOpen ? "Fermer les groupes" : "Créer / gérer les groupes"}</button>
             {availabilityPartnerId && (
-              <button className="primary" type="button" disabled={savingAvailability || !availabilityTargetIds.length} onClick={saveAvailability}>
-                {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
-              </button>
+              <>
+                <button className="primary" type="button" disabled={savingAvailability || sendingAvailability || !availabilityTargetIds.length} onClick={saveAvailability}>
+                  {savingAvailability ? "Enregistrement..." : "Enregistrer les disponibilités"}
+                </button>
+                <button className="availability-send-button" type="button" disabled={savingAvailability || sendingAvailability || availabilityDirty || !availabilityReadyToSend} onClick={sendAvailabilityToClients}>
+                  {sendingAvailability ? "Envoi..." : "Envoyer la disponibilité"}
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -1364,11 +1414,11 @@ export default function Admin() {
                 <span>Choisissez si cette liste est exceptionnelle ou si elle devient la référence habituelle de ce client.</span>
               </div>
               <label className={availabilitySaveScope === "delivery" ? "active" : ""}>
-                <input type="radio" name="availability-scope" value="delivery" checked={availabilitySaveScope === "delivery"} onChange={() => setAvailabilitySaveScope("delivery")} />
+                <input type="radio" name="availability-scope" value="delivery" checked={availabilitySaveScope === "delivery"} onChange={() => { setAvailabilitySaveScope("delivery"); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
                 Cette livraison uniquement
               </label>
               <label className={availabilitySaveScope === "habitual" ? "active" : ""}>
-                <input type="radio" name="availability-scope" value="habitual" checked={availabilitySaveScope === "habitual"} onChange={() => setAvailabilitySaveScope("habitual")} />
+                <input type="radio" name="availability-scope" value="habitual" checked={availabilitySaveScope === "habitual"} onChange={() => { setAvailabilitySaveScope("habitual"); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
                 Enregistrer comme liste habituelle
               </label>
             </div>}
@@ -1386,9 +1436,9 @@ export default function Admin() {
             <div className="availability-message-editor">
               <label>
                 Message pour le client <small>Facultatif — visible dans l’application et ajouté au mail</small>
-                <textarea maxLength="2000" rows="4" placeholder="Ex. Cette semaine, pensez à commander avant mercredi soir…" value={availabilityMessage} onChange={(event) => setAvailabilityMessage(event.target.value)} />
+                <textarea maxLength="2000" rows="4" placeholder="Ex. Cette semaine, pensez à commander avant mercredi soir…" value={availabilityMessage} onChange={(event) => { setAvailabilityMessage(event.target.value); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
               </label>
-              <label className="availability-email-option"><input type="checkbox" checked={sendAvailabilityEmail} onChange={(event) => setSendAvailabilityEmail(event.target.checked)} /> Envoyer la liste et ce message par mail lors de l’enregistrement</label>
+              <small>Le mail n’est plus envoyé automatiquement. Enregistrez d’abord, puis utilisez le bouton « Envoyer la disponibilité ».</small>
             </div>
             <div className="availability-actions">
               <button className="ghost" type="button" onClick={() => {
@@ -1398,13 +1448,19 @@ export default function Admin() {
                 setAllocationVisibilityDraft(Object.fromEntries(
                   availabilityProducts.map((product) => [product.id, Boolean(product.active)])
                 ));
+                setAvailabilityDirty(true);
+                setAvailabilityReadyToSend(false);
               }}>Utiliser les disponibilités générales</button>
-              <button className="ghost" type="button" onClick={() => setAllocationVisibilityDraft(
-                Object.fromEntries(availabilityProducts.map((product) => [product.id, true]))
-              )}>Tout rendre visible</button>
-              <button className="ghost" type="button" onClick={() => setAllocationVisibilityDraft(
-                Object.fromEntries(availabilityProducts.map((product) => [product.id, false]))
-              )}>Tout masquer</button>
+              <button className="ghost" type="button" onClick={() => {
+                setAllocationVisibilityDraft(Object.fromEntries(availabilityProducts.map((product) => [product.id, true])));
+                setAvailabilityDirty(true);
+                setAvailabilityReadyToSend(false);
+              }}>Tout rendre visible</button>
+              <button className="ghost" type="button" onClick={() => {
+                setAllocationVisibilityDraft(Object.fromEntries(availabilityProducts.map((product) => [product.id, false])));
+                setAvailabilityDirty(true);
+                setAvailabilityReadyToSend(false);
+              }}>Tout masquer</button>
             </div>
             <div className="availability-groups">
               {Object.entries([...availabilityProducts].sort((productA, productB) =>
@@ -1431,7 +1487,11 @@ export default function Admin() {
                           min="0"
                           step={product.unit === "kg" ? "0.5" : "1"}
                           value={allocationDraft[product.id] ?? ""}
-                          onChange={(event) => setAllocationDraft((current) => ({ ...current, [product.id]: event.target.value }))}
+                          onChange={(event) => {
+                            setAllocationDraft((current) => ({ ...current, [product.id]: event.target.value }));
+                            setAvailabilityDirty(true);
+                            setAvailabilityReadyToSend(false);
+                          }}
                           placeholder="À volonté"
                           aria-label={`Limite pour ${product.name}`}
                         />
@@ -1440,10 +1500,14 @@ export default function Admin() {
                           <input
                             type="checkbox"
                             checked={isVisible}
-                            onChange={(event) => setAllocationVisibilityDraft((current) => ({
-                              ...current,
-                              [product.id]: event.target.checked
-                            }))}
+                            onChange={(event) => {
+                              setAllocationVisibilityDraft((current) => ({
+                                ...current,
+                                [product.id]: event.target.checked
+                              }));
+                              setAvailabilityDirty(true);
+                              setAvailabilityReadyToSend(false);
+                            }}
                           />
                           Visible
                         </label>
