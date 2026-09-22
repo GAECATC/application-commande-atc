@@ -77,6 +77,14 @@ export default function Admin() {
   const [matrixEditingDate, setMatrixEditingDate] = useState("");
   const [matrixDraft, setMatrixDraft] = useState({});
   const [matrixSaving, setMatrixSaving] = useState(false);
+  const [matrixEmailDate, setMatrixEmailDate] = useState("");
+  const [matrixEmailTargetIds, setMatrixEmailTargetIds] = useState([]);
+  const [matrixPreviousOrders, setMatrixPreviousOrders] = useState({});
+  const [sendingMatrixEmails, setSendingMatrixEmails] = useState(false);
+  const [validatingDeliveryDate, setValidatingDeliveryDate] = useState("");
+  const [validatingOrderId, setValidatingOrderId] = useState("");
+  const [retryValidationEmails, setRetryValidationEmails] = useState([]);
+  const [retryingValidationEmails, setRetryingValidationEmails] = useState(false);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
@@ -867,7 +875,7 @@ export default function Admin() {
     ]).values()));
   }
 
-  async function saveOrder(order) {
+  async function saveOrder(order, sendEmail = false) {
     if (savingOrderId) return;
     setOrderEditMessage("");
     setSavingOrderId(order.id);
@@ -878,7 +886,7 @@ export default function Admin() {
       response = await fetch("/api/orders", {
         method: "PUT",
         headers,
-        body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId, items })
+        body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId, items, sendEmail })
       });
       data = await response.json();
     } catch {
@@ -891,9 +899,9 @@ export default function Admin() {
     setOrderDraft({});
     setOrderEditProducts([]);
     setOrderProductToAdd("");
-    if (data.email?.sent) {
+    if (sendEmail && data.email?.sent) {
       setEmailNotice({ type: "success", text: `Commande modifiée et e-mail envoyé à ${order.partnerName}.` });
-    } else {
+    } else if (sendEmail) {
       const reason = data.email?.reason;
       const detail = reason === "missing-recipient"
         ? "aucune adresse e-mail n’est renseignée pour ce client"
@@ -901,10 +909,12 @@ export default function Admin() {
           ? "le service d’envoi d’e-mails n’est pas configuré"
           : "l’envoi de l’e-mail a échoué";
       setEmailNotice({ type: "warning", text: `Commande modifiée, mais ${detail}.` });
-    }
+    } else setEmailNotice(null);
     setMessage("");
     await loadAdminData();
-    setOrderSaveNotice("Votre modification a été enregistrée sur l’application.");
+    setOrderSaveNotice(sendEmail && data.email?.sent
+      ? "Votre modification a été enregistrée et le mail a été envoyé."
+      : "Votre modification a été enregistrée sur l’application, sans envoi de mail.");
   }
 
   async function togglePreparationCheck(deliveryDate, itemKey, checked) {
@@ -966,9 +976,9 @@ export default function Admin() {
         quantity: Number(matrixDraft[matrixValueKey(row.id, client.id)] || 0)
       })).filter((item) => item.quantity > 0);
       try {
-        const response = await fetch("/api/orders", { method: "PUT", headers, body: JSON.stringify({ orderId: clientOrders[0].id, partnerId: client.id, items }) });
+        const response = await fetch("/api/orders", { method: "PUT", headers, body: JSON.stringify({ orderId: clientOrders[0].id, partnerId: client.id, items, sendEmail: false }) });
         const data = await response.json().catch(() => ({}));
-        return { client, ok: response.ok, error: data.error, email: data.email };
+        return { client, ok: response.ok, error: data.error };
       } catch {
         return { client, ok: false, error: "serveur inaccessible" };
       }
@@ -978,9 +988,127 @@ export default function Admin() {
     setMatrixDraft({});
     await loadAdminData();
     const failed = results.filter((result) => !result.ok);
-    const emailFailures = results.filter((result) => result.ok && !result.email?.sent);
-    if (failed.length) return setMessage(`Modifications partielles. Échec pour ${failed.map((result) => `${result.client.name} (${result.error || "cause inconnue"})`).join(", ")}. Les autres commandes ont été enregistrées.`);
-    setOrderSaveNotice(`${changedClients.length} commande${changedClients.length > 1 ? "s" : ""} mise${changedClients.length > 1 ? "s" : ""} à jour.${emailFailures.length ? ` Courriel non envoyé pour ${emailFailures.map((result) => result.client.name).join(", ")}.` : " Les courriels ont été envoyés."}`);
+    const savedClientIds = results.filter((result) => result.ok).map((result) => result.client.id);
+    if (savedClientIds.length) {
+      setMatrixEmailDate(deliverySummary.deliveryDate);
+      setMatrixEmailTargetIds((current) => matrixEmailDate === deliverySummary.deliveryDate ? [...new Set([...current, ...savedClientIds])] : savedClientIds);
+      setMatrixPreviousOrders((current) => {
+        const next = { ...current };
+        for (const order of deliverySummary.orders) {
+          if (savedClientIds.includes(order.partnerId) && !next[order.id]) next[order.id] = order;
+        }
+        return next;
+      });
+    }
+    if (failed.length) return setMessage(`Modifications partielles. Échec pour ${failed.map((result) => `${result.client.name} (${result.error || "cause inconnue"})`).join(", ")}. Les autres commandes ont été enregistrées sans mail.`);
+    setOrderSaveNotice(`${savedClientIds.length} commande${savedClientIds.length > 1 ? "s" : ""} mise${savedClientIds.length > 1 ? "s" : ""} à jour, sans envoi de mail.`);
+  }
+
+  async function sendMatrixUpdateEmails(deliverySummary) {
+    if (sendingMatrixEmails || !matrixEmailTargetIds.length) return;
+    const targets = deliverySummary.orders.filter((order) => matrixEmailTargetIds.includes(order.partnerId));
+    if (!targets.length) return setMessage("Aucune commande active sélectionnée pour l’envoi.");
+    if (!window.confirm(`Envoyer le récapitulatif de commande à ${targets.length} client${targets.length > 1 ? "s" : ""} ?`)) return;
+    setSendingMatrixEmails(true);
+    const results = [];
+    for (let index = 0; index < targets.length; index += 3) {
+      const batch = await Promise.all(targets.slice(index, index + 3).map(async (order) => {
+        try {
+          const response = await fetch("/api/orders", {
+            method: "POST", headers,
+            body: JSON.stringify({ action: "send-update-email", orderId: order.id, partnerId: order.partnerId, previousOrder: matrixPreviousOrders[order.id] })
+          });
+          const data = await response.json().catch(() => ({}));
+          return { order, sent: response.ok && data.email?.sent === true, error: data.error };
+        } catch {
+          return { order, sent: false, error: "serveur inaccessible" };
+        }
+      }));
+      results.push(...batch);
+    }
+    setSendingMatrixEmails(false);
+    const failures = results.filter((result) => !result.sent);
+    setMatrixEmailTargetIds(failures.map((result) => result.order.partnerId));
+    setMatrixPreviousOrders((current) => {
+      const next = { ...current };
+      for (const result of results) if (result.sent) delete next[result.order.id];
+      return next;
+    });
+    setEmailNotice(failures.length
+      ? { type: "warning", text: `Mail non envoyé à ${failures.map((result) => result.order.partnerName).join(", ")}. ${results.length - failures.length} envoi(s) réussi(s).` }
+      : { type: "success", text: `${results.length} mail${results.length > 1 ? "s" : ""} envoyé${results.length > 1 ? "s" : ""} aux clients sélectionnés.` });
+    if (!failures.length) setMatrixEmailDate("");
+  }
+
+  async function validateAllOrders(deliverySummary) {
+    if (validatingDeliveryDate || validatingOrderId || matrixSaving || matrixEditingDate) return;
+    const orders = deliverySummary.orders;
+    if (!orders.length || !window.confirm(`Valider les ${orders.length} commandes du ${formatDate(deliverySummary.deliveryDate)} et envoyer un mail à chaque client ?`)) return;
+    setValidatingDeliveryDate(deliverySummary.deliveryDate);
+    const results = [];
+    for (let index = 0; index < orders.length; index += 3) {
+      const batch = await Promise.all(orders.slice(index, index + 3).map(async (order) => {
+        try {
+          const response = await fetch("/api/orders", {
+            method: "PATCH", headers,
+            body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
+          });
+          const data = await response.json().catch(() => ({}));
+          return { order, validated: response.ok, emailed: data.email?.sent === true, error: data.error };
+        } catch {
+          return { order, validated: false, emailed: false, error: "serveur inaccessible" };
+        }
+      }));
+      results.push(...batch);
+    }
+    setMatrixEmailDate("");
+    setMatrixEmailTargetIds([]);
+    setMatrixPreviousOrders((current) => {
+      const next = { ...current };
+      for (const order of orders) delete next[order.id];
+      return next;
+    });
+    try {
+      await loadAdminData();
+    } catch {
+      setMessage("Les validations ont été traitées, mais le tableau n’a pas pu être actualisé. Actualisez la page avant toute nouvelle action.");
+    } finally {
+      setValidatingDeliveryDate("");
+    }
+    const failed = results.filter((result) => !result.validated);
+    const emailFailures = results.filter((result) => result.validated && !result.emailed);
+    setRetryValidationEmails((current) => [
+      ...current.filter((item) => !orders.some((order) => order.id === item.id)),
+      ...emailFailures.map((result) => result.order)
+    ]);
+    if (failed.length || emailFailures.length) {
+      setEmailNotice({ type: "warning", text: `${results.length - failed.length} commande(s) validée(s). ${failed.length ? `Validation échouée : ${failed.map((result) => result.order.partnerName).join(", ")}. ` : ""}${emailFailures.length ? `Mail non envoyé : ${emailFailures.map((result) => result.order.partnerName).join(", ")}.` : ""}` });
+    } else {
+      setEmailNotice({ type: "success", text: `${results.length} commande(s) validée(s) et ${results.length} mail(s) envoyé(s).` });
+    }
+  }
+
+  async function retryFailedValidationEmails() {
+    if (retryingValidationEmails || !retryValidationEmails.length) return;
+    setRetryingValidationEmails(true);
+    const results = await Promise.all(retryValidationEmails.map(async (order) => {
+      try {
+        const response = await fetch("/api/orders", {
+          method: "POST", headers,
+          body: JSON.stringify({ action: "resend-validation-email", orderId: order.id, partnerId: order.partnerId })
+        });
+        const data = await response.json().catch(() => ({}));
+        return { order, sent: response.ok && data.email?.sent === true };
+      } catch {
+        return { order, sent: false };
+      }
+    }));
+    setRetryingValidationEmails(false);
+    const failed = results.filter((result) => !result.sent).map((result) => result.order);
+    setRetryValidationEmails(failed);
+    setEmailNotice(failed.length
+      ? { type: "warning", text: `Mail toujours non envoyé à ${failed.map((order) => order.partnerName).join(", ")}. Vérifiez la messagerie avant de réessayer pour éviter un éventuel doublon.` }
+      : { type: "success", text: `${results.length} mail${results.length > 1 ? "s" : ""} de validation envoyé${results.length > 1 ? "s" : ""}.` });
   }
 
   async function deleteOrder(order) {
@@ -998,28 +1126,39 @@ export default function Admin() {
       setEditingOrderId(null);
       setOrderDraft({});
     }
-    setMessage("Commande supprimee.");
+    setMessage("Commande supprimée sans envoi de mail.");
     await loadAdminData();
   }
 
   async function validateAdminOrder(order) {
+    if (validatingOrderId || validatingDeliveryDate) return;
     if (!window.confirm(`Valider la commande de ${order.partnerName} ?`)) return;
+    setValidatingOrderId(order.id);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
+      });
+      const data = await response.json();
+      if (!response.ok) return setMessage(data.error || "Validation refusée.");
 
-    const response = await fetch("/api/orders", {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
-    });
-    const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Validation refusee.");
-
-    if (editingOrderId === order.id) {
-      setEditingOrderId(null);
-      setOrderDraft({});
+      if (editingOrderId === order.id) {
+        setEditingOrderId(null);
+        setOrderDraft({});
+      }
+      if (!data.email?.sent) setRetryValidationEmails((current) => [...current.filter((item) => item.id !== order.id), order]);
+      setEmailNotice(data.email?.sent
+        ? { type: "success", text: `Commande de ${order.partnerName} validée et mail envoyé.` }
+        : { type: "warning", text: `Commande de ${order.partnerName} validée, mais le mail n’a pas été envoyé.` });
+      setMessage("");
+      window.open(`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`, "_blank", "noopener,noreferrer");
+      await loadAdminData();
+    } catch {
+      setMessage("La confirmation de validation n’a pas été reçue. Actualisez la page et vérifiez la commande avant de réessayer.");
+    } finally {
+      setValidatingOrderId("");
     }
-    setMessage("Commande validee.");
-    window.open(`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`, "_blank", "noopener,noreferrer");
-    await loadAdminData();
   }
 
   if (restoringSession) {
@@ -1095,6 +1234,7 @@ export default function Admin() {
       {emailNotice && <div className={`email-status-notice ${emailNotice.type}`} role="status">
         <span aria-hidden="true">{emailNotice.type === "success" ? "✓" : "!"}</span>
         <strong>{emailNotice.text}</strong>
+        {retryValidationEmails.length > 0 && <button className="ghost email-retry-button" type="button" disabled={retryingValidationEmails} onClick={retryFailedValidationEmails}>{retryingValidationEmails ? "Envoi…" : "Réessayer les mails non envoyés"}</button>}
         <button type="button" aria-label="Fermer le message" onClick={() => setEmailNotice(null)}>×</button>
       </div>}
       {preparationError && <div className="admin-error-overlay" role="presentation">
@@ -1152,7 +1292,20 @@ export default function Admin() {
         </section>}
 
         <section className="client-order-matrix-section">
-          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <button className="ghost matrix-edit-button" type="button" onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>}</div></div>
+          <div className="matrix-heading"><h3>Quantités par client</h3><div className="actions no-print">{matrixEditing ? <><button className="primary" type="button" disabled={matrixSaving} onClick={() => saveMatrixEdit(deliverySummary, orderMatrix)}>{matrixSaving ? "Enregistrement…" : "Enregistrer les modifications"}</button><button className="ghost" type="button" disabled={matrixSaving} onClick={() => { setMatrixEditingDate(""); setMatrixDraft({}); }}>Annuler</button></> : <>
+            <button className="ghost matrix-edit-button" type="button" disabled={Boolean(validatingDeliveryDate)} onClick={() => startMatrixEdit(deliverySummary, orderMatrix)}>Modifier le tableau</button>
+            <button className="ghost" type="button" disabled={Boolean(validatingDeliveryDate)} onClick={() => {
+              if (matrixEmailDate === deliverySummary.deliveryDate) setMatrixEmailDate("");
+              else { setMatrixEmailDate(deliverySummary.deliveryDate); setMatrixEmailTargetIds([]); }
+            }}>{matrixEmailDate === deliverySummary.deliveryDate ? "Masquer les destinataires" : "Envoyer les modifications"}</button>
+            <button className="primary" type="button" disabled={Boolean(validatingDeliveryDate || validatingOrderId || matrixEditingDate)} onClick={() => validateAllOrders(deliverySummary)}>{validatingDeliveryDate === deliverySummary.deliveryDate ? "Validation en cours…" : "Valider toutes les commandes et envoyer les mails"}</button>
+          </>}</div></div>
+          {matrixEmailDate === deliverySummary.deliveryDate && !matrixEditing && <div className="matrix-email-picker no-print">
+            <strong>Clients à prévenir</strong>
+            <p>Seuls les clients cochés recevront le récapitulatif actuel de leur commande.</p>
+            <div className="matrix-email-clients">{orderMatrix.clients.map((client) => <label key={client.id}><input type="checkbox" checked={matrixEmailTargetIds.includes(client.id)} onChange={(event) => setMatrixEmailTargetIds((current) => event.target.checked ? [...current, client.id] : current.filter((id) => id !== client.id))} />{client.name}</label>)}</div>
+            <button className="primary" type="button" disabled={sendingMatrixEmails || !matrixEmailTargetIds.length} onClick={() => sendMatrixUpdateEmails(deliverySummary)}>{sendingMatrixEmails ? "Envoi en cours…" : `Envoyer à ${matrixEmailTargetIds.length} client${matrixEmailTargetIds.length > 1 ? "s" : ""}`}</button>
+          </div>}
           <div className="client-order-matrix-wrap">
             <table className="client-order-matrix">
               <thead><tr><th scope="col">Produit</th>{orderMatrix.clients.map((client) => <th className="client-column" style={clientColumnStyle(client.id)} scope="col" key={client.id}>{client.name}</th>)}</tr></thead>
@@ -1229,7 +1382,8 @@ export default function Admin() {
                     <button className="ghost" type="button" disabled={!orderProductToAdd} onClick={() => { setOrderDraft((current) => ({ ...current, [orderProductToAdd]: "1" })); setOrderProductToAdd(""); setOrderProductSearch(""); }}>Ajouter</button>
                   </div>
                   <div className="order-actions">
-                    <button className="primary" type="button" disabled={savingOrderId === order.id} onClick={() => saveOrder(order)}>{savingOrderId === order.id ? "Enregistrement..." : "Enregistrer"}</button>
+                    <button className="ghost" type="button" disabled={savingOrderId === order.id} onClick={() => saveOrder(order)}>{savingOrderId === order.id ? "Enregistrement..." : "Enregistrer"}</button>
+                    <button className="primary" type="button" disabled={savingOrderId === order.id} onClick={() => saveOrder(order, true)}>Enregistrer et envoyer un mail</button>
                     <button className="ghost" type="button" onClick={() => { setEditingOrderId(null); setOrderDraft({}); setOrderEditProducts([]); }}>Annuler</button>
                   </div>
                   {orderEditMessage && <p className="notice order-edit-message">{orderEditMessage}</p>}
@@ -1239,7 +1393,7 @@ export default function Admin() {
                   <strong>{currency.format(order.total)}</strong>
                   <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
                   <Link className="ghost no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">Bon livraison</Link>
-                  <button className="primary no-print" type="button" onClick={() => validateAdminOrder(order)}>Valider</button>
+                  <button className="primary no-print" type="button" disabled={Boolean(validatingDeliveryDate || validatingOrderId)} onClick={() => validateAdminOrder(order)}>{validatingOrderId === order.id ? "Validation…" : "Valider et envoyer un mail"}</button>
                   <button className="danger no-print" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                 </div>
               )}

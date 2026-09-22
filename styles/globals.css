@@ -113,13 +113,15 @@ button:disabled {
 .admin-shell > .panel,
 .admin-shell > .print-report { border-radius: 14px; box-shadow: 0 8px 24px rgba(16, 61, 35, .06); }
 
-.email-status-notice { display: grid; grid-template-columns: 32px minmax(0, 1fr) 30px; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid; border-radius: 12px; }
+.email-status-notice { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto 30px; align-items: center; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid; border-radius: 12px; }
 .email-status-notice > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-weight: 900; }
 .email-status-notice.success { border-color: #9ec66c; background: #f1f8e8; }
 .email-status-notice.success > span { background: var(--primary); }
 .email-status-notice.warning { border-color: #efb36e; background: #fff5e9; }
 .email-status-notice.warning > span { background: var(--accent); }
 .email-status-notice button { width: 30px; height: 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
+.email-status-notice .email-retry-button { width: auto; height: auto; padding: 9px 12px; border: 1px solid var(--line); background: #fff; color: var(--primary); font-size: .9rem; }
+.email-status-notice > button:last-child { grid-column: 4; }
 .general-status-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 11px 14px; border: 1px solid var(--brand-light); border-radius: 10px; background: #f4f9e9; }
 .general-status-notice button { width: 30px; height: 30px; flex: 0 0 30px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 1.35rem; }
 .order-save-toast { position: fixed; z-index: 1000; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 10px; max-width: min(430px, calc(100vw - 32px)); padding: 14px 18px; border: 1px solid #8fbd5d; border-radius: 12px; background: #f1f8e8; box-shadow: 0 14px 35px rgba(23, 77, 44, .2); color: var(--primary); animation: toast-in .2s ease-out; }
@@ -656,7 +658,14 @@ form {
 .crate-salad-total { margin: 8px 0; padding: 8px 0; border-bottom: 2px solid var(--line); }
 .mobile-prep-check { display: none; }
 .matrix-check-cell { display: block; }
-.matrix-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.matrix-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.matrix-heading .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.matrix-heading .actions > button { max-width: 100%; white-space: normal; }
+.matrix-email-picker { display: grid; gap: 10px; margin: 12px 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f9fbf5; }
+.matrix-email-picker p { margin: 0; }
+.matrix-email-picker > button { justify-self: start; }
+.matrix-email-clients { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.matrix-email-clients label { display: inline-flex; align-items: center; gap: 6px; }
 .matrix-edit-button { background: #111; color: #fff; border-color: #111; }
 .matrix-edit-button:hover { background: #2b2b2b; color: #fff; }
 .matrix-quantity-editor { display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -1422,6 +1431,9 @@ form {
 }
 
 @media (max-width: 760px) {
+  .email-status-notice { grid-template-columns: 32px minmax(0, 1fr) 30px; }
+  .email-status-notice .email-retry-button { grid-column: 2; grid-row: 2; justify-self: start; }
+  .email-status-notice > button:last-child { grid-column: 3; grid-row: 1; }
   .shell,
   .admin-shell {
     width: min(100% - 20px, 1120px);

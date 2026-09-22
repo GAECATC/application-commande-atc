@@ -3,6 +3,7 @@ const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
 const { classifyMailError, sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
 const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
+const { shouldSendOrderUpdateEmail } = require("@/lib/order-email-policy");
 
 async function notifyOrder(partner, order, mode, previousOrder) {
   try {
@@ -44,6 +45,28 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
+    if (req.body?.action === "send-update-email" || req.body?.action === "resend-validation-email") {
+      if (!isAdmin(req)) return res.status(401).json({ error: "Accès admin refusé" });
+      const { orderId, partnerId } = req.body;
+      if (!orderId || !partnerId) return res.status(400).json({ error: "Commande et client requis" });
+      const validationEmail = req.body.action === "resend-validation-email";
+      try {
+        const [orders, partners] = await Promise.all([
+          getOrders({ partnerId, includeInactive: validationEmail }),
+          getPartners()
+        ]);
+        const order = orders.find((item) => item.id === orderId && item.status === (validationEmail ? "validated" : "active"));
+        const partner = partners.find((item) => item.id === partnerId);
+        if (!order || !partner) return res.status(404).json({ error: "Commande ou client introuvable" });
+        const suppliedPreviousOrder = req.body.previousOrder;
+        const previousOrder = !validationEmail && suppliedPreviousOrder?.id === order.id && suppliedPreviousOrder?.partnerId === partnerId && Array.isArray(suppliedPreviousOrder.items)
+          ? suppliedPreviousOrder : undefined;
+        const email = await notifyOrder(partner, order, validationEmail ? "validated" : "updated", previousOrder);
+        return res.status(email.sent ? 200 : 502).json({ email, error: email.sent ? undefined : "Le mail n’a pas pu être envoyé" });
+      } catch {
+        return res.status(500).json({ error: "L’envoi du mail est momentanément indisponible" });
+      }
+    }
     try {
       const { partnerId, code, items, comment, basketSelections } = req.body || {};
       if (String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
@@ -66,7 +89,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
-    const { orderId, partnerId, code, items, comment } = req.body || {};
+      const { orderId, partnerId, code, items, comment, sendEmail } = req.body || {};
     if (comment !== undefined && String(comment || "").length > MAX_ORDER_COMMENT_LENGTH) return res.status(400).json({ error: "Commentaire trop long" });
     let nextPartnerId = partnerId;
     let partnerForEmail = null;
@@ -107,15 +130,17 @@ export default async function handler(req, res) {
         comment: comment === undefined ? undefined : normalizeOrderComment(comment),
         allowedProductIds
       });
-      if (!partnerForEmail) {
+      const shouldSendEmail = shouldSendOrderUpdateEmail({ adminRequest, sendEmail });
+      if (shouldSendEmail && !partnerForEmail) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
-      const mode = adminRequest ? "updated" : "updated-by-client";
-      const [email, adminEmail] = await Promise.all([
-        notifyOrder(partnerForEmail, order, mode, previousOrder),
-        adminRequest ? Promise.resolve(null) : notifyAdmin(partnerForEmail, order, mode, previousOrder)
-      ]);
+      const [email, adminEmail] = shouldSendEmail
+        ? await Promise.all([
+          notifyOrder(partnerForEmail, order, adminRequest ? "updated" : "updated-by-client", previousOrder),
+          adminRequest ? Promise.resolve(null) : notifyAdmin(partnerForEmail, order, "updated-by-client", previousOrder)
+        ])
+        : [{ sent: false, skipped: true, reason: "not-requested" }, null];
       return res.status(200).json({ order, email, adminEmail });
     } catch (error) {
       const status = error.message === "Commande introuvable" ? 404 : 400;
@@ -142,12 +167,14 @@ export default async function handler(req, res) {
 
     try {
       const order = await cancelOrder({ orderId, partnerId: nextPartnerId });
-      if (!partnerForEmail) {
+      if (!adminRequest && !partnerForEmail) {
         const partners = await getPartners();
         partnerForEmail = partners.find((partner) => partner.id === nextPartnerId);
       }
       const mode = adminRequest ? "cancelled" : "cancelled-by-client";
-      const email = await notifyOrder(partnerForEmail, order, mode);
+      const email = adminRequest
+        ? { sent: false, skipped: true, reason: "not-requested" }
+        : await notifyOrder(partnerForEmail, order, mode);
       const adminEmail = adminRequest ? null : await notifyAdmin(partnerForEmail, order, mode);
       return res.status(200).json({ order, email, adminEmail });
     } catch (error) {
