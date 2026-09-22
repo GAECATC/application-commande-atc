@@ -1,6 +1,7 @@
 const { deleteProduct, deleteProductPrice, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct, upsertProductPrice } = require("@/lib/db");
 const { isAdmin, requireAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
+const { isProductVisibleInAvailability } = require("@/lib/availability-products");
 
 function slugify(value) {
   return String(value)
@@ -37,8 +38,6 @@ export default async function handler(req, res) {
       const deliveryDate = delivery.deliveryDate;
       const allocations = await getProductAllocations({ partnerId: partner.id, deliveryDate, inheritPrevious: true });
       if (allocations.length) {
-        // Une liste personnelle remplace la visibilité générale et doit aussi inclure
-        // les produits qui n'ont pas encore de prix explicite dans cette grille.
         products = await getProducts({ includeHidden: true, priceListId: partner.priceListId });
         const orders = await getOrders({ partnerId: partner.id, deliveryDate });
         const orderedByProduct = new Map();
@@ -49,9 +48,9 @@ export default async function handler(req, res) {
         }
         const allocationByProduct = new Map(allocations.map((item) => [item.productId, item]));
         products = products
-          .filter((product) => product.active && allocationByProduct.get(product.id)?.visible !== false && allocationByProduct.has(product.id))
+          .filter((product) => isProductVisibleInAvailability(product, allocationByProduct))
           .map((product) => {
-            const allocationQuantity = Number(allocationByProduct.get(product.id).quantity);
+            const allocationQuantity = Number(allocationByProduct.get(product.id)?.quantity || 0);
             return {
               ...product,
               stock: allocationQuantity > 0

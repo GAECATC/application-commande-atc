@@ -496,7 +496,7 @@ export default function Admin() {
       (availabilityData.configured || availabilityData.inherited)
         ? Object.fromEntries((productData.products || []).map((product) => {
           const allocation = savedAllocations.find((item) => item.productId === product.id);
-          return [product.id, Boolean(allocation && allocation.visible !== false)];
+          return [product.id, allocation ? allocation.visible !== false : product.listed !== false];
         }))
         : Object.fromEntries((productData.products || []).map((product) => [product.id, Boolean(product.active)]))
     );
@@ -1077,7 +1077,7 @@ export default function Admin() {
           ["availability", "Disponibilités", null],
           ["clients", "Clients", partners.length],
           ["catalog", "Catalogue", products.length]
-        ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
+        ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); if (value === "availability" && adminView !== "availability" && availabilityPartnerId && !availabilityDirty && !availabilityReadyToSend) loadAvailability(availabilityPartnerId); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
       </nav>
 
       {message && <div className="general-status-notice no-print" role="status">
