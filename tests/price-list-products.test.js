@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { attachPrices } = require("../lib/db");
+const { buildProductsQuery, normalizeProduct } = require("../lib/mysql-db");
 
 const products = [
   { id: "carotte", name: "Carotte", active: true },
@@ -39,4 +40,25 @@ test("retirer une référence d'une grille ne modifie pas les autres grilles", (
     attachPrices(products, withoutSatorizTomato, "epicerie"),
     [{ id: "carotte", name: "Carotte", active: true, price: 2.5, listed: true }]
   );
+});
+
+test("une référence cochée dans la grille reste disponible malgré son ancien statut inactif", () => {
+  const oldProducts = [{ id: "chicoree", name: "Chicorée", active: false }];
+  const oldPrices = [{ priceListId: "epicerie", productId: "chicoree", price: 3.68 }];
+
+  assert.deepEqual(attachPrices(oldProducts, oldPrices, "epicerie"), [
+    { id: "chicoree", name: "Chicorée", active: true, price: 3.68, listed: true }
+  ]);
+  assert.deepEqual(attachPrices(oldProducts, oldPrices, "satoriz"), []);
+});
+
+test("la requête MySQL de la grille n'écarte pas les références à cause de l'ancien statut actif", () => {
+  const priced = buildProductsQuery({ priceListId: "epicerie" });
+  assert.match(priced.sql, /inner join product_prices/);
+  assert.doesNotMatch(priced.sql, /where p\.active = 1/);
+  assert.deepEqual(priced.params, ["epicerie"]);
+  assert.equal(normalizeProduct({ id: "chicoree", active: 0, listed: 1 }).active, true);
+
+  const general = buildProductsQuery();
+  assert.match(general.sql, /where p\.active = 1/);
 });
