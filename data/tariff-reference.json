@@ -1,0 +1,1292 @@
+{
+  "Mercuriale 2026": [
+    {
+      "name": "ail frais KG",
+      "unit": "",
+      "price": 8.6,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:3"
+    },
+    {
+      "name": "aubergine KG",
+      "unit": "",
+      "price": 3.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:4"
+    },
+    {
+      "name": "basilic bouquet P",
+      "unit": "",
+      "price": 1.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:5"
+    },
+    {
+      "name": "betterave KG",
+      "unit": "",
+      "price": 2.26,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:6"
+    },
+    {
+      "name": "blette KG",
+      "unit": "",
+      "price": 3.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:7"
+    },
+    {
+      "name": "Blette couleur botte",
+      "unit": "",
+      "price": 1.8,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:8"
+    },
+    {
+      "name": "carotte botte P",
+      "unit": "",
+      "price": 2.14,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:9"
+    },
+    {
+      "name": "celeri branche KG",
+      "unit": "",
+      "price": 3.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:10"
+    },
+    {
+      "name": "celeri rave KG",
+      "unit": "",
+      "price": 2.8,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:11"
+    },
+    {
+      "name": "cebette P",
+      "unit": "",
+      "price": 2.06,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:12"
+    },
+    {
+      "name": "chicorée de trévise KG",
+      "unit": "",
+      "price": 3.35,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:13"
+    },
+    {
+      "name": "chicorée pain de sucre KG",
+      "unit": "",
+      "price": 2.95,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:14"
+    },
+    {
+      "name": "chou chinois/pak choi KG",
+      "unit": "",
+      "price": 3.3,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:15"
+    },
+    {
+      "name": "chou kale P",
+      "unit": "",
+      "price": 1.5,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:16"
+    },
+    {
+      "name": "chou lisse/chou rouge/pointu KG",
+      "unit": "",
+      "price": 2.2,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:17"
+    },
+    {
+      "name": "concombre épineux KG",
+      "unit": "",
+      "price": 3.2,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:18"
+    },
+    {
+      "name": "concombre lisse piece P",
+      "unit": "",
+      "price": 1.3,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:19"
+    },
+    {
+      "name": "courge butternut/potimarron KG",
+      "unit": "",
+      "price": 2.2,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:20"
+    },
+    {
+      "name": "courge muscade/bleue KG",
+      "unit": "",
+      "price": 2.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:21"
+    },
+    {
+      "name": "courge patidou KG",
+      "unit": "",
+      "price": 2.9,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:22"
+    },
+    {
+      "name": "courge spaghetti KG",
+      "unit": "",
+      "price": 2.0,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:23"
+    },
+    {
+      "name": "courgette debut et fin de saison KG",
+      "unit": "",
+      "price": 2.65,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:24"
+    },
+    {
+      "name": "courgette juillet aout KG",
+      "unit": "",
+      "price": 2.15,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:25"
+    },
+    {
+      "name": "courgette jaune, blanche ,ronde KG",
+      "unit": "",
+      "price": 2.15,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:26"
+    },
+    {
+      "name": "echalotte KG",
+      "unit": "",
+      "price": 5.3,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:27"
+    },
+    {
+      "name": "epinard KG",
+      "unit": "",
+      "price": 4.35,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:28"
+    },
+    {
+      "name": "fenouil",
+      "unit": "",
+      "price": 3.35,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:29"
+    },
+    {
+      "name": "haricot serre KG",
+      "unit": "",
+      "price": 8.0,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:30"
+    },
+    {
+      "name": "haricot vert/ plat KG",
+      "unit": "",
+      "price": 6.9,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:31"
+    },
+    {
+      "name": "laitue  P",
+      "unit": "",
+      "price": 1.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:32"
+    },
+    {
+      "name": "mache/mesclum KG",
+      "unit": "",
+      "price": 12.0,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:33"
+    },
+    {
+      "name": "navet violet/jaune KG",
+      "unit": "",
+      "price": 2.26,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:34"
+    },
+    {
+      "name": "navet daikon KG",
+      "unit": "",
+      "price": 2.6,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:35"
+    },
+    {
+      "name": "oignon botte P",
+      "unit": "",
+      "price": 2.06,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:36"
+    },
+    {
+      "name": "oignon rouge/blanc KG",
+      "unit": "",
+      "price": 3.0,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:37"
+    },
+    {
+      "name": "pasteque KG",
+      "unit": "",
+      "price": 2.0,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:38"
+    },
+    {
+      "name": "patate douce KG",
+      "unit": "",
+      "price": 3.3,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:39"
+    },
+    {
+      "name": "patate douce gros calibre KG",
+      "unit": "",
+      "price": 2.8,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:40"
+    },
+    {
+      "name": "persil frisé bouquet P",
+      "unit": "",
+      "price": 1.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:41"
+    },
+    {
+      "name": "persil plat bouquet P",
+      "unit": "",
+      "price": 1.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:42"
+    },
+    {
+      "name": "poireau KG",
+      "unit": "",
+      "price": 2.98,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:43"
+    },
+    {
+      "name": "poivron vert KG",
+      "unit": "",
+      "price": 3.1,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:44"
+    },
+    {
+      "name": "poivron couleur KG",
+      "unit": "",
+      "price": 3.75,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:45"
+    },
+    {
+      "name": "pdt consommation  Maiwen blanche KG",
+      "unit": "",
+      "price": 1.7,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:46"
+    },
+    {
+      "name": "pdt nouvelle  rouge KG",
+      "unit": "",
+      "price": 4.5,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:47"
+    },
+    {
+      "name": "pdt nouvelle jaune KG",
+      "unit": "",
+      "price": 4.5,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:48"
+    },
+    {
+      "name": "pdt sac 2,5 kg P",
+      "unit": "",
+      "price": 4.6,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:49"
+    },
+    {
+      "name": "potimarron orange/ vert KG",
+      "unit": "",
+      "price": 2.2,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:50"
+    },
+    {
+      "name": "radis botte P",
+      "unit": "",
+      "price": 1.6,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:51"
+    },
+    {
+      "name": "radis noir, violet, redd meat…KG",
+      "unit": "",
+      "price": 2.6,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:52"
+    },
+    {
+      "name": "rutabaga/panais KG",
+      "unit": "",
+      "price": 2.75,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:53"
+    },
+    {
+      "name": "tomate ancienne  rouge KG",
+      "unit": "",
+      "price": 3.95,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:54"
+    },
+    {
+      "name": "tomate ancienne jaune",
+      "unit": "",
+      "price": 3.95,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:55"
+    },
+    {
+      "name": "tomate ancienne rose",
+      "unit": "",
+      "price": 3.95,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:56"
+    },
+    {
+      "name": "tomate ronde KG",
+      "unit": "",
+      "price": 2.9,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:57"
+    },
+    {
+      "name": "tomate cerise KG",
+      "unit": "",
+      "price": 5.3,
+      "source": "MERCURIALE 2026 LA RAVOIRE (1).xlsx:Feuil1:58"
+    }
+  ],
+  "Tarif épicerie": [
+    {
+      "name": "Ail botte BIO",
+      "unit": "Pce",
+      "price": 2.2,
+      "source": "tarifs épicerie.ods:Feuille1:3"
+    },
+    {
+      "name": "Ail frais BIO",
+      "unit": "Kg",
+      "price": 8.8,
+      "source": "tarifs épicerie.ods:Feuille1:4"
+    },
+    {
+      "name": "Ail sec BIO",
+      "unit": "Kg",
+      "price": 7.34,
+      "source": "tarifs épicerie.ods:Feuille1:5"
+    },
+    {
+      "name": "Aubergine BIO",
+      "unit": "Kg",
+      "price": 3.86,
+      "source": "tarifs épicerie.ods:Feuille1:6"
+    },
+    {
+      "name": "Basilic BIO",
+      "unit": "Pce",
+      "price": 1.2,
+      "source": "tarifs épicerie.ods:Feuille1:7"
+    },
+    {
+      "name": "Bette BIO",
+      "unit": "Kg",
+      "price": 2.95,
+      "source": "tarifs épicerie.ods:Feuille1:8"
+    },
+    {
+      "name": "Betterave crue BIO",
+      "unit": "Kg",
+      "price": 2.5,
+      "source": "tarifs épicerie.ods:Feuille1:9"
+    },
+    {
+      "name": "Carotte BIO",
+      "unit": "Kg",
+      "price": 2.65,
+      "source": "tarifs épicerie.ods:Feuille1:10"
+    },
+    {
+      "name": "Carotte botte BIO",
+      "unit": "Kg",
+      "price": 2.67,
+      "source": "tarifs épicerie.ods:Feuille1:11"
+    },
+    {
+      "name": "Céleri rave BIO",
+      "unit": "Kg",
+      "price": 2.9645,
+      "source": "tarifs épicerie.ods:Feuille1:12"
+    },
+    {
+      "name": "Chicorée pain de sucre BIO",
+      "unit": "Kg",
+      "price": 3.6784,
+      "source": "tarifs épicerie.ods:Feuille1:13"
+    },
+    {
+      "name": "Chicorée trévise BIO",
+      "unit": "Kg",
+      "price": 3.6784,
+      "source": "tarifs épicerie.ods:Feuille1:14"
+    },
+    {
+      "name": "Choux Cabus BIO",
+      "unit": "Kg",
+      "price": 2.5047,
+      "source": "tarifs épicerie.ods:Feuille1:15"
+    },
+    {
+      "name": "Choux chinois BIO",
+      "unit": "Kg",
+      "price": 3.6784,
+      "source": "tarifs épicerie.ods:Feuille1:16"
+    },
+    {
+      "name": "Choux de printemps BIO",
+      "unit": "Kg",
+      "price": 2.8556,
+      "source": "tarifs épicerie.ods:Feuille1:17"
+    },
+    {
+      "name": "Choux fleur BIO",
+      "unit": "Kg",
+      "price": 3.3033,
+      "source": "tarifs épicerie.ods:Feuille1:18"
+    },
+    {
+      "name": "Choux frisé BIO",
+      "unit": "Kg",
+      "price": 2.5047,
+      "source": "tarifs épicerie.ods:Feuille1:19"
+    },
+    {
+      "name": "Choux rave BIO",
+      "unit": "Kg",
+      "price": 2.7588,
+      "source": "tarifs épicerie.ods:Feuille1:20"
+    },
+    {
+      "name": "Concombre BIO",
+      "unit": "Kg",
+      "price": 3.3033,
+      "source": "tarifs épicerie.ods:Feuille1:21"
+    },
+    {
+      "name": "Courge Butternut BIO",
+      "unit": "Kg",
+      "price": 2.51,
+      "source": "tarifs épicerie.ods:Feuille1:22"
+    },
+    {
+      "name": "Courge Carrat BIO",
+      "unit": "Kg",
+      "price": 2.51,
+      "source": "tarifs épicerie.ods:Feuille1:23"
+    },
+    {
+      "name": "Courge Musquée BIO",
+      "unit": "Kg",
+      "price": 2.36,
+      "source": "tarifs épicerie.ods:Feuille1:24"
+    },
+    {
+      "name": "Courge Patidou BIO",
+      "unit": "Kg",
+      "price": 2.51,
+      "source": "tarifs épicerie.ods:Feuille1:25"
+    },
+    {
+      "name": "Courge Potimarron BIO",
+      "unit": "Kg",
+      "price": 2.51,
+      "source": "tarifs épicerie.ods:Feuille1:26"
+    },
+    {
+      "name": "Courge Potimarron Vert BIO",
+      "unit": "Kg",
+      "price": 2.51,
+      "source": "tarifs épicerie.ods:Feuille1:27"
+    },
+    {
+      "name": "Courgette pleine saison promo",
+      "unit": "",
+      "price": 2.32,
+      "source": "tarifs épicerie.ods:Feuille1:28"
+    },
+    {
+      "name": "Courgette BIO",
+      "unit": "Kg",
+      "price": 2.6375,
+      "source": "tarifs épicerie.ods:Feuille1:29"
+    },
+    {
+      "name": "Courgette serre BIO",
+      "unit": "Kg",
+      "price": 3.6925,
+      "source": "tarifs épicerie.ods:Feuille1:30"
+    },
+    {
+      "name": "Echalotte BIO",
+      "unit": "Kg",
+      "price": 6.0,
+      "source": "tarifs épicerie.ods:Feuille1:31"
+    },
+    {
+      "name": "Epinard BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs épicerie.ods:Feuille1:32"
+    },
+    {
+      "name": "Fenouil BIO",
+      "unit": "Kg",
+      "price": 3.48,
+      "source": "tarifs épicerie.ods:Feuille1:33"
+    },
+    {
+      "name": "Haricot vert BIO",
+      "unit": "Kg",
+      "price": 6.9,
+      "source": "tarifs épicerie.ods:Feuille1:34"
+    },
+    {
+      "name": "Haricot serre",
+      "unit": "Kg",
+      "price": 8.0,
+      "source": "tarifs épicerie.ods:Feuille1:35"
+    },
+    {
+      "name": "Laitue BIO",
+      "unit": "Pce",
+      "price": 1.05,
+      "source": "tarifs épicerie.ods:Feuille1:36"
+    },
+    {
+      "name": "Laitue serre BIO",
+      "unit": "Pce",
+      "price": 1.2,
+      "source": "tarifs épicerie.ods:Feuille1:37"
+    },
+    {
+      "name": "laitue",
+      "unit": "Kg",
+      "price": 3.5,
+      "source": "tarifs épicerie.ods:Feuille1:38"
+    },
+    {
+      "name": "Mâche BIO",
+      "unit": "Kg",
+      "price": 13.1136,
+      "source": "tarifs épicerie.ods:Feuille1:39"
+    },
+    {
+      "name": "Melon Bio",
+      "unit": "Kg",
+      "price": 2.6343,
+      "source": "tarifs épicerie.ods:Feuille1:40"
+    },
+    {
+      "name": "Mesclum BIO",
+      "unit": "Kg",
+      "price": 13.1136,
+      "source": "tarifs épicerie.ods:Feuille1:41"
+    },
+    {
+      "name": "Navet BIO",
+      "unit": "Kg",
+      "price": 2.5652,
+      "source": "tarifs épicerie.ods:Feuille1:42"
+    },
+    {
+      "name": "Navet botte BIO",
+      "unit": "Pce",
+      "price": 2.1121,
+      "source": "tarifs épicerie.ods:Feuille1:43"
+    },
+    {
+      "name": "Oignon BIO",
+      "unit": "Kg",
+      "price": 2.86,
+      "source": "tarifs épicerie.ods:Feuille1:44"
+    },
+    {
+      "name": "Oignon botte BIO",
+      "unit": "Pce",
+      "price": 2.205,
+      "source": "tarifs épicerie.ods:Feuille1:45"
+    },
+    {
+      "name": "Pastèque",
+      "unit": "Kg",
+      "price": 2.09,
+      "source": "tarifs épicerie.ods:Feuille1:46"
+    },
+    {
+      "name": "Panais BIO",
+      "unit": "Kg",
+      "price": 3.03,
+      "source": "tarifs épicerie.ods:Feuille1:47"
+    },
+    {
+      "name": "Patate douce BIO",
+      "unit": "Kg",
+      "price": 4.0462,
+      "source": "tarifs épicerie.ods:Feuille1:48"
+    },
+    {
+      "name": "PDT primeur BIO",
+      "unit": "Kg",
+      "price": 5.05,
+      "source": "tarifs épicerie.ods:Feuille1:49"
+    },
+    {
+      "name": "PDT primeur saison BIO",
+      "unit": "Kg",
+      "price": 3.22,
+      "source": "tarifs épicerie.ods:Feuille1:50"
+    },
+    {
+      "name": "PDT conservation BIO",
+      "unit": "Kg",
+      "price": 1.76,
+      "source": "tarifs épicerie.ods:Feuille1:51"
+    },
+    {
+      "name": "Persil BIO",
+      "unit": "Pce",
+      "price": 1.2,
+      "source": "tarifs épicerie.ods:Feuille1:52"
+    },
+    {
+      "name": "Poireaux BIO",
+      "unit": "Kg",
+      "price": 3.025,
+      "source": "tarifs épicerie.ods:Feuille1:53"
+    },
+    {
+      "name": "Poivron BIO",
+      "unit": "Kg",
+      "price": 3.9204,
+      "source": "tarifs épicerie.ods:Feuille1:54"
+    },
+    {
+      "name": "Poivron mini sucre BIO",
+      "unit": "Kg",
+      "price": 7.3447,
+      "source": "tarifs épicerie.ods:Feuille1:55"
+    },
+    {
+      "name": "Radis botte BIO",
+      "unit": "Pce",
+      "price": 1.6,
+      "source": "tarifs épicerie.ods:Feuille1:56"
+    },
+    {
+      "name": "Radis daïkon BIO",
+      "unit": "Kg",
+      "price": 2.9403,
+      "source": "tarifs épicerie.ods:Feuille1:57"
+    },
+    {
+      "name": "Radis noir BIO",
+      "unit": "Kg",
+      "price": 2.9403,
+      "source": "tarifs épicerie.ods:Feuille1:58"
+    },
+    {
+      "name": "Tomate ancienne BIO",
+      "unit": "Kg",
+      "price": 3.95,
+      "source": "tarifs épicerie.ods:Feuille1:59"
+    },
+    {
+      "name": "Tomate cerise BIO",
+      "unit": "Kg",
+      "price": 6.3,
+      "source": "tarifs épicerie.ods:Feuille1:60"
+    },
+    {
+      "name": "Tomate ronde BIO",
+      "unit": "Kg",
+      "price": 2.9,
+      "source": "tarifs épicerie.ods:Feuille1:61"
+    },
+    {
+      "name": "Topinambour BIO",
+      "unit": "Kg",
+      "price": 4.009,
+      "source": "tarifs épicerie.ods:Feuille1:62"
+    },
+    {
+      "name": "Confiture pêche BIO",
+      "unit": "Pce",
+      "price": 3.6,
+      "source": "tarifs épicerie.ods:Feuille1:64"
+    },
+    {
+      "name": "Confiture pêche gingembre BIO",
+      "unit": "Pce",
+      "price": 3.23,
+      "source": "tarifs épicerie.ods:Feuille1:65"
+    },
+    {
+      "name": "Conserve apéro courgette BIO",
+      "unit": "Pce",
+      "price": 2.9,
+      "source": "tarifs épicerie.ods:Feuille1:66"
+    },
+    {
+      "name": "Conserve cardons BIO",
+      "unit": "Pce",
+      "price": 4.8,
+      "source": "tarifs épicerie.ods:Feuille1:67"
+    },
+    {
+      "name": "Conserve coulis tomate BIO",
+      "unit": "Pce",
+      "price": 2.42,
+      "source": "tarifs épicerie.ods:Feuille1:68"
+    },
+    {
+      "name": "Conserve ketchup BIO",
+      "unit": "Pce",
+      "price": 3.23,
+      "source": "tarifs épicerie.ods:Feuille1:69"
+    },
+    {
+      "name": "Conserve pesto basilic BIO",
+      "unit": "Pce",
+      "price": 4.03,
+      "source": "tarifs épicerie.ods:Feuille1:70"
+    },
+    {
+      "name": "Conserve pickles choux fleur BIO",
+      "unit": "Pce",
+      "price": 3.23,
+      "source": "tarifs épicerie.ods:Feuille1:71"
+    },
+    {
+      "name": "Conserve pickles concombre BIO",
+      "unit": "Pce",
+      "price": 3.63,
+      "source": "tarifs épicerie.ods:Feuille1:72"
+    },
+    {
+      "name": "chips",
+      "unit": "Pce",
+      "price": 2.28,
+      "source": "tarifs épicerie.ods:Feuille1:73"
+    },
+    {
+      "name": "tartinade aubergine",
+      "unit": "Pce",
+      "price": 3.63,
+      "source": "tarifs épicerie.ods:Feuille1:74"
+    },
+    {
+      "name": "pickles ail",
+      "unit": "Pce",
+      "price": 3.63,
+      "source": "tarifs épicerie.ods:Feuille1:75"
+    },
+    {
+      "name": "bière Blonde / Ambrée /Ipa 33cl",
+      "unit": "Pce",
+      "price": 1.8,
+      "source": "tarifs épicerie.ods:Feuille1:78"
+    },
+    {
+      "name": "bière Blonde / Ambrée /Ipa 75cl",
+      "unit": "Pce",
+      "price": 3.7,
+      "source": "tarifs épicerie.ods:Feuille1:79"
+    }
+  ],
+  "Paniers": [
+    {
+      "name": "Ail botte BIO",
+      "unit": "Pce",
+      "price": 2.7,
+      "source": "tarifs vente directe.ods:Feuille1:2"
+    },
+    {
+      "name": "Ail frais BIO",
+      "unit": "Kg",
+      "price": 10.5,
+      "source": "tarifs vente directe.ods:Feuille1:3"
+    },
+    {
+      "name": "Ail sec BIO",
+      "unit": "Kg",
+      "price": 9.0,
+      "source": "tarifs vente directe.ods:Feuille1:4"
+    },
+    {
+      "name": "Aubergine BIO",
+      "unit": "Kg",
+      "price": 4.4,
+      "source": "tarifs vente directe.ods:Feuille1:5"
+    },
+    {
+      "name": "Basilic BIO",
+      "unit": "Pce",
+      "price": 1.2,
+      "source": "tarifs vente directe.ods:Feuille1:6"
+    },
+    {
+      "name": "Bette BIO",
+      "unit": "Kg",
+      "price": 3.5,
+      "source": "tarifs vente directe.ods:Feuille1:7"
+    },
+    {
+      "name": "Betterave crue BIO",
+      "unit": "Kg",
+      "price": 3.2,
+      "source": "tarifs vente directe.ods:Feuille1:8"
+    },
+    {
+      "name": "Carotte BIO",
+      "unit": "Kg",
+      "price": 2.65,
+      "source": "tarifs vente directe.ods:Feuille1:9"
+    },
+    {
+      "name": "Carotte botte BIO",
+      "unit": "Kg",
+      "price": 3.0,
+      "source": "tarifs vente directe.ods:Feuille1:10"
+    },
+    {
+      "name": "Céleri rave BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:11"
+    },
+    {
+      "name": "Chicorée pain de sucre BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:12"
+    },
+    {
+      "name": "Chicorée trévise BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:13"
+    },
+    {
+      "name": "Choux Cabus BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:14"
+    },
+    {
+      "name": "Choux chinois BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:15"
+    },
+    {
+      "name": "Choux de printemps BIO",
+      "unit": "Kg",
+      "price": 3.5,
+      "source": "tarifs vente directe.ods:Feuille1:16"
+    },
+    {
+      "name": "Choux fleur BIO",
+      "unit": "Kg",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille1:17"
+    },
+    {
+      "name": "Choux frisé BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:18"
+    },
+    {
+      "name": "Choux rave BIO",
+      "unit": "Kg",
+      "price": 3.4,
+      "source": "tarifs vente directe.ods:Feuille1:19"
+    },
+    {
+      "name": "Concombre BIO",
+      "unit": "Kg",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille1:20"
+    },
+    {
+      "name": "Courge Butternut BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:21"
+    },
+    {
+      "name": "Courge Carrat BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:22"
+    },
+    {
+      "name": "Courge Musquée BIO",
+      "unit": "Kg",
+      "price": 2.6,
+      "source": "tarifs vente directe.ods:Feuille1:23"
+    },
+    {
+      "name": "Courge Patidou BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:24"
+    },
+    {
+      "name": "Courge Potimarron BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:25"
+    },
+    {
+      "name": "Courge Potimarron Vert BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:26"
+    },
+    {
+      "name": "Courgette BIO",
+      "unit": "Kg",
+      "price": 2.8,
+      "source": "tarifs vente directe.ods:Feuille1:27"
+    },
+    {
+      "name": "Courgette serre BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:28"
+    },
+    {
+      "name": "Courgette serre BIO",
+      "unit": "Kg",
+      "price": 3.3,
+      "source": "tarifs vente directe.ods:Feuille1:29"
+    },
+    {
+      "name": "Echalotte BIO",
+      "unit": "Kg",
+      "price": 6.0,
+      "source": "tarifs vente directe.ods:Feuille1:30"
+    },
+    {
+      "name": "Echallion",
+      "unit": "Kg",
+      "price": 4.4,
+      "source": "tarifs vente directe.ods:Feuille1:31"
+    },
+    {
+      "name": "Epinard BIO",
+      "unit": "Kg",
+      "price": 5.2,
+      "source": "tarifs vente directe.ods:Feuille1:32"
+    },
+    {
+      "name": "Fenouil BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:33"
+    },
+    {
+      "name": "Haricot vert BIO",
+      "unit": "Kg",
+      "price": 7.3,
+      "source": "tarifs vente directe.ods:Feuille1:34"
+    },
+    {
+      "name": "Laitue BIO",
+      "unit": "Pce",
+      "price": 1.2,
+      "source": "tarifs vente directe.ods:Feuille1:35"
+    },
+    {
+      "name": "Laitue serre BIO",
+      "unit": "Pce",
+      "price": 1.4,
+      "source": "tarifs vente directe.ods:Feuille1:36"
+    },
+    {
+      "name": "Mâche BIO",
+      "unit": "Kg",
+      "price": 15.0,
+      "source": "tarifs vente directe.ods:Feuille1:37"
+    },
+    {
+      "name": "Melon Bio",
+      "unit": "Kg",
+      "price": 3.0,
+      "source": "tarifs vente directe.ods:Feuille1:38"
+    },
+    {
+      "name": "Mesclum BIO",
+      "unit": "Kg",
+      "price": 15.0,
+      "source": "tarifs vente directe.ods:Feuille1:39"
+    },
+    {
+      "name": "Navet BIO",
+      "unit": "Kg",
+      "price": 3.1,
+      "source": "tarifs vente directe.ods:Feuille1:40"
+    },
+    {
+      "name": "Navet botte BIO",
+      "unit": "Pce",
+      "price": 2.6,
+      "source": "tarifs vente directe.ods:Feuille1:41"
+    },
+    {
+      "name": "Oignon BIO",
+      "unit": "Kg",
+      "price": 3.3,
+      "source": "tarifs vente directe.ods:Feuille1:42"
+    },
+    {
+      "name": "Oignon botte BIO",
+      "unit": "Pce",
+      "price": 2.6,
+      "source": "tarifs vente directe.ods:Feuille1:43"
+    },
+    {
+      "name": "pastèque",
+      "unit": "Kg",
+      "price": 2.5,
+      "source": "tarifs vente directe.ods:Feuille1:44"
+    },
+    {
+      "name": "Panais BIO",
+      "unit": "Kg",
+      "price": 3.8,
+      "source": "tarifs vente directe.ods:Feuille1:45"
+    },
+    {
+      "name": "Patate douce BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:46"
+    },
+    {
+      "name": "PDT primeur BIO",
+      "unit": "Kg",
+      "price": 7.0,
+      "source": "tarifs vente directe.ods:Feuille1:47"
+    },
+    {
+      "name": "PDT primeur BIO",
+      "unit": "Kg",
+      "price": 5.5,
+      "source": "tarifs vente directe.ods:Feuille1:48"
+    },
+    {
+      "name": "PDT primeur saison BIO",
+      "unit": "Kg",
+      "price": 3.5,
+      "source": "tarifs vente directe.ods:Feuille1:49"
+    },
+    {
+      "name": "Persil BIO",
+      "unit": "Pce",
+      "price": 1.4,
+      "source": "tarifs vente directe.ods:Feuille1:50"
+    },
+    {
+      "name": "Poireaux BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:51"
+    },
+    {
+      "name": "Poivron BIO",
+      "unit": "Kg",
+      "price": 4.7,
+      "source": "tarifs vente directe.ods:Feuille1:52"
+    },
+    {
+      "name": "Poivron mini sucre BIO",
+      "unit": "Kg",
+      "price": 8.0,
+      "source": "tarifs vente directe.ods:Feuille1:53"
+    },
+    {
+      "name": "Radis botte BIO",
+      "unit": "Pce",
+      "price": 1.9,
+      "source": "tarifs vente directe.ods:Feuille1:54"
+    },
+    {
+      "name": "Radis daïkon BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:55"
+    },
+    {
+      "name": "Radis noir BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:56"
+    },
+    {
+      "name": "Tomate ancienne BIO",
+      "unit": "Kg",
+      "price": 4.2,
+      "source": "tarifs vente directe.ods:Feuille1:57"
+    },
+    {
+      "name": "Tomate cerise BIO",
+      "unit": "Kg",
+      "price": 6.3,
+      "source": "tarifs vente directe.ods:Feuille1:58"
+    },
+    {
+      "name": "Tomate ronde BIO",
+      "unit": "Kg",
+      "price": 3.6,
+      "source": "tarifs vente directe.ods:Feuille1:59"
+    },
+    {
+      "name": "Confiture pêche BIO",
+      "unit": "Pce",
+      "price": 4.4,
+      "source": "tarifs vente directe.ods:Feuille1:62"
+    },
+    {
+      "name": "Confiture pêche gingembre BIO",
+      "unit": "Pce",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille1:63"
+    },
+    {
+      "name": "Conserve apéro courgette BIO",
+      "unit": "Pce",
+      "price": 3.5,
+      "source": "tarifs vente directe.ods:Feuille1:64"
+    },
+    {
+      "name": "Conserve cardons BIO",
+      "unit": "Pce",
+      "price": 7.0,
+      "source": "tarifs vente directe.ods:Feuille1:65"
+    },
+    {
+      "name": "Conserve coulis tomate BIO",
+      "unit": "Pce",
+      "price": 3.0,
+      "source": "tarifs vente directe.ods:Feuille1:66"
+    },
+    {
+      "name": "Conserve ketchup BIO",
+      "unit": "Pce",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille1:67"
+    },
+    {
+      "name": "Conserve pesto basilic BIO",
+      "unit": "Pce",
+      "price": 5.5,
+      "source": "tarifs vente directe.ods:Feuille1:68"
+    },
+    {
+      "name": "Conserve pickles choux fleur BIO",
+      "unit": "Pce",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille1:69"
+    },
+    {
+      "name": "Conserve pickles concombre BIO",
+      "unit": "Pce",
+      "price": 4.5,
+      "source": "tarifs vente directe.ods:Feuille1:70"
+    },
+    {
+      "name": "tartinade aubergine",
+      "unit": "Pce",
+      "price": 4.5,
+      "source": "tarifs vente directe.ods:Feuille1:71"
+    },
+    {
+      "name": "Betterave crue BIO",
+      "unit": "Kg",
+      "price": 2.9,
+      "source": "tarifs vente directe.ods:Feuille2:2"
+    },
+    {
+      "name": "Carotte BIO",
+      "unit": "Kg",
+      "price": 3.3,
+      "source": "tarifs vente directe.ods:Feuille2:3"
+    },
+    {
+      "name": "Céleri rave BIO",
+      "unit": "Kg",
+      "price": 3.4,
+      "source": "tarifs vente directe.ods:Feuille2:4"
+    },
+    {
+      "name": "Choux Cabus BIO",
+      "unit": "Kg",
+      "price": 2.9,
+      "source": "tarifs vente directe.ods:Feuille2:5"
+    },
+    {
+      "name": "Choux chinois BIO",
+      "unit": "Kg",
+      "price": 4.0,
+      "source": "tarifs vente directe.ods:Feuille2:6"
+    },
+    {
+      "name": "Choux rave BIO",
+      "unit": "Kg",
+      "price": 3.2,
+      "source": "tarifs vente directe.ods:Feuille2:7"
+    },
+    {
+      "name": "Courge Potimarron Vert BIO",
+      "unit": "Kg",
+      "price": 3.0,
+      "source": "tarifs vente directe.ods:Feuille2:8"
+    },
+    {
+      "name": "Echalotte BIO",
+      "unit": "Kg",
+      "price": 6.0,
+      "source": "tarifs vente directe.ods:Feuille2:9"
+    },
+    {
+      "name": "Laitue serre BIO",
+      "unit": "Pce",
+      "price": 1.4,
+      "source": "tarifs vente directe.ods:Feuille2:10"
+    },
+    {
+      "name": "Navet BIO",
+      "unit": "Kg",
+      "price": 2.9,
+      "source": "tarifs vente directe.ods:Feuille2:11"
+    },
+    {
+      "name": "Oignon BIO",
+      "unit": "Kg",
+      "price": 3.3,
+      "source": "tarifs vente directe.ods:Feuille2:12"
+    },
+    {
+      "name": "Panais BIO",
+      "unit": "Kg",
+      "price": 3.5,
+      "source": "tarifs vente directe.ods:Feuille2:13"
+    },
+    {
+      "name": "PDT BIO",
+      "unit": "Kg",
+      "price": 2.2,
+      "source": "tarifs vente directe.ods:Feuille2:14"
+    },
+    {
+      "name": "Poireaux BIO",
+      "unit": "Kg",
+      "price": 3.3,
+      "source": "tarifs vente directe.ods:Feuille2:15"
+    },
+    {
+      "name": "Radis daïkon BIO",
+      "unit": "Kg",
+      "price": 3.4,
+      "source": "tarifs vente directe.ods:Feuille2:16"
+    },
+    {
+      "name": "Radis noir BIO",
+      "unit": "Kg",
+      "price": 3.4,
+      "source": "tarifs vente directe.ods:Feuille2:17"
+    }
+  ]
+}
