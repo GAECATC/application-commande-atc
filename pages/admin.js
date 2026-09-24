@@ -107,6 +107,7 @@ export default function Admin() {
   const [availabilityPartnerId, setAvailabilityPartnerId] = useState("");
   const [availabilityDeliveryDate, setAvailabilityDeliveryDate] = useState("");
   const [availabilityProducts, setAvailabilityProducts] = useState([]);
+  const [availabilityCategory, setAvailabilityCategory] = useState("__all__");
   const [allocationDraft, setAllocationDraft] = useState({});
   const [allocationVisibilityDraft, setAllocationVisibilityDraft] = useState({});
   const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
@@ -181,6 +182,24 @@ export default function Admin() {
       .map(([category, categoryProducts]) => [category, categoryProducts.filter((product) => product.name.toLocaleLowerCase("fr").includes(search))])
       .filter(([, categoryProducts]) => categoryProducts.length);
   }, [catalogGroups, catalogSearch]);
+  const availabilityCategories = useMemo(() => {
+    const counts = availabilityProducts.reduce((result, product) => {
+      const category = product.category || "Autres";
+      result[category] = (result[category] || 0) + 1;
+      return result;
+    }, {});
+    return Object.entries(counts).sort(([categoryA], [categoryB]) => {
+      const indexA = PRODUCT_CATEGORIES.indexOf(categoryA);
+      const indexB = PRODUCT_CATEGORIES.indexOf(categoryB);
+      if (indexA === -1 && indexB === -1) return categoryA.localeCompare(categoryB, "fr");
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  }, [availabilityProducts]);
+  const selectedAvailabilityCategory = availabilityCategory === "__all__" || availabilityCategories.some(([category]) => category === availabilityCategory)
+    ? availabilityCategory
+    : "__all__";
   const effectiveCatalogCategory = catalogCategory === "__all__" || catalogGroups.some(([category]) => category === catalogCategory)
     ? catalogCategory
     : (catalogGroups[0]?.[0] || "");
@@ -1648,13 +1667,26 @@ export default function Admin() {
                 setAvailabilityReadyToSend(false);
               }}>Tout masquer</button>
             </div>
+            <div className="availability-category-navigation">
+              <div className="catalog-tabs availability-category-tabs" role="group" aria-label="Filtrer les disponibilités par catégorie">
+                <button type="button" className={selectedAvailabilityCategory === "__all__" ? "active" : ""} aria-pressed={selectedAvailabilityCategory === "__all__"} onClick={() => setAvailabilityCategory("__all__")}>Toutes les catégories<span>{availabilityProducts.length}</span></button>
+                {availabilityCategories.map(([category, count]) => <button type="button" key={category} className={selectedAvailabilityCategory === category ? "active" : ""} aria-pressed={selectedAvailabilityCategory === category} onClick={() => setAvailabilityCategory(category)}>{category}<span>{count}</span></button>)}
+              </div>
+              <label className="compact-label availability-category-select">
+                Catégorie
+                <select value={selectedAvailabilityCategory} onChange={(event) => setAvailabilityCategory(event.target.value)}>
+                  <option value="__all__">Toutes les catégories ({availabilityProducts.length})</option>
+                  {availabilityCategories.map(([category, count]) => <option key={category} value={category}>{category} ({count})</option>)}
+                </select>
+              </label>
+            </div>
             <div className="availability-groups">
               {Object.entries([...availabilityProducts].sort((productA, productB) =>
                 productA.name.localeCompare(productB.name, "fr", { sensitivity: "base", numeric: true })
               ).reduce((groups, product) => {
-                (groups[product.category] ||= []).push(product);
+                (groups[product.category || "Autres"] ||= []).push(product);
                 return groups;
-              }, {})).map(([category, categoryProducts]) => (
+              }, {})).filter(([category]) => selectedAvailabilityCategory === "__all__" || category === selectedAvailabilityCategory).map(([category, categoryProducts]) => (
                 <section className="availability-group" key={category}>
                   <h3>{category}</h3>
                   {categoryProducts.map((product) => {
