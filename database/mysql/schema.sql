@@ -31,6 +31,7 @@ create table if not exists product_prices (
   price_list_id varchar(191) not null,
   product_id varchar(191) not null,
   price decimal(10, 4) not null default 0,
+  listed tinyint(1) not null default 1,
   primary key (price_list_id, product_id),
   constraint product_prices_price_list_fk foreign key (price_list_id) references price_lists(id) on delete cascade,
   constraint product_prices_product_fk foreign key (product_id) references products(id) on delete cascade

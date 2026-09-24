@@ -36,6 +36,7 @@ create table if not exists product_prices (
   price_list_id text not null references price_lists(id) on delete cascade,
   product_id text not null references products(id) on delete cascade,
   price numeric(10, 4) not null default 0,
+  listed boolean not null default true,
   primary key (price_list_id, product_id)
 );
 

@@ -1,6 +1,7 @@
 .next
 node_modules
 data/db.json
+data/backups/
 .env
 .env.local
 *.log
