@@ -659,13 +659,14 @@ form {
 .mobile-prep-check { display: none; }
 .matrix-check-cell { display: block; }
 .matrix-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-.matrix-heading .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.matrix-heading .actions > button { max-width: 100%; white-space: normal; }
+.matrix-heading .actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: min(100%, 760px); }
+.matrix-heading .actions > button { min-width: 0; min-height: 48px; padding: 9px 12px; white-space: normal; text-align: center; line-height: 1.2; }
 .matrix-email-picker { display: grid; gap: 10px; margin: 12px 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f9fbf5; }
 .matrix-email-picker p { margin: 0; }
-.matrix-email-picker > button { justify-self: start; }
-.matrix-email-clients { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-.matrix-email-clients label { display: inline-flex; align-items: center; gap: 6px; }
+.matrix-email-picker > button { justify-self: start; min-height: 44px; }
+.matrix-email-clients { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 8px; }
+.matrix-email-clients label { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: center; gap: 9px; min-width: 0; min-height: 46px; margin: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow-wrap: anywhere; cursor: pointer; }
+.matrix-email-clients input { width: 18px; height: 18px; margin: 0; }
 .matrix-edit-button { background: #111; color: #fff; border-color: #111; }
 .matrix-edit-button:hover { background: #2b2b2b; color: #fff; }
 .matrix-quantity-editor { display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -673,6 +674,7 @@ form {
 .matrix-quantity-editor small { white-space: nowrap; }
 
 @media (max-width: 1200px) {
+  .matrix-heading .actions { width: 100%; }
   .mobile-prep-check { display: block; width: 22px; min-width: 22px; height: 22px; margin: 0; accent-color: var(--primary); }
   .harvest-total-row { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
   .crate-summary-list > div { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; }
@@ -690,6 +692,12 @@ form {
   .client-order-matrix th:first-child { position: sticky; left: 0; z-index: 3; background: #f4f8ea; box-shadow: 1px 0 0 var(--line); }
   .client-order-matrix thead th:first-child { z-index: 6; }
   .client-order-matrix tbody tr:nth-child(even) th:first-child { background: #f8faf5; }
+}
+
+@media (max-width: 700px) {
+  .matrix-heading .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .matrix-heading .actions > button:last-child:nth-child(3) { grid-column: 1 / -1; }
+  .matrix-email-picker > button { width: 100%; justify-self: stretch; }
 }
 
 .orders-list {

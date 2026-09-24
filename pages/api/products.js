@@ -1,4 +1,4 @@
-const { deleteProduct, deleteProductPrice, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, upsertProduct, upsertProductPrice } = require("@/lib/db");
+const { deleteProduct, deleteProductPrice, getAvailabilityMessage, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProductPrices, getProducts, upsertProduct, upsertProductPrice } = require("@/lib/db");
 const { isAdmin, requireAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isProductVisibleInAvailability } = require("@/lib/availability-products");
@@ -94,6 +94,24 @@ export default async function handler(req, res) {
     return res.status(200).json({ product: saved });
   }
 
+  if (req.method === "PATCH") {
+    if (!requireAdmin(req, res)) return;
+    const { id, priceListId, listed } = req.body || {};
+    if (!id || !priceListId || typeof listed !== "boolean") return res.status(400).json({ error: "Produit, grille et sélection requis" });
+    try {
+      if (listed) {
+        const prices = await getProductPrices(priceListId);
+        const existing = prices.find((item) => item.productId === id);
+        await upsertProductPrice(priceListId, id, existing ? existing.price : Number(req.body.price || 0));
+      } else {
+        await deleteProductPrice(priceListId, id);
+      }
+      return res.status(200).json({ id, priceListId, listed });
+    } catch (error) {
+      return res.status(400).json({ error: error.message || "Modification de la grille refusée" });
+    }
+  }
+
   if (req.method === "DELETE") {
     if (!requireAdmin(req, res)) return;
     const { id, priceListId } = req.body || {};
@@ -108,6 +126,6 @@ export default async function handler(req, res) {
     }
   }
 
-  res.setHeader("Allow", "GET, POST, DELETE");
+  res.setHeader("Allow", "GET, POST, PATCH, DELETE");
   return res.status(405).json({ error: "Methode non autorisee" });
 };

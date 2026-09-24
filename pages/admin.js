@@ -758,20 +758,32 @@ export default function Admin() {
     await loadAdminData();
   }
 
-  async function removeProductFromPriceList(product) {
-    const selectedPriceList = priceLists.find((priceList) => priceList.id === selectedPriceListId);
-    if (!selectedPriceList || !window.confirm(`Retirer « ${product.name} » uniquement de la grille « ${selectedPriceList.name} » ? Le produit et ses prix dans les autres grilles seront conservés.`)) return;
+  async function toggleProductInPriceList(product, listed) {
+    const response = await fetch("/api/products", {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ id: product.id, priceListId: selectedPriceListId, listed, price: product.price })
+    });
+    const data = await response.json();
+    if (!response.ok) return setMessage(data.error || "Modification de la grille refusée.");
+    setProducts((current) => current.map((item) => item.id === product.id ? { ...item, listed } : item));
+    setMessage(`« ${product.name} » ${listed ? "ajouté à" : "retiré de"} cette grille.`);
+  }
+
+  async function deleteCatalogProduct(product) {
+    if (!window.confirm(`Supprimer définitivement « ${product.name} » du catalogue et de toutes les grilles tarifaires ? Les commandes passées restent conservées. Cette action est irréversible.`)) return;
+    if (dirtyProductIds.length && !window.confirm("Des modifications du catalogue ne sont pas enregistrées. Les perdre et poursuivre la suppression ?")) return;
 
     const response = await fetch("/api/products", {
       method: "DELETE",
       headers,
-      body: JSON.stringify({ id: product.id, priceListId: selectedPriceListId })
+      body: JSON.stringify({ id: product.id })
     });
     const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Retrait de la grille refusé.");
+    if (!response.ok) return setMessage(data.error || "Suppression du produit refusée.");
 
     setDirtyProductIds((current) => current.filter((id) => id !== product.id));
-    setMessage(`« ${product.name} » a été retiré uniquement de la grille « ${selectedPriceList.name} ».`);
+    setMessage(`« ${product.name} » a été supprimé du catalogue.`);
     await loadAdminData(password, selectedPriceListId);
   }
 
@@ -1835,7 +1847,8 @@ export default function Admin() {
                     product={product}
                     categories={categoryOptions}
                     onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
-                    onDelete={product.listed !== false ? () => removeProductFromPriceList(product) : undefined}
+                    onToggleListed={(listed) => toggleProductInPriceList(product, listed)}
+                    onDelete={() => deleteCatalogProduct(product)}
                   />
                 ))}
               </div>
@@ -1853,7 +1866,7 @@ export default function Admin() {
                 <svg className={`clients-chevron ${open ? "open" : ""}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {open && <div className="admin-products">
-                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onDelete={product.listed !== false ? () => removeProductFromPriceList(product) : undefined} />)}
+                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onToggleListed={(listed) => toggleProductInPriceList(product, listed)} onDelete={() => deleteCatalogProduct(product)} />)}
               </div>}
             </section>;
           })}
@@ -1907,8 +1920,8 @@ export default function Admin() {
   );
 }
 
-function ProductEditor({ product, categories, onChange, onDelete }) {
-  return <ProductForm value={product} categories={categories} onChange={onChange} onDelete={onDelete} showSubmit={false} />;
+function ProductEditor({ product, categories, onChange, onToggleListed, onDelete }) {
+  return <ProductForm value={product} categories={categories} onChange={onChange} onToggleListed={onToggleListed} onDelete={onDelete} showSubmit={false} />;
 }
 
 function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
@@ -1941,7 +1954,7 @@ function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
   );
 }
 
-function ProductForm({ value, categories, onChange, onSubmit, onDelete, showSubmit = true }) {
+function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, onDelete, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -1982,10 +1995,10 @@ function ProductForm({ value, categories, onChange, onSubmit, onDelete, showSubm
         </span>
       </label>
       <label className="toggle product-visible-field">
-        <input type="checkbox" checked={value.listed !== false} onChange={(event) => patch("listed", event.target.checked)} />
+        <input type="checkbox" checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
         Dans cette grille
       </label>
-      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Retirer de la grille</button>}
+      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Supprimer</button>}
       {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );
