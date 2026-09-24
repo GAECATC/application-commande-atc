@@ -39,3 +39,24 @@ test("une dénomination ambiguë n'est jamais restaurée automatiquement", () =>
   assert.equal(plan.restore.length, 0);
   assert.equal(plan.review.length, 1);
 });
+
+test("un identifiant historique retrouve le produit renommé si l'unité concorde", () => {
+  const [plan] = planTariffRecovery(
+    { "Mercuriale 2026": [{ name: "basilic bouquet P", unit: "", price: 1.1 }] },
+    [{ id: "mercuriale", name: "Mercuriale 2026" }],
+    [{ id: "basilic-bouquet-piece", name: "Basilic frais bouquet", unit: "piece" }],
+    []
+  );
+  assert.deepEqual(plan.restore.map((item) => item.productId), ["basilic-bouquet-piece"]);
+});
+
+test("un identifiant historique avec une unité différente reste à examiner", () => {
+  const [plan] = planTariffRecovery(
+    { "Mercuriale 2026": [{ name: "Blette couleur botte", unit: "piece", price: 1.8 }] },
+    [{ id: "mercuriale", name: "Mercuriale 2026" }],
+    [{ id: "blette-couleur-botte-piece", name: "Blette pied", unit: "kg" }],
+    []
+  );
+  assert.equal(plan.restore.length, 0);
+  assert.match(plan.review[0], /unité différente/);
+});

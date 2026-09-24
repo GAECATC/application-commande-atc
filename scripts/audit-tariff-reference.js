@@ -18,9 +18,9 @@ async function main() {
     const ambiguous = [];
     const different = [];
     const matchedIds = new Set();
-    for (const { row, candidates } of matches) {
+    for (const { row, candidates, unitConflict } of matches) {
       if (candidates.length !== 1) {
-        ambiguous.push(`${row.name} (${row.unit || "unité non précisée"}) : ${candidates.length} correspondance(s)`);
+        ambiguous.push(`${row.name} (${row.unit || "unité non précisée"}) : ${candidates.length} correspondance(s)${unitConflict ? ", unité différente dans l'application" : ""}`);
         continue;
       }
       const product = candidates[0];
