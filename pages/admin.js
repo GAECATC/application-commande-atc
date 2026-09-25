@@ -4,6 +4,7 @@ const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import Image from "next/image";
 const { buildCrateSummary, countSaladCratesByType } = require("@/lib/crate-summary");
+const { canSaveCatalog, isCompleteAdminSnapshot } = require("@/lib/admin-catalog-safety");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 async function readCatalogResponse(response) {
@@ -110,6 +111,8 @@ export default function Admin() {
   const [dirtyProductIds, setDirtyProductIds] = useState([]);
   const [dirtyPartnerIds, setDirtyPartnerIds] = useState([]);
   const [savingCatalog, setSavingCatalog] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [catalogPendingCount, setCatalogPendingCount] = useState(0);
   const [catalogError, setCatalogError] = useState("");
   const [savingPartners, setSavingPartners] = useState(false);
   const [message, setMessage] = useState("");
@@ -153,6 +156,7 @@ export default function Admin() {
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState({});
   const [adminView, setAdminView] = useState("orders");
   const availabilityLoadRequest = useRef(0);
+  const adminLoadRequest = useRef(0);
 
   const headers = useMemo(() => ({ "Content-Type": "application/json", "x-admin-password": password }), [password]);
   const categoryOptions = useMemo(() => {
@@ -287,13 +291,13 @@ export default function Admin() {
 
   useEffect(() => {
     function warnBeforeLeaving(event) {
-      if (!availabilityDirty) return;
+      if (!availabilityDirty && !dirtyProductIds.length && !dirtyPartnerIds.length && !savingCatalog && !catalogPendingCount) return;
       event.preventDefault();
       event.returnValue = "";
     }
     window.addEventListener("beforeunload", warnBeforeLeaving);
     return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
-  }, [availabilityDirty]);
+  }, [availabilityDirty, dirtyProductIds.length, dirtyPartnerIds.length, savingCatalog, catalogPendingCount]);
 
   useEffect(() => {
     const selectedPartner = partners.find((partner) => partner.id === basketDraft.partnerId);
@@ -344,44 +348,66 @@ export default function Admin() {
     window.location.replace("/admin");
   }
 
+  function confirmDiscardAdminDrafts() {
+    if (!dirtyProductIds.length && !dirtyPartnerIds.length && !availabilityDirty) return true;
+    return window.confirm("Des modifications ne sont pas enregistrées (catalogue, clients ou disponibilités). Les abandonner et recharger les données ?");
+  }
+
   async function loadAdminData(pass = password, forcedPriceListId = selectedPriceListId) {
+    const requestId = ++adminLoadRequest.current;
+    setAdminLoading(true);
     const adminHeaders = { "x-admin-password": pass };
-    const sessionRes = await fetch("/api/session", { headers: adminHeaders });
-    const sessionData = await sessionRes.json();
-    const nextPriceLists = sessionData.priceLists || [];
-    const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";
-    const [productRes, summaryRes, partnerRes] = await Promise.all([
-      fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(nextPriceListId)}`, { headers: adminHeaders }),
-      fetch("/api/summary", { headers: adminHeaders }),
-      fetch("/api/partners", { headers: adminHeaders })
-    ]);
-    const productData = await productRes.json();
-    const summaryData = await summaryRes.json();
-    const partnerData = await partnerRes.json();
-    setPriceLists(nextPriceLists);
-    setSelectedPriceListId(nextPriceListId);
-    setProducts(productData.products || []);
-    setPartners((partnerData.partners || []).map((partner) => ({ ...partner, originalId: partner.id })));
-    setDirtyProductIds([]);
-    setDirtyPartnerIds([]);
-    setSummary(summaryData);
-    setPreparationChecks(Object.fromEntries((summaryData.groups || []).flatMap((group) =>
-      (group.checkedKeys || []).map((itemKey) => [preparationStateKey(group.deliveryDate, itemKey), true])
-    )));
     try {
-      const [basketRes, groupRes] = await Promise.all([
-        fetch("/api/baskets", { headers: adminHeaders }),
-        fetch("/api/client-groups", { headers: adminHeaders })
+      const sessionRes = await fetch("/api/session", { headers: adminHeaders, cache: "no-store" });
+      const sessionData = await readCatalogResponse(sessionRes);
+      if (!sessionRes.ok || !Array.isArray(sessionData.priceLists)) throw new Error(sessionData.error || "Liste des grilles indisponible.");
+      const nextPriceLists = sessionData.priceLists;
+      const nextPriceListId = forcedPriceListId || nextPriceLists[0]?.id || "";
+      const [productRes, summaryRes, partnerRes] = await Promise.all([
+        fetch(`/api/products?includeHidden=true&priceListId=${encodeURIComponent(nextPriceListId)}`, { headers: adminHeaders, cache: "no-store" }),
+        fetch("/api/summary", { headers: adminHeaders, cache: "no-store" }),
+        fetch("/api/partners", { headers: adminHeaders, cache: "no-store" })
       ]);
-      const [basketData, groupData] = await Promise.all([basketRes.json(), groupRes.json()]);
-      setBaskets(basketRes.ok ? (basketData.baskets || []) : []);
-      setClientGroups(groupRes.ok ? (groupData.groups || []) : []);
-      if (!basketRes.ok) setMessage(basketData.error || "Les paniers ne peuvent pas être chargés pour le moment.");
-      else if (!groupRes.ok) setMessage(groupData.error || "Les groupes de clients ne peuvent pas être chargés pour le moment.");
-    } catch {
-      setBaskets([]);
-      setClientGroups([]);
-      setMessage("Les paniers ou les groupes ne peuvent pas être chargés pour le moment. Les autres données restent disponibles.");
+      const [productData, summaryData, partnerData] = await Promise.all([
+        readCatalogResponse(productRes), readCatalogResponse(summaryRes), readCatalogResponse(partnerRes)
+      ]);
+      if (!productRes.ok) throw new Error(productData.error || "Catalogue indisponible.");
+      if (!summaryRes.ok) throw new Error(summaryData.error || "Récapitulatif indisponible.");
+      if (!partnerRes.ok) throw new Error(partnerData.error || "Liste des clients indisponible.");
+      if (!isCompleteAdminSnapshot({ priceLists: nextPriceLists, products: productData.products, groups: summaryData.groups, partners: partnerData.partners })) {
+        throw new Error("Réponse incomplète du serveur : le dernier affichage est conservé.");
+      }
+      if (requestId !== adminLoadRequest.current) return false;
+      setPriceLists(nextPriceLists);
+      setSelectedPriceListId(nextPriceListId);
+      setProducts(productData.products);
+      setPartners(partnerData.partners.map((partner) => ({ ...partner, originalId: partner.id })));
+      setDirtyProductIds([]);
+      setDirtyPartnerIds([]);
+      setSummary(summaryData);
+      setPreparationChecks(Object.fromEntries(summaryData.groups.flatMap((group) =>
+        (group.checkedKeys || []).map((itemKey) => [preparationStateKey(group.deliveryDate, itemKey), true])
+      )));
+      try {
+        const [basketRes, groupRes] = await Promise.all([
+          fetch("/api/baskets", { headers: adminHeaders, cache: "no-store" }),
+          fetch("/api/client-groups", { headers: adminHeaders, cache: "no-store" })
+        ]);
+        const [basketData, groupData] = await Promise.all([readCatalogResponse(basketRes), readCatalogResponse(groupRes)]);
+        if (requestId !== adminLoadRequest.current) return true;
+        if (basketRes.ok && Array.isArray(basketData.baskets)) setBaskets(basketData.baskets);
+        else setMessage(basketData.error || "Paniers momentanément indisponibles ; leur dernier affichage est conservé.");
+        if (groupRes.ok && Array.isArray(groupData.groups)) setClientGroups(groupData.groups);
+        else setMessage(groupData.error || "Groupes momentanément indisponibles ; leur dernier affichage est conservé.");
+      } catch {
+        if (requestId === adminLoadRequest.current) setMessage("Paniers ou groupes momentanément indisponibles ; leur dernier affichage est conservé.");
+      }
+      return true;
+    } catch (error) {
+      if (requestId === adminLoadRequest.current) setCatalogError(`Actualisation interrompue. Les données déjà affichées ont été conservées. ${catalogFailureMessage(error)}`);
+      return false;
+    } finally {
+      if (requestId === adminLoadRequest.current) setAdminLoading(false);
     }
   }
 
@@ -768,7 +794,7 @@ export default function Admin() {
 
   async function saveCatalogChanges() {
     const dirtyProducts = products.filter((product) => dirtyProductIds.includes(product.id));
-    if (!dirtyProducts.length) return;
+    if (!canSaveCatalog({ dirtyCount: dirtyProducts.length, saving: savingCatalog, pendingCount: catalogPendingCount, loading: adminLoading })) return;
 
     setSavingCatalog(true);
     let savedCount = 0;
@@ -783,7 +809,7 @@ export default function Admin() {
         if (!response.ok) throw new Error(`${data.error || "Enregistrement refusé"}${data.code ? ` (code : ${data.code})` : ""}`);
         savedCount += 1;
       }
-      await loadAdminData(password, selectedPriceListId);
+      if (!await loadAdminData(password, selectedPriceListId)) return;
       setMessage("Catalogue mis à jour et vérifié.");
     } catch (error) {
       setCatalogError(`${savedCount ? `${savedCount} produit(s) déjà enregistrés. ` : ""}${catalogFailureMessage(error)} Les modifications restantes ne sont pas confirmées. Actualisez la page pour vérifier avant de réessayer.`);
@@ -793,6 +819,8 @@ export default function Admin() {
   }
 
   async function toggleProductInPriceList(product, listed) {
+    if (savingCatalog || adminLoading) return;
+    setCatalogPendingCount((count) => count + 1);
     try {
       const response = await fetch("/api/products", {
         method: "PATCH",
@@ -805,6 +833,8 @@ export default function Admin() {
       setMessage(`« ${product.name} » ${listed ? "ajouté à" : "retiré de"} cette grille.`);
     } catch (error) {
       setCatalogError(`La référence « ${product.name} » n'a pas été modifiée dans la grille. ${catalogFailureMessage(error)}`);
+    } finally {
+      setCatalogPendingCount((count) => count - 1);
     }
   }
 
@@ -1253,7 +1283,7 @@ export default function Admin() {
         </div>
         <div className="actions">
           <Link className="link-button" href="/admin/historique">Historique des commandes</Link>
-          <button className="ghost" onClick={() => loadAdminData()}>Actualiser</button>
+          <button className="ghost" type="button" disabled={savingCatalog || adminLoading || catalogPendingCount > 0} onClick={() => { if (confirmDiscardAdminDrafts()) loadAdminData(); }}>Actualiser</button>
           <button className="primary" onClick={() => window.print()}>Imprimer / PDF</button>
           <button className="ghost admin-logout-button" type="button" onClick={logout}>Déconnexion</button>
         </div>
@@ -1266,7 +1296,7 @@ export default function Admin() {
           ["availability", "Disponibilités", null],
           ["clients", "Clients", partners.length],
           ["catalog", "Catalogue", products.length]
-        ].map(([value, label, count]) => <button type="button" className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); if (value === "availability" && adminView !== "availability" && availabilityPartnerId && !availabilityDirty && !availabilityReadyToSend) loadAvailability(availabilityPartnerId); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
+        ].map(([value, label, count]) => <button type="button" disabled={savingCatalog || adminLoading || catalogPendingCount > 0} className={adminView === value ? "active" : ""} aria-current={adminView === value ? "page" : undefined} key={value} onClick={() => { setAdminView(value); if (value === "clients") setClientsOpen(true); if (value === "availability" && adminView !== "availability" && availabilityPartnerId && !availabilityDirty && !availabilityReadyToSend) loadAvailability(availabilityPartnerId); }}><span>{label}</span>{count !== null && <small>{count}</small>}</button>)}
       </nav>
 
       {message && <div className="general-status-notice no-print" role="status">
@@ -1839,11 +1869,12 @@ export default function Admin() {
                 Grille tarifaire
                 <select
                   value={selectedPriceListId}
+                  disabled={savingCatalog || adminLoading || catalogPendingCount > 0}
                   onChange={(event) => {
                     const nextValue = event.target.value;
-                    setSelectedPriceListId(nextValue);
+                    if (!confirmDiscardAdminDrafts()) { event.target.value = selectedPriceListId; return; }
                     setPriceListActionsOpen(false);
-                    queueMicrotask(() => loadAdminData(password, nextValue));
+                    loadAdminData(password, nextValue);
                   }}
                 >
                   {priceLists.map((priceList) => (
@@ -1906,6 +1937,7 @@ export default function Admin() {
                     categories={categoryOptions}
                     onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)}
                     onToggleListed={(listed) => toggleProductInPriceList(product, listed)}
+                    disabled={savingCatalog || adminLoading || catalogPendingCount > 0}
                     onDelete={() => deleteCatalogProduct(product)}
                   />
                 ))}
@@ -1924,7 +1956,7 @@ export default function Admin() {
                 <svg className={`clients-chevron ${open ? "open" : ""}`} viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {open && <div className="admin-products">
-                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onToggleListed={(listed) => toggleProductInPriceList(product, listed)} onDelete={() => deleteCatalogProduct(product)} />)}
+                {categoryProducts.map((product) => <ProductEditor key={product.id} product={product} categories={categoryOptions} onChange={(nextProduct) => updateProductDraft(product.id, nextProduct)} onToggleListed={(listed) => toggleProductInPriceList(product, listed)} onDelete={() => deleteCatalogProduct(product)} disabled={savingCatalog || adminLoading || catalogPendingCount > 0} />)}
               </div>}
             </section>;
           })}
@@ -1935,8 +1967,8 @@ export default function Admin() {
             <strong>Catalogue</strong>
             <span>{dirtyProductIds.length ? `${dirtyProductIds.length} modification${dirtyProductIds.length > 1 ? "s" : ""} en attente` : "Aucune modification en attente"}</span>
           </div>
-          <button className="primary" type="button" disabled={!dirtyProductIds.length || savingCatalog} onClick={saveCatalogChanges}>
-            {savingCatalog ? "Enregistrement..." : "Enregistrer le catalogue"}
+          <button className="primary" type="button" disabled={!canSaveCatalog({ dirtyCount: dirtyProductIds.length, saving: savingCatalog, pendingCount: catalogPendingCount, loading: adminLoading })} onClick={saveCatalogChanges}>
+            {savingCatalog || catalogPendingCount > 0 ? "Enregistrement..." : adminLoading ? "Actualisation..." : "Enregistrer le catalogue"}
           </button>
         </aside>
       </section>
@@ -1978,7 +2010,7 @@ export default function Admin() {
   );
 }
 
-function ProductEditor({ product, categories, onChange, onToggleListed, onDelete }) {
+function ProductEditor({ product, categories, onChange, onToggleListed, onDelete, disabled = false }) {
   const [updatingListed, setUpdatingListed] = useState(false);
   async function handleToggle(listed) {
     setUpdatingListed(true);
@@ -1988,7 +2020,7 @@ function ProductEditor({ product, categories, onChange, onToggleListed, onDelete
       setUpdatingListed(false);
     }
   }
-  return <ProductForm value={product} categories={categories} onChange={onChange} onToggleListed={handleToggle} updatingListed={updatingListed} onDelete={onDelete} showSubmit={false} />;
+  return <ProductForm value={product} categories={categories} onChange={onChange} onToggleListed={handleToggle} updatingListed={updatingListed} onDelete={onDelete} disabled={disabled} showSubmit={false} />;
 }
 
 function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
@@ -2021,7 +2053,7 @@ function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
   );
 }
 
-function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, updatingListed = false, onDelete, showSubmit = true }) {
+function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, updatingListed = false, onDelete, disabled = false, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -2030,17 +2062,17 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, up
     <div className="product-editor">
       <label className="product-field product-name-field">
         <span>Produit</span>
-        <input value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
+        <input disabled={disabled} value={value.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom" />
       </label>
       <label className="product-field product-category-field">
         <span>Catégorie</span>
-        <select value={value.category} onChange={(event) => patch("category", event.target.value)}>
+        <select disabled={disabled} value={value.category} onChange={(event) => patch("category", event.target.value)}>
           {categories.map((category) => <option key={category}>{category}</option>)}
         </select>
       </label>
       <label className="product-field product-unit-field">
         <span>Unité</span>
-        <select value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
+        <select disabled={disabled} value={value.unit} onChange={(event) => patch("unit", event.target.value)}>
           <option value="kg">kg</option>
           <option value="piece">pièce</option>
           <option value="unite">unité</option>
@@ -2052,6 +2084,7 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, up
         <span className="input-with-suffix">
           <input
             type="number"
+            disabled={disabled}
             min="0"
             step="0.01"
             value={value.price === 0 ? "" : (value.price ?? "")}
@@ -2065,15 +2098,15 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, up
       <label className="product-field product-stock-field">
         <span>Disponible</span>
         <span className="input-with-suffix">
-          <input type="number" step="0.01" value={value.stock} onChange={(event) => patch("stock", Number(event.target.value))} placeholder="0" />
+          <input type="number" disabled={disabled} step="0.01" value={value.stock} onChange={(event) => patch("stock", Number(event.target.value))} placeholder="0" />
           <strong>{unitLabel(value.unit)}</strong>
         </span>
       </label>
       <label className="toggle product-visible-field">
-        <input type="checkbox" disabled={updatingListed} checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
+        <input type="checkbox" disabled={disabled || updatingListed} checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
         {updatingListed ? "Enregistrement…" : "Dans cette grille"}
       </label>
-      {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Supprimer</button>}
+      {onDelete && <button className="danger product-action-field" type="button" disabled={disabled} onClick={onDelete}>Supprimer</button>}
       {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}
     </div>
   );
