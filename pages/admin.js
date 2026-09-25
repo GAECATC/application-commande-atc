@@ -2050,7 +2050,15 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, up
       <label className="product-field product-price-field">
         <span>Prix</span>
         <span className="input-with-suffix">
-          <input type="number" step="0.01" value={value.price} onChange={(event) => patch("price", Number(event.target.value))} placeholder="0,00" />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={value.price === 0 ? "" : (value.price ?? "")}
+            onFocus={(event) => event.target.select()}
+            onChange={(event) => patch("price", event.target.value)}
+            placeholder="0"
+          />
           <strong>€</strong>
         </span>
       </label>
