@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { attachPrices } = require("../lib/db");
-const { buildProductsQuery, normalizeProduct } = require("../lib/mysql-db");
+const { attachPrices, getProductPrices } = require("../lib/db");
+const { buildProductsQuery, getProductPrices: getMySqlProductPrices, normalizeProduct } = require("../lib/mysql-db");
 
 const products = [
   { id: "carotte", name: "Carotte", active: true },
@@ -12,6 +12,11 @@ const prices = [
   { priceListId: "epicerie", productId: "carotte", price: 2.5 },
   { priceListId: "satoriz", productId: "tomate", price: 3.8 }
 ];
+
+test("la lecture des tarifs est accessible au changement immédiat de grille", () => {
+  assert.equal(typeof getProductPrices, "function");
+  assert.equal(typeof getMySqlProductPrices, "function");
+});
 
 test("une grille publique ne contient que ses propres références", () => {
   assert.deepEqual(

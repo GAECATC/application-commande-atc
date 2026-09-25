@@ -6,6 +6,17 @@ import Image from "next/image";
 const { buildCrateSummary, countSaladCratesByType } = require("@/lib/crate-summary");
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+async function readCatalogResponse(response) {
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(`Réponse illisible du serveur (HTTP ${response.status}). La modification n'est pas confirmée.`);
+  }
+}
+
+function catalogFailureMessage(error) {
+  return error instanceof TypeError ? "Connexion au serveur impossible. Vérifiez le réseau et réactualisez la page avant de réessayer." : (error.message || "Cause inconnue. Actualisez la page avant de réessayer.");
+}
 const emptyPartner = { id: "", name: "", code: "", email: "", active: true, priceListId: "" };
 const emptyProduct = { name: "", category: PRODUCT_CATEGORIES[0], unit: "kg", price: 0, stock: 0, active: true, sortOrder: 100 };
 const emptyBasket = { id: "", name: "", partnerId: "", active: true, items: {} };
@@ -99,6 +110,7 @@ export default function Admin() {
   const [dirtyProductIds, setDirtyProductIds] = useState([]);
   const [dirtyPartnerIds, setDirtyPartnerIds] = useState([]);
   const [savingCatalog, setSavingCatalog] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
   const [savingPartners, setSavingPartners] = useState(false);
   const [message, setMessage] = useState("");
   const [emailNotice, setEmailNotice] = useState(null);
@@ -759,34 +771,41 @@ export default function Admin() {
     if (!dirtyProducts.length) return;
 
     setSavingCatalog(true);
-    for (const product of dirtyProducts) {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...product, priceListId: selectedPriceListId })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setSavingCatalog(false);
-        return setMessage(data.error || "Catalogue refuse.");
+    let savedCount = 0;
+    try {
+      for (const product of dirtyProducts) {
+        const response = await fetch("/api/products", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ ...product, priceListId: selectedPriceListId })
+        });
+        const data = await readCatalogResponse(response);
+        if (!response.ok) throw new Error(`${data.error || "Enregistrement refusé"}${data.code ? ` (code : ${data.code})` : ""}`);
+        savedCount += 1;
       }
+      await loadAdminData(password, selectedPriceListId);
+      setMessage("Catalogue mis à jour et vérifié.");
+    } catch (error) {
+      setCatalogError(`${savedCount ? `${savedCount} produit(s) déjà enregistrés. ` : ""}${catalogFailureMessage(error)} Les modifications restantes ne sont pas confirmées. Actualisez la page pour vérifier avant de réessayer.`);
+    } finally {
+      setSavingCatalog(false);
     }
-
-    setSavingCatalog(false);
-    setMessage("Catalogue mis a jour.");
-    await loadAdminData();
   }
 
   async function toggleProductInPriceList(product, listed) {
-    const response = await fetch("/api/products", {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ id: product.id, priceListId: selectedPriceListId, listed, price: product.price })
-    });
-    const data = await response.json();
-    if (!response.ok) return setMessage(data.error || "Modification de la grille refusée.");
-    setProducts((current) => current.map((item) => item.id === product.id ? { ...item, listed } : item));
-    setMessage(`« ${product.name} » ${listed ? "ajouté à" : "retiré de"} cette grille.`);
+    try {
+      const response = await fetch("/api/products", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ id: product.id, priceListId: selectedPriceListId, listed, price: product.price })
+      });
+      const data = await readCatalogResponse(response);
+      if (!response.ok) throw new Error(`${data.error || "Modification refusée"}${data.code ? ` (code : ${data.code})` : ""}`);
+      setProducts((current) => current.map((item) => item.id === product.id ? { ...item, listed } : item));
+      setMessage(`« ${product.name} » ${listed ? "ajouté à" : "retiré de"} cette grille.`);
+    } catch (error) {
+      setCatalogError(`La référence « ${product.name} » n'a pas été modifiée dans la grille. ${catalogFailureMessage(error)}`);
+    }
   }
 
   async function deleteCatalogProduct(product) {
@@ -1273,6 +1292,13 @@ export default function Admin() {
           <button type="button" aria-label="Fermer le message d’erreur" onClick={() => setPreparationError("")}>×</button>
           <strong id="preparation-error-title">La validation n’a pas été enregistrée</strong>
           <p>{preparationError}</p>
+        </section>
+      </div>}
+      {catalogError && <div className="admin-error-overlay" role="presentation">
+        <section className="admin-error-dialog" role="alertdialog" aria-modal="true" aria-labelledby="catalog-error-title">
+          <button type="button" aria-label="Fermer le message d’erreur" onClick={() => setCatalogError("")}>×</button>
+          <strong id="catalog-error-title">Modification du catalogue non confirmée</strong>
+          <p>{catalogError}</p>
         </section>
       </div>}
 
@@ -1953,7 +1979,16 @@ export default function Admin() {
 }
 
 function ProductEditor({ product, categories, onChange, onToggleListed, onDelete }) {
-  return <ProductForm value={product} categories={categories} onChange={onChange} onToggleListed={onToggleListed} onDelete={onDelete} showSubmit={false} />;
+  const [updatingListed, setUpdatingListed] = useState(false);
+  async function handleToggle(listed) {
+    setUpdatingListed(true);
+    try {
+      await onToggleListed(listed);
+    } finally {
+      setUpdatingListed(false);
+    }
+  }
+  return <ProductForm value={product} categories={categories} onChange={onChange} onToggleListed={handleToggle} updatingListed={updatingListed} onDelete={onDelete} showSubmit={false} />;
 }
 
 function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
@@ -1986,7 +2021,7 @@ function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
   );
 }
 
-function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, onDelete, showSubmit = true }) {
+function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, updatingListed = false, onDelete, showSubmit = true }) {
   function patch(field, nextValue) {
     onChange({ ...value, [field]: nextValue });
   }
@@ -2027,8 +2062,8 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, on
         </span>
       </label>
       <label className="toggle product-visible-field">
-        <input type="checkbox" checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
-        Dans cette grille
+        <input type="checkbox" disabled={updatingListed} checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
+        {updatingListed ? "Enregistrement…" : "Dans cette grille"}
       </label>
       {onDelete && <button className="danger product-action-field" type="button" onClick={onDelete}>Supprimer</button>}
       {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}

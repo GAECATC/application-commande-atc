@@ -72,6 +72,8 @@ export default async function handler(req, res) {
     const product = req.body || {};
     const id = product.id || slugify(product.name);
     if (!id || !product.name) return res.status(400).json({ error: "Nom produit requis" });
+    const price = Number(product.price);
+    if (product.priceListId && (!Number.isFinite(price) || price < 0)) return res.status(400).json({ error: `Prix invalide pour « ${product.name} »` });
     const payload = {
       id,
       name: product.name,
@@ -86,12 +88,21 @@ export default async function handler(req, res) {
     if (product.priceListId && product.listed !== false) payload.active = true;
     else if (!product.priceListId && Object.hasOwn(product, "active")) payload.active = Boolean(product.active);
 
-    const saved = await upsertProduct(payload);
-    if (product.priceListId) {
-      if (product.listed === false) await deleteProductPrice(product.priceListId, id);
-      else await upsertProductPrice(product.priceListId, id, Number(product.price || 0));
+    try {
+      const saved = await upsertProduct(payload);
+      if (product.priceListId) {
+        // Enregistrer aussi le tarif d'un produit hors grille, sans le rendre visible.
+        await upsertProductPrice(product.priceListId, id, price);
+        if (product.listed === false) await deleteProductPrice(product.priceListId, id);
+        const recorded = (await getProductPrices(product.priceListId)).find((item) => item.productId === id);
+        if (!recorded || Number(recorded.price) !== price || recorded.listed !== (product.listed !== false)) {
+          return res.status(500).json({ error: `L'enregistrement de « ${product.name} » n'a pas pu être confirmé. Actualisez avant de réessayer.` });
+        }
+      }
+      return res.status(200).json({ product: saved });
+    } catch (error) {
+      return res.status(500).json({ error: `Le serveur n'a pas pu enregistrer « ${product.name} ». Aucune confirmation n'a été reçue.`, code: error.code || "SAVE_FAILED" });
     }
-    return res.status(200).json({ product: saved });
   }
 
   if (req.method === "PATCH") {
@@ -106,9 +117,12 @@ export default async function handler(req, res) {
       } else {
         await deleteProductPrice(priceListId, id);
       }
+      const recorded = (await getProductPrices(priceListId)).find((item) => item.productId === id);
+      if (listed && !recorded?.listed) return res.status(500).json({ error: "L'ajout à la grille n'a pas pu être confirmé. Actualisez avant de réessayer." });
+      if (!listed && recorded?.listed) return res.status(500).json({ error: "Le retrait de la grille n'a pas pu être confirmé. Actualisez avant de réessayer." });
       return res.status(200).json({ id, priceListId, listed });
     } catch (error) {
-      return res.status(400).json({ error: error.message || "Modification de la grille refusée" });
+      return res.status(500).json({ error: "Le serveur n'a pas pu modifier la grille. La modification n'a pas été confirmée.", code: error.code || "GRID_UPDATE_FAILED" });
     }
   }
 
