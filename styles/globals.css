@@ -506,7 +506,7 @@ form {
 .partner-email-line input { flex: 1; min-width: 0; width: 100%; }
 .partner-emails-editor button { min-height: 44px; padding: 8px 12px; }
 .partner-emails-editor small, .availability-email-recipients small { color: var(--muted); }
-.availability-email-recipients { display: grid; gap: 10px; margin: 14px 0; }
+.availability-email-recipients { display: grid; gap: 10px; margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .availability-email-recipients fieldset { display: flex; flex-wrap: wrap; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
 .availability-email-recipients label { display: flex; align-items: center; gap: 8px; min-height: 44px; overflow-wrap: anywhere; }
 .availability-email-recipients input { width: 22px; height: 22px; flex-shrink: 0; }

@@ -133,9 +133,6 @@ export default function Admin() {
   const [allocationVisibilityDraft, setAllocationVisibilityDraft] = useState({});
   const [savedAllocationProductIds, setSavedAllocationProductIds] = useState([]);
   const [orderedByProduct, setOrderedByProduct] = useState({});
-  const [availabilityConfigured, setAvailabilityConfigured] = useState(false);
-  const [availabilityInherited, setAvailabilityInherited] = useState(false);
-  const [availabilitySource, setAvailabilitySource] = useState("general");
   const [availabilitySaveScope, setAvailabilitySaveScope] = useState("delivery");
   const [availabilitySelectionMode, setAvailabilitySelectionMode] = useState("single");
   const [availabilityMessage, setAvailabilityMessage] = useState("");
@@ -504,9 +501,6 @@ export default function Admin() {
     setAllocationVisibilityDraft({});
     setSavedAllocationProductIds([]);
     setOrderedByProduct({});
-    setAvailabilityConfigured(false);
-    setAvailabilityInherited(false);
-    setAvailabilitySource("general");
     setAvailabilityDirty(false);
     setAvailabilityReadyToSend(false);
     setAvailabilityMessage("");
@@ -576,9 +570,6 @@ export default function Admin() {
     );
     setSavedAllocationProductIds(savedAllocations.filter((item) => item.visible !== false).map((item) => item.productId));
     setOrderedByProduct(availabilityData.orderedByProduct || {});
-    setAvailabilityConfigured(Boolean(availabilityData.configured));
-    setAvailabilityInherited(Boolean(availabilityData.inherited));
-    setAvailabilitySource(availabilityData.source || "general");
     setAvailabilityMessage(availabilityData.message || "");
   }
 
@@ -1644,7 +1635,7 @@ export default function Admin() {
           </div>
         </div>}
         <div className="availability-recipient-picker">
-          <strong>À qui appliquer cette liste ?</strong>
+          <strong>Clients</strong>
           <div className="availability-mode-tabs" role="group" aria-label="Mode de sélection des clients">
             {[
               ["single", "Un client"],
@@ -1676,8 +1667,7 @@ export default function Admin() {
         </div>
         {availabilitySelectionMode === "multiple" && <div className="availability-group-targets temporary-availability-targets">
           <div>
-            <strong>Sélection ponctuelle</strong>
-            <span>Cochez les clients qui recevront cette même liste. Cette sélection sera effacée juste après l’enregistrement.</span>
+            <strong>Choisir les clients</strong>
           </div>
           <div className="availability-target-list">
             {partners.filter((partner) => partner.active).map((partner) => <label key={partner.id}>
@@ -1696,7 +1686,7 @@ export default function Admin() {
         {availabilityPartnerId && availabilityTargetIds.length > 0 && (
           <>
             {availabilityPartnerId.startsWith("group:") && <div className="availability-group-targets">
-              <div><strong>Clients concernés par cette mise à jour</strong><span>La liste affichée prend {availabilityTargets[0]?.name || "le premier client"} comme modèle. Décochez un client pour préserver sa liste personnalisée ; ses tarifs ne seront jamais modifiés.</span></div>
+              <div><strong>Clients du groupe</strong><span>Modèle : {availabilityTargets[0]?.name || "premier client"}</span></div>
               <div className="availability-target-list">
                 {availabilityTargets.map((target) => <label key={target.id}>
                   <input type="checkbox" checked={availabilityTargetIds.includes(target.id)} onChange={(event) => setAvailabilityTargetIds((current) => event.target.checked ? [...current, target.id] : current.filter((id) => id !== target.id))} />
@@ -1706,8 +1696,7 @@ export default function Admin() {
             </div>}
             {availabilitySelectionMode === "single" && <div className="availability-scope-picker">
               <div>
-                <strong>Portée de l’enregistrement</strong>
-                <span>Choisissez si cette liste est exceptionnelle ou si elle devient la référence habituelle de ce client.</span>
+                <strong>Enregistrer pour</strong>
               </div>
               <label className={availabilitySaveScope === "delivery" ? "active" : ""}>
                 <input type="radio" name="availability-scope" value="delivery" checked={availabilitySaveScope === "delivery"} onChange={() => { setAvailabilitySaveScope("delivery"); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
@@ -1715,41 +1704,27 @@ export default function Admin() {
               </label>
               <label className={availabilitySaveScope === "habitual" ? "active" : ""}>
                 <input type="radio" name="availability-scope" value="habitual" checked={availabilitySaveScope === "habitual"} onChange={() => { setAvailabilitySaveScope("habitual"); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
-                Enregistrer comme liste habituelle
+                Liste habituelle
               </label>
             </div>}
-            <p className="section-note">
-              {availabilitySource === "habitual"
-                ? "La liste habituelle de ce client est actuellement utilisée. Choisissez « Cette livraison uniquement » pour faire une exception sans modifier sa référence."
-                : availabilitySource === "previous"
-                ? "Ancien fonctionnement : la dernière liste connue est reprise. Enregistrez une liste habituelle pour fixer une référence durable."
-                : availabilityInherited
-                ? "Une liste antérieure est actuellement reprise."
-                : availabilityConfigured
-                ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
-                : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
-            </p>
             <div className="availability-email-recipients">
-              <strong>Destinataires du mail de disponibilité</strong>
-              <small>Toutes les adresses sont cochées par défaut. Décochez celles qui ne doivent pas recevoir cet envoi.</small>
+              <strong>Envoyer le mail à</strong>
               {availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map((target) => {
                 const emails = parseEmailList(target.email);
                 const selected = availabilityEmailRecipients[target.id] ?? emails;
                 return <fieldset key={target.id} disabled={sendingAvailability}>
                   <legend>{target.name}</legend>
                   {emails.length ? <>
-                    <button className="ghost" type="button" onClick={() => setAvailabilityEmailRecipients((current) => ({ ...current, [target.id]: emails }))}>Toutes les adresses</button>
                     {emails.map((email) => <label key={email}><input type="checkbox" checked={selected.includes(email)} onChange={(event) => setAvailabilityEmailRecipients((current) => ({ ...current, [target.id]: event.target.checked ? [...selected, email] : selected.filter((item) => item !== email) }))} />{email}</label>)}
-                  </> : <p>Aucune adresse enregistrée. Ajoutez-en dans « Clients ».</p>}
+                  </> : <p>Aucune adresse — à ajouter dans « Clients ».</p>}
                 </fieldset>;
               })}
             </div>
             <div className="availability-message-editor">
               <label>
-                Message pour le client <small>Facultatif — visible dans l’application et ajouté au mail</small>
-                <textarea maxLength="2000" rows="4" placeholder="Ex. Cette semaine, pensez à commander avant mercredi soir…" value={availabilityMessage} onChange={(event) => { setAvailabilityMessage(event.target.value); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
+                Message pour le client
+                <textarea maxLength="2000" rows="3" placeholder="Votre message…" value={availabilityMessage} onChange={(event) => { setAvailabilityMessage(event.target.value); setAvailabilityDirty(true); setAvailabilityReadyToSend(false); }} />
               </label>
-              <small>Le mail n’est plus envoyé automatiquement. Enregistrez d’abord, puis utilisez le bouton « Envoyer la disponibilité ».</small>
             </div>
             <div className="availability-actions">
               <button className="ghost" type="button" onClick={() => {
