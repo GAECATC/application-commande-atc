@@ -12,6 +12,7 @@ const { classifyMailError, sendAvailabilityNotice } = require("@/lib/mailer");
 const { isAdmin } = require("@/lib/auth");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { resolveAvailabilitySource } = require("@/lib/availability-scope");
+const { selectPartnerEmails } = require("@/lib/partner-emails");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -57,11 +58,17 @@ export default async function handler(req, res) {
     if (req.body?.action === "send-email") {
       const partner = (await getPartners()).find((item) => item.id === partnerId);
       if (!partner) return res.status(404).json({ error: "Client introuvable" });
+      let recipients;
+      try { recipients = selectPartnerEmails(partner, req.body.recipients); }
+      catch (error) { return res.status(400).json({ error: error.message }); }
+      if (!recipients.length) return res.status(400).json({ error: "Adresse email du client manquante" });
       try {
         const message = await getAvailabilityMessage({ partnerId, deliveryDate });
-        const email = await sendAvailabilityNotice({ partner, deliveryDate, message });
+        const email = await sendAvailabilityNotice({ partner, deliveryDate, message, recipients });
         if (!email.sent) {
-          const reason = email.reason === "missing-recipient"
+          const reason = email.reason === "recipient-rejected"
+            ? `Envoi partiel ou refusé : ${email.acceptedCount} adresse(s) acceptée(s), ${email.rejectedCount} refusée(s). Vérifiez avant de renvoyer pour éviter les doublons.`
+            : email.reason === "missing-recipient"
             ? "Adresse email du client manquante"
             : "Configuration d’envoi des emails indisponible";
           return res.status(400).json({ error: reason, email });

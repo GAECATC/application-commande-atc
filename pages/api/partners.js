@@ -1,10 +1,6 @@
 const { deletePartner, getPartners, upsertPartner } = require("@/lib/db");
 const { requireAdmin } = require("@/lib/auth");
-
-function isValidEmail(value) {
-  if (!value) return true;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
+const { normalizePartnerEmails } = require("@/lib/partner-emails");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -20,16 +16,16 @@ export default async function handler(req, res) {
     if (!partner.id || !partner.name || !partner.code || !partner.priceListId) {
       return res.status(400).json({ error: "Client incomplet" });
     }
-    if (!isValidEmail(partner.email || "")) {
-      return res.status(400).json({ error: "Email client invalide" });
-    }
+    let email;
+    try { email = normalizePartnerEmails(partner.email ?? ""); }
+    catch (error) { return res.status(400).json({ error: error.message }); }
 
     const saved = await upsertPartner({
       id: partner.id,
       originalId: partner.originalId || partner.id,
       name: partner.name,
       code: partner.code,
-      email: partner.email || "",
+      email,
       billingName: partner.billingName || "",
       billingAddress: partner.billingAddress || "",
       siret: partner.siret || "",

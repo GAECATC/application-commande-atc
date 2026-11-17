@@ -3,6 +3,8 @@ const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
 import OrderReplyHistory from "../components/OrderReplyHistory";
+import PartnerEmailsEditor from "../components/PartnerEmailsEditor";
+const { parseEmailList } = require("@/lib/partner-emails");
 import Image from "next/image";
 const { buildCrateSummary, countSaladCratesByType } = require("@/lib/crate-summary");
 const { canSaveCatalog, isCompleteAdminSnapshot } = require("@/lib/admin-catalog-safety");
@@ -143,6 +145,7 @@ export default function Admin() {
   const [sendingAvailability, setSendingAvailability] = useState(false);
   const [availabilityTargets, setAvailabilityTargets] = useState([]);
   const [availabilityTargetIds, setAvailabilityTargetIds] = useState([]);
+  const [availabilityEmailRecipients, setAvailabilityEmailRecipients] = useState({});
   const [temporaryAvailabilityIds, setTemporaryAvailabilityIds] = useState([]);
   const [clientGroups, setClientGroups] = useState([]);
   const [clientGroupDraft, setClientGroupDraft] = useState(emptyClientGroup);
@@ -494,6 +497,7 @@ export default function Admin() {
 
   async function loadAvailability(partnerId, pass = password, selectedTargetIds = null, temporaryTargetIds = null) {
     const requestId = ++availabilityLoadRequest.current;
+    if (partnerId !== availabilityPartnerId) setAvailabilityEmailRecipients({});
     setAvailabilityPartnerId(partnerId);
     setAvailabilityDeliveryDate("");
     setAllocationDraft({});
@@ -545,6 +549,7 @@ export default function Admin() {
     setAvailabilityTargets(availabilityResults.map(({ target, data }) => ({
       id: target.id,
       name: target.name,
+      email: target.email,
       deliveryDate: data.deliveryDate,
       configuredForDelivery: Boolean(data.configured)
     })));
@@ -621,9 +626,15 @@ export default function Admin() {
 
   async function sendAvailabilityToClients() {
     if (!availabilityReadyToSend || availabilityDirty || !availabilityTargetIds.length) return;
+    const targets = availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id));
+    if (targets.some((target) => dirtyPartnerIds.includes(target.id))) {
+      return setMessage("Enregistrez d’abord les clients, puis rechargez leurs disponibilités pour utiliser les adresses enregistrées.");
+    }
+    const withoutRecipients = targets.filter((target) => !(availabilityEmailRecipients[target.id] ?? parseEmailList(target.email)).length);
+    if (withoutRecipients.length) return setMessage(`Choisissez au moins une adresse e-mail pour : ${withoutRecipients.map((target) => target.name).join(", ")}. Aucun mail envoyé.`);
     setSendingAvailability(true);
     try {
-      const results = await Promise.all(availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map(async (target) => {
+      const results = await Promise.all(targets.map(async (target) => {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 25000);
         try {
@@ -631,7 +642,7 @@ export default function Admin() {
             method: "POST",
             headers,
             signal: controller.signal,
-            body: JSON.stringify({ action: "send-email", partnerId: target.id, deliveryDate: target.deliveryDate })
+            body: JSON.stringify({ action: "send-email", partnerId: target.id, deliveryDate: target.deliveryDate, recipients: availabilityEmailRecipients[target.id] ?? parseEmailList(target.email) })
           });
           const responseText = await response.text();
           let data = {};
@@ -860,6 +871,11 @@ export default function Admin() {
   }
 
   function updatePartnerDraft(partnerKey, nextPartner) {
+    const previous = partners.find((partner) => (partner.originalId || partner.id) === partnerKey);
+    if (previous?.email !== nextPartner.email) {
+      setAvailabilityReadyToSend(false);
+      setAvailabilityEmailRecipients({});
+    }
     setPartners((current) => current.map((partner) => (partner.originalId || partner.id) === partnerKey ? nextPartner : partner));
     setDirtyPartnerIds((current) => current.includes(partnerKey) ? current : [...current, partnerKey]);
   }
@@ -1713,6 +1729,21 @@ export default function Admin() {
                 ? "La case Visible détermine les produits proposés à ce client. Une limite vide ou égale à 0 signifie : à volonté."
                 : "Ce client utilise encore la disponibilité générale. Adaptez les cases visibles et les limites, puis enregistrez sa liste personnelle."}
             </p>
+            <div className="availability-email-recipients">
+              <strong>Destinataires du mail de disponibilité</strong>
+              <small>Toutes les adresses sont cochées par défaut. Décochez celles qui ne doivent pas recevoir cet envoi.</small>
+              {availabilityTargets.filter((target) => availabilityTargetIds.includes(target.id)).map((target) => {
+                const emails = parseEmailList(target.email);
+                const selected = availabilityEmailRecipients[target.id] ?? emails;
+                return <fieldset key={target.id} disabled={sendingAvailability}>
+                  <legend>{target.name}</legend>
+                  {emails.length ? <>
+                    <button className="ghost" type="button" onClick={() => setAvailabilityEmailRecipients((current) => ({ ...current, [target.id]: emails }))}>Toutes les adresses</button>
+                    {emails.map((email) => <label key={email}><input type="checkbox" checked={selected.includes(email)} onChange={(event) => setAvailabilityEmailRecipients((current) => ({ ...current, [target.id]: event.target.checked ? [...selected, email] : selected.filter((item) => item !== email) }))} />{email}</label>)}
+                  </> : <p>Aucune adresse enregistrée. Ajoutez-en dans « Clients ».</p>}
+                </fieldset>;
+              })}
+            </div>
             <div className="availability-message-editor">
               <label>
                 Message pour le client <small>Facultatif — visible dans l’application et ajouté au mail</small>
@@ -1843,7 +1874,7 @@ export default function Admin() {
               <input value={newPartner.name} onChange={(event) => setNewPartner((current) => ({ ...current, name: event.target.value }))} placeholder="Nom du client" />
               <input value={newPartner.id} onChange={(event) => setNewPartner((current) => ({ ...current, id: event.target.value }))} placeholder="Identifiant" />
               <input value={newPartner.code} onChange={(event) => setNewPartner((current) => ({ ...current, code: event.target.value }))} placeholder="Code client" />
-              <input type="email" value={newPartner.email} onChange={(event) => setNewPartner((current) => ({ ...current, email: event.target.value }))} placeholder="Email" />
+              <PartnerEmailsEditor value={newPartner.email} onChange={(email) => setNewPartner((current) => ({ ...current, email }))} label="E-mails du nouveau client" />
               <select value={newPartner.priceListId || selectedPriceListId} onChange={(event) => setNewPartner((current) => ({ ...current, priceListId: event.target.value }))}>
                 {priceLists.map((priceList) => (
                   <option key={priceList.id} value={priceList.id}>{priceList.name}</option>
@@ -2052,12 +2083,7 @@ function PartnerEditor({ partner, priceLists, onChange, onDelete }) {
       <input value={partner.name} onChange={(event) => patch("name", event.target.value)} placeholder="Nom du client" />
       <input value={partner.id} onChange={(event) => patch("id", event.target.value.trim())} placeholder="Identifiant" />
       <input value={partner.code} onChange={(event) => patch("code", event.target.value.trim())} placeholder="Code client" />
-      <input
-        type="email"
-        value={partner.email || ""}
-        onChange={(event) => patch("email", event.target.value)}
-        placeholder="email client"
-      />
+      <PartnerEmailsEditor value={partner.email || ""} onChange={(email) => patch("email", email)} label={`E-mails de ${partner.name}`} />
       <select value={partner.priceListId} onChange={(event) => patch("priceListId", event.target.value)}>
         {priceLists.map((priceList) => (
           <option key={priceList.id} value={priceList.id}>{priceList.name}</option>

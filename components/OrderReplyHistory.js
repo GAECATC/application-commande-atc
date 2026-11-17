@@ -1,6 +1,6 @@
 export default function OrderReplyHistory({ replies = [] }) {
   if (!replies.length) return null;
-  const labels = { sent: "Mail envoyé", failed: "Mail non envoyé", unknown: "Envoi non confirmé", pending: "Envoi en cours ou interrompu — à vérifier" };
+  const labels = { sent: "Mail envoyé", partial: "Mail partiellement envoyé — à vérifier", failed: "Mail non envoyé", unknown: "Envoi non confirmé", pending: "Envoi en cours ou interrompu — à vérifier" };
   return <div className="order-reply-history">
     <strong>Réponses de la ferme</strong>
     {replies.map((reply) => <article className="order-reply-record" key={reply.id}>

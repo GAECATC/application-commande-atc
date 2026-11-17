@@ -61,3 +61,14 @@ test("une panne après acceptation SMTP ne masque pas la trace ni l'incertitude 
   assert.equal(result.reply.emailStatus, "pending");
   assert.match(result.error, /statut/);
 });
+
+test("une réponse à plusieurs contacts conserve les destinataires et le statut partiel", async () => {
+  const { args, records } = setup({
+    partner: { id: "p1", email: "a@example.fr, b@example.fr" },
+    sendMail: async () => ({ sent: false, acceptedCount: 1, rejectedCount: 1, reason: "recipient-rejected" })
+  });
+  const result = await sendReplyWithHistory(args);
+  assert.equal(result.status, 502);
+  assert.equal(records[0].recipient, "a@example.fr, b@example.fr");
+  assert.equal(records[0].emailStatus, "partial");
+});
