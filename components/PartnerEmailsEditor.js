@@ -7,6 +7,5 @@ export default function PartnerEmailsEditor({ value = "", onChange, label = "E-m
       {addresses.length > 1 && <button className="ghost" type="button" aria-label={`Retirer l’adresse ${index + 1}`} onClick={() => onChange(addresses.filter((_, position) => position !== index).join("\n"))}>×</button>}
     </div>)}
     <button className="ghost" type="button" onClick={() => onChange(`${addresses.join("\n")}\n`)}>Ajouter une adresse</button>
-    <small>255 caractères maximum au total.</small>
   </div>;
 }

@@ -1273,6 +1273,9 @@ form {
   min-height: 18px;
 }
 
+.product-editor .product-visible-field { min-height: 44px; justify-content: center; }
+.product-editor .product-visible-field input { width: 22px; height: 22px; }
+
 .admin-savebar {
   position: sticky;
   bottom: 16px;

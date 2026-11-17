@@ -1522,9 +1522,7 @@ export default function Admin() {
       <section className={`panel no-print basket-admin-panel admin-workspace ${adminView === "baskets" ? "active" : ""}`}>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Composition automatique</p>
             <h2>Paniers</h2>
-            <p className="section-note">Créez un panier type et affectez-le au client qui pourra le commander par quantité.</p>
           </div>
           <button className="primary" type="button" disabled={savingBasket} onClick={saveBasket}>
             {savingBasket ? "Enregistrement..." : basketDraft.id ? "Mettre à jour le panier" : "Créer le panier"}
@@ -1548,8 +1546,8 @@ export default function Admin() {
         </div>
         {basketDraft.partnerId && (
           <div className="basket-price-summary">
-            <span>Tarifs appliqués : <strong>{partners.find((partner) => partner.id === basketDraft.partnerId)?.name}</strong></span>
-            <strong>Prix estimé du panier : {currency.format(basketEstimatedPrice)}</strong>
+            <span>{partners.find((partner) => partner.id === basketDraft.partnerId)?.name}</span>
+            <strong>Total estimé : {currency.format(basketEstimatedPrice)}</strong>
           </div>
         )}
         <div className="basket-product-editor">
@@ -1559,7 +1557,7 @@ export default function Admin() {
               <input type="number" min="0" step={product.unit === "kg" ? "0.01" : "1"} value={basketDraft.items[product.id] || ""} onChange={(event) => setBasketDraft((current) => ({ ...current, items: { ...current.items, [product.id]: event.target.value } }))} />
             </label>
           ))}
-          {!basketProducts.length && <p className="basket-empty">{loadingBasketCatalog ? "Chargement des tarifs..." : basketDraft.partnerId ? "Aucun légume dans cette sélection." : "Choisissez d’abord un client pour afficher ses légumes et ses tarifs."}</p>}
+          {!basketProducts.length && <p className="basket-empty">{loadingBasketCatalog ? "Chargement…" : basketDraft.partnerId ? "Aucun légume sélectionné." : "Choisir un client"}</p>}
         </div>
         {baskets.length > 0 && <div className="basket-admin-list">
           {baskets.map((basket) => <article key={basket.id} className="basket-admin-card">
@@ -1917,19 +1915,18 @@ export default function Admin() {
             </div>
             <form className="new-price-list-form" onSubmit={addPriceList}>
               <label>
-                Nouvelle grille tarifaire
+                Nouvelle grille
                 <span>
                   <input
                     value={newPriceListName}
                     onChange={(event) => setNewPriceListName(event.target.value)}
-                    placeholder="Exemple : Restaurants 2026"
+                    placeholder="Nom de la grille"
                   />
                   <button className="ghost" type="submit" disabled={savingPriceList}>
                     {savingPriceList ? "Création..." : "Créer la grille"}
                   </button>
                 </span>
               </label>
-              <small>La nouvelle grille affichera tous les produits avec un prix initial de 0 €.</small>
             </form>
           </div>
         </div>
@@ -2007,15 +2004,14 @@ export default function Admin() {
               <input
                 value={newCategoryName}
                 onChange={(event) => setNewCategoryName(event.target.value)}
-                placeholder="Exemple : Champignons"
+                placeholder="Nom de la catégorie"
               />
               <button className="ghost" type="submit">Créer la catégorie</button>
             </span>
           </label>
-          <small>La catégorie sera enregistrée durablement dès qu’un produit l’utilisant sera enregistré.</small>
         </form>
         <div className="managed-category">
-          <span>Gérer la catégorie sélectionnée : <strong>{draft.category}</strong></span>
+          <span>Catégorie : <strong>{draft.category}</strong></span>
           <button className="more-actions-button" type="button" aria-label="Actions sur la catégorie" onClick={() => setCategoryActionsOpen((open) => !open)}>⋯</button>
           {categoryActionsOpen && (
             <div className="management-menu">
@@ -2122,9 +2118,8 @@ function ProductForm({ value, categories, onChange, onSubmit, onToggleListed, up
           <strong>{unitLabel(value.unit)}</strong>
         </span>
       </label>
-      <label className="toggle product-visible-field">
-        <input type="checkbox" disabled={disabled || updatingListed} checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
-        {updatingListed ? "Enregistrement…" : "Dans cette grille"}
+      <label className="toggle product-visible-field" aria-busy={updatingListed}>
+        <input type="checkbox" aria-label={`Inclure ${value.name || "ce produit"} dans la grille tarifaire`} disabled={disabled || updatingListed} checked={value.listed !== false} onChange={(event) => onToggleListed ? onToggleListed(event.target.checked) : patch("listed", event.target.checked)} />
       </label>
       {onDelete && <button className="danger product-action-field" type="button" disabled={disabled} onClick={onDelete}>Supprimer</button>}
       {showSubmit && <button className="primary product-action-field" type="button" onClick={onSubmit}>Enregistrer</button>}
