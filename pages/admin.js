@@ -94,13 +94,16 @@ export default function Admin() {
   const [matrixPreviousOrders, setMatrixPreviousOrders] = useState({});
   const [sendingMatrixEmails, setSendingMatrixEmails] = useState(false);
   const [validatingDeliveryDate, setValidatingDeliveryDate] = useState("");
-  const [validatingOrderId, setValidatingOrderId] = useState("");
   const [retryValidationEmails, setRetryValidationEmails] = useState([]);
   const [retryingValidationEmails, setRetryingValidationEmails] = useState(false);
   const [priceLists, setPriceLists] = useState([]);
   const [selectedPriceListId, setSelectedPriceListId] = useState("");
   const [draft, setDraft] = useState(emptyProduct);
   const [editingOrderId, setEditingOrderId] = useState(null);
+  const [replyOrderId, setReplyOrderId] = useState(null);
+  const [orderReplyDrafts, setOrderReplyDrafts] = useState({});
+  const [sendingReplyId, setSendingReplyId] = useState(null);
+  const [orderReplyNotice, setOrderReplyNotice] = useState(null);
   const [savingOrderId, setSavingOrderId] = useState(null);
   const [orderEditMessage, setOrderEditMessage] = useState("");
   const [orderSaveNotice, setOrderSaveNotice] = useState("");
@@ -938,6 +941,31 @@ export default function Admin() {
     await loadAdminData();
   }
 
+  async function replyToOrderComment(order) {
+    const message = (orderReplyDrafts[order.id] || "").trim();
+    if (!message || sendingReplyId) return;
+    setSendingReplyId(order.id);
+    setOrderReplyNotice(null);
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST", headers,
+        body: JSON.stringify({ action: "reply-comment", orderId: order.id, partnerId: order.partnerId, message })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.email?.sent) {
+        setOrderReplyNotice({ orderId: order.id, text: data.error || "Le mail n’a pas pu être envoyé." });
+        return;
+      }
+      setOrderReplyDrafts((current) => ({ ...current, [order.id]: "" }));
+      setReplyOrderId(null);
+      setOrderReplyNotice({ orderId: order.id, text: "Votre réponse a été envoyée par mail." });
+    } catch {
+      setOrderReplyNotice({ orderId: order.id, text: "L’envoi n’a pas été confirmé. Vérifiez la messagerie avant de réessayer pour éviter un doublon." });
+    } finally {
+      setSendingReplyId(null);
+    }
+  }
+
   async function startEditOrder(order) {
     setEmailNotice(null);
     setOrderEditMessage("");
@@ -1121,7 +1149,7 @@ export default function Admin() {
   }
 
   async function validateAllOrders(deliverySummary) {
-    if (validatingDeliveryDate || validatingOrderId || matrixSaving || matrixEditingDate) return;
+    if (validatingDeliveryDate || matrixSaving || matrixEditingDate) return;
     const orders = deliverySummary.orders;
     if (!orders.length || !window.confirm(`Valider les ${orders.length} commandes du ${formatDate(deliverySummary.deliveryDate)} et envoyer un mail à chaque client ?`)) return;
     setValidatingDeliveryDate(deliverySummary.deliveryDate);
@@ -1208,37 +1236,6 @@ export default function Admin() {
     }
     setMessage("Commande supprimée sans envoi de mail.");
     await loadAdminData();
-  }
-
-  async function validateAdminOrder(order) {
-    if (validatingOrderId || validatingDeliveryDate) return;
-    if (!window.confirm(`Valider la commande de ${order.partnerName} ?`)) return;
-    setValidatingOrderId(order.id);
-    try {
-      const response = await fetch("/api/orders", {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ orderId: order.id, partnerId: order.partnerId })
-      });
-      const data = await response.json();
-      if (!response.ok) return setMessage(data.error || "Validation refusée.");
-
-      if (editingOrderId === order.id) {
-        setEditingOrderId(null);
-        setOrderDraft({});
-      }
-      if (!data.email?.sent) setRetryValidationEmails((current) => [...current.filter((item) => item.id !== order.id), order]);
-      setEmailNotice(data.email?.sent
-        ? { type: "success", text: `Commande de ${order.partnerName} validée et mail envoyé.` }
-        : { type: "warning", text: `Commande de ${order.partnerName} validée, mais le mail n’a pas été envoyé.` });
-      setMessage("");
-      window.open(`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`, "_blank", "noopener,noreferrer");
-      await loadAdminData();
-    } catch {
-      setMessage("La confirmation de validation n’a pas été reçue. Actualisez la page et vérifiez la commande avant de réessayer.");
-    } finally {
-      setValidatingOrderId("");
-    }
   }
 
   if (restoringSession) {
@@ -1385,7 +1382,7 @@ export default function Admin() {
               if (matrixEmailDate === deliverySummary.deliveryDate) setMatrixEmailDate("");
               else { setMatrixEmailDate(deliverySummary.deliveryDate); setMatrixEmailTargetIds([]); }
             }}>{matrixEmailDate === deliverySummary.deliveryDate ? "Masquer les destinataires" : "Envoyer les modifications"}</button>
-            <button className="primary" type="button" disabled={Boolean(validatingDeliveryDate || validatingOrderId || matrixEditingDate)} onClick={() => validateAllOrders(deliverySummary)}>{validatingDeliveryDate === deliverySummary.deliveryDate ? "Validation en cours…" : "Valider toutes les commandes et envoyer les mails"}</button>
+            <button className="primary" type="button" disabled={Boolean(validatingDeliveryDate || matrixEditingDate)} onClick={() => validateAllOrders(deliverySummary)}>{validatingDeliveryDate === deliverySummary.deliveryDate ? "Validation en cours…" : "Valider toutes les commandes et envoyer les mails"}</button>
           </>}</div></div>
           {matrixEmailDate === deliverySummary.deliveryDate && !matrixEditing && <div className="matrix-email-picker no-print">
             <strong>Clients à prévenir</strong>
@@ -1437,7 +1434,19 @@ export default function Admin() {
                   <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                 ))}
               </ul>
-              {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
+              {order.comment && <div className="order-comment-thread">
+                <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>
+                {replyOrderId === order.id ? <form className="order-reply-form" onSubmit={(event) => { event.preventDefault(); replyToOrderComment(order); }}>
+                  <label htmlFor={`order-reply-${order.id}`}>Votre réponse au client</label>
+                  <textarea id={`order-reply-${order.id}`} rows={4} maxLength={1000} required disabled={sendingReplyId === order.id} value={orderReplyDrafts[order.id] || ""} onChange={(event) => setOrderReplyDrafts((current) => ({ ...current, [order.id]: event.target.value }))} />
+                  <small>Envoi par mail, sans modification ni validation de la commande. La réponse n’est pas conservée dans l’application.</small>
+                  <div className="order-actions">
+                    <button className="primary" type="submit" disabled={Boolean(sendingReplyId) || !(orderReplyDrafts[order.id] || "").trim()}>{sendingReplyId === order.id ? "Envoi…" : "Envoyer la réponse par mail"}</button>
+                    <button className="ghost" type="button" disabled={sendingReplyId === order.id} onClick={() => setReplyOrderId(null)}>Fermer</button>
+                  </div>
+                </form> : <button className="ghost" type="button" disabled={Boolean(sendingReplyId)} onClick={() => { setReplyOrderId(order.id); setOrderReplyNotice(null); }}>Répondre</button>}
+                {orderReplyNotice?.orderId === order.id && <p role="status">{orderReplyNotice.text}</p>}
+              </div>}
               {editingOrderId === order.id ? (
                 <div className="order-edit no-print">
                   <div className="order-edit-lines">
@@ -1479,8 +1488,6 @@ export default function Admin() {
                 <div className="order-actions">
                   <strong>{currency.format(order.total)}</strong>
                   <button className="ghost no-print" type="button" onClick={() => startEditOrder(order)}>Modifier</button>
-                  <Link className="ghost no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">Bon livraison</Link>
-                  <button className="primary no-print" type="button" disabled={Boolean(validatingDeliveryDate || validatingOrderId)} onClick={() => validateAdminOrder(order)}>{validatingOrderId === order.id ? "Validation…" : "Valider et envoyer un mail"}</button>
                   <button className="danger no-print" type="button" onClick={() => deleteOrder(order)}>Supprimer</button>
                 </div>
               )}

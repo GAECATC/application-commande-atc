@@ -490,6 +490,14 @@ form {
   white-space: pre-wrap;
 }
 
+.order-comment-thread { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.order-reply-form { display: grid; gap: 10px; }
+.order-reply-form label { font-weight: 700; }
+.order-reply-form textarea { width: 100%; min-height: 120px; font: inherit; padding: 12px; }
+.order-reply-form small { color: var(--muted); }
+.order-comment-thread button { min-height: 44px; }
+.order-reply-form .order-actions, .order-edit .order-actions { flex-wrap: wrap; }
+
 .checkout span {
   display: block;
   margin-top: 4px;
@@ -2012,6 +2020,7 @@ form {
   .order-card { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(260px, 1.3fr); }
   .order-card > .order-actions,
   .order-card > .order-edit,
-  .order-card > .order-comment { grid-column: 1 / -1; }
+  .order-card > .order-comment,
+  .order-card > .order-comment-thread { grid-column: 1 / -1; }
   .order-card > .order-actions { justify-content: flex-end; flex-wrap: wrap; }
 }

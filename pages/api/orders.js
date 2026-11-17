@@ -1,7 +1,7 @@
 const { cancelOrder, clearPreparationChecks, createOrder, getBasketTemplates, getOrders, getPartnerByCredentials, getPartners, getProductAllocations, getProducts, updateOrder, validateOrder, validateProductAllocations } = require("@/lib/db");
 const { getNextPartnerDelivery } = require("@/lib/schedule");
 const { isAdmin } = require("@/lib/auth");
-const { classifyMailError, sendAdminOrderAlert, sendOrderConfirmation } = require("@/lib/mailer");
+const { classifyMailError, sendAdminOrderAlert, sendOrderConfirmation, sendOrderReply } = require("@/lib/mailer");
 const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
 const { shouldSendOrderUpdateEmail } = require("@/lib/order-email-policy");
 
@@ -45,6 +45,27 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
+    if (req.body?.action === "reply-comment") {
+      if (!isAdmin(req)) return res.status(401).json({ error: "Accès admin refusé" });
+      const { orderId, partnerId, message } = req.body;
+      if (!orderId || !partnerId) return res.status(400).json({ error: "Commande et client requis" });
+      if (typeof message !== "string" || !message.trim() || message.length > MAX_ORDER_COMMENT_LENGTH) {
+        return res.status(400).json({ error: `Une réponse de 1 à ${MAX_ORDER_COMMENT_LENGTH} caractères est requise` });
+      }
+      try {
+        const [orders, partners] = await Promise.all([getOrders({ partnerId }), getPartners()]);
+        const order = orders.find((item) => item.id === orderId);
+        const partner = partners.find((item) => item.id === partnerId);
+        if (!order || !partner) return res.status(404).json({ error: "Commande ou client introuvable" });
+        if (!order.comment?.trim()) return res.status(400).json({ error: "Cette commande ne contient pas de commentaire" });
+        const email = await sendOrderReply({ partner, order, message: message.trim() });
+        const error = email.reason === "missing-recipient" ? "Aucune adresse e-mail renseignée pour ce client"
+          : "Le service d’envoi des e-mails n’est pas configuré";
+        return res.status(email.sent ? 200 : 502).json({ email, error: email.sent ? undefined : error });
+      } catch (error) {
+        return res.status(502).json({ error: "L’envoi n’a pas été confirmé. Vérifiez la messagerie avant de réessayer pour éviter un doublon.", email: { sent: false, reason: classifyMailError(error) } });
+      }
+    }
     if (req.body?.action === "send-update-email" || req.body?.action === "resend-validation-email") {
       if (!isAdmin(req)) return res.status(401).json({ error: "Accès admin refusé" });
       const { orderId, partnerId } = req.body;
