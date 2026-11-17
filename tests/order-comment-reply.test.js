@@ -23,12 +23,13 @@ async function requestReply({ admin = true, body = {}, mailResult = { sent: true
   const source = fs.readFileSync(require.resolve("../pages/api/orders.js"), "utf8")
     .replace("export default async function handler", "async function handler");
   const mocks = {
-    "@/lib/db": { getOrders: async ({ partnerId }) => orders.filter((item) => item.partnerId === partnerId), getPartners: async () => [partner] },
+    "@/lib/db": { getOrders: async ({ partnerId }) => orders.filter((item) => item.partnerId === partnerId), getPartners: async () => [partner], createOrderReply: async () => {}, updateOrderReplyStatus: async () => {} },
     "@/lib/auth": { isAdmin: () => admin },
     "@/lib/schedule": {},
     "@/lib/mailer": { classifyMailError: () => "smtp-timeout", sendOrderReply: async (args) => { if (mailError) throw mailError; sent.push(args); return mailResult; } },
     "@/lib/order-comment": require("../lib/order-comment"),
-    "@/lib/order-email-policy": require("../lib/order-email-policy")
+    "@/lib/order-email-policy": require("../lib/order-email-policy"),
+    "@/lib/order-reply-history": require("../lib/order-reply-history")
   };
   const context = vm.createContext({ require: (name) => { assert.ok(mocks[name], name); return mocks[name]; } });
   vm.runInContext(`${source}\nthis.handler = handler;`, context);
@@ -44,7 +45,7 @@ test("seul un administrateur peut envoyer une réponse", async () => {
   assert.equal(result.sent.length, 0);
 });
 
-test("une réponse cible la commande du bon client et ne modifie aucune donnée", async () => {
+test("une réponse cible la commande du bon client sans modifier son contenu", async () => {
   const result = await requestReply();
   assert.equal(result.status, 200);
   assert.equal(result.sent.length, 1);

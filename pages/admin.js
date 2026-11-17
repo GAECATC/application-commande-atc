@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const { PRODUCT_CATEGORIES } = require("@/lib/product-categories");
 const { isFreshProduce } = require("@/lib/product-seasons");
 import Link from "next/link";
+import OrderReplyHistory from "../components/OrderReplyHistory";
 import Image from "next/image";
 const { buildCrateSummary, countSaladCratesByType } = require("@/lib/crate-summary");
 const { canSaveCatalog, isCompleteAdminSnapshot } = require("@/lib/admin-catalog-safety");
@@ -952,13 +953,23 @@ export default function Admin() {
         body: JSON.stringify({ action: "reply-comment", orderId: order.id, partnerId: order.partnerId, message })
       });
       const data = await response.json();
+      if (data.reply) {
+        // Le brouillon n'est effacé que lorsque la trace est durable.
+        setOrderReplyDrafts((current) => ({ ...current, [order.id]: "" }));
+        const appendReply = (item) => item.id === order.id
+          ? { ...item, replies: [...(item.replies || []).filter((reply) => reply.id !== data.reply.id), data.reply] } : item;
+        setSummary((current) => current ? {
+          ...current, orders: current.orders.map(appendReply),
+          groups: current.groups?.map((group) => ({ ...group, orders: group.orders.map(appendReply) }))
+        } : current);
+      }
       if (!response.ok || !data.email?.sent) {
         setOrderReplyNotice({ orderId: order.id, text: data.error || "Le mail n’a pas pu être envoyé." });
         return;
       }
       setOrderReplyDrafts((current) => ({ ...current, [order.id]: "" }));
       setReplyOrderId(null);
-      setOrderReplyNotice({ orderId: order.id, text: "Votre réponse a été envoyée par mail." });
+      setOrderReplyNotice({ orderId: order.id, text: "Votre réponse est conservée et a été envoyée par mail." });
     } catch {
       setOrderReplyNotice({ orderId: order.id, text: "L’envoi n’a pas été confirmé. Vérifiez la messagerie avant de réessayer pour éviter un doublon." });
     } finally {
@@ -1434,18 +1445,19 @@ export default function Admin() {
                   <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                 ))}
               </ul>
-              {order.comment && <div className="order-comment-thread">
-                <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>
-                {replyOrderId === order.id ? <form className="order-reply-form" onSubmit={(event) => { event.preventDefault(); replyToOrderComment(order); }}>
+              {(order.comment || order.replies?.length > 0) && <div className="order-comment-thread">
+                {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
+                {order.comment && (replyOrderId === order.id ? <form className="order-reply-form" onSubmit={(event) => { event.preventDefault(); replyToOrderComment(order); }}>
                   <label htmlFor={`order-reply-${order.id}`}>Votre réponse au client</label>
                   <textarea id={`order-reply-${order.id}`} rows={4} maxLength={1000} required disabled={sendingReplyId === order.id} value={orderReplyDrafts[order.id] || ""} onChange={(event) => setOrderReplyDrafts((current) => ({ ...current, [order.id]: event.target.value }))} />
-                  <small>Envoi par mail, sans modification ni validation de la commande. La réponse n’est pas conservée dans l’application.</small>
+                  <small>La réponse est conservée avec cette commande et envoyée par mail au client.</small>
                   <div className="order-actions">
                     <button className="primary" type="submit" disabled={Boolean(sendingReplyId) || !(orderReplyDrafts[order.id] || "").trim()}>{sendingReplyId === order.id ? "Envoi…" : "Envoyer la réponse par mail"}</button>
                     <button className="ghost" type="button" disabled={sendingReplyId === order.id} onClick={() => setReplyOrderId(null)}>Fermer</button>
                   </div>
-                </form> : <button className="ghost" type="button" disabled={Boolean(sendingReplyId)} onClick={() => { setReplyOrderId(order.id); setOrderReplyNotice(null); }}>Répondre</button>}
+                </form> : <button className="ghost" type="button" disabled={Boolean(sendingReplyId)} onClick={() => { setReplyOrderId(order.id); setOrderReplyNotice(null); }}>Répondre</button>)}
                 {orderReplyNotice?.orderId === order.id && <p role="status">{orderReplyNotice.text}</p>}
+                <OrderReplyHistory replies={order.replies} />
               </div>}
               {editingOrderId === order.id ? (
                 <div className="order-edit no-print">

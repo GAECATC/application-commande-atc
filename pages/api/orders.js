@@ -4,6 +4,8 @@ const { isAdmin } = require("@/lib/auth");
 const { classifyMailError, sendAdminOrderAlert, sendOrderConfirmation, sendOrderReply } = require("@/lib/mailer");
 const { MAX_ORDER_COMMENT_LENGTH, normalizeOrderComment } = require("@/lib/order-comment");
 const { shouldSendOrderUpdateEmail } = require("@/lib/order-email-policy");
+const { createOrderReply, updateOrderReplyStatus } = require("@/lib/db");
+const { sendReplyWithHistory } = require("@/lib/order-reply-history");
 
 async function notifyOrder(partner, order, mode, previousOrder) {
   try {
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
     const includeInactive = req.query.history === "true";
 
     if (isAdmin(req)) {
-      const orders = await getOrders({ deliveryDate: req.query.deliveryDate, includeInactive });
+      const orders = await getOrders({ deliveryDate: req.query.deliveryDate, includeInactive, includeReplies: true });
       const partners = await getPartners();
       const partnerById = new Map(partners.map((partner) => [partner.id, partner.name]));
       return res.status(200).json({
@@ -58,10 +60,11 @@ export default async function handler(req, res) {
         const partner = partners.find((item) => item.id === partnerId);
         if (!order || !partner) return res.status(404).json({ error: "Commande ou client introuvable" });
         if (!order.comment?.trim()) return res.status(400).json({ error: "Cette commande ne contient pas de commentaire" });
-        const email = await sendOrderReply({ partner, order, message: message.trim() });
-        const error = email.reason === "missing-recipient" ? "Aucune adresse e-mail renseignée pour ce client"
-          : "Le service d’envoi des e-mails n’est pas configuré";
-        return res.status(email.sent ? 200 : 502).json({ email, error: email.sent ? undefined : error });
+        const { status, ...result } = await sendReplyWithHistory({
+          partner, order, message: message.trim(), createReply: createOrderReply,
+          updateStatus: updateOrderReplyStatus, sendMail: sendOrderReply
+        });
+        return res.status(status).json(result);
       } catch (error) {
         return res.status(502).json({ error: "L’envoi n’a pas été confirmé. Vérifiez la messagerie avant de réessayer pour éviter un doublon.", email: { sent: false, reason: classifyMailError(error) } });
       }

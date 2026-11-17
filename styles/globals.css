@@ -497,6 +497,10 @@ form {
 .order-reply-form small { color: var(--muted); }
 .order-comment-thread button { min-height: 44px; }
 .order-reply-form .order-actions, .order-edit .order-actions { flex-wrap: wrap; }
+.order-reply-history { display: grid; gap: 10px; margin-top: 16px; }
+.order-reply-record { padding: 12px; border-left: 4px solid var(--primary); background: #eef4e7; border-radius: 4px; }
+.order-reply-record p { white-space: pre-wrap; margin: 8px 0; }
+.order-reply-record time, .order-reply-record summary { font-size: .9rem; }
 
 .checkout span {
   display: block;

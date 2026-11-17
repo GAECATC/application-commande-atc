@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import OrderReplyHistory from "../../components/OrderReplyHistory";
 
 const currency = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -152,7 +153,10 @@ export default function AdminHistory() {
                           <li key={item.id}>{formatNumber(item.quantity)} {unitLabel(item.unit)} - {item.productName}</li>
                         ))}
                       </ul>
-                      {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
+                      {(order.comment || order.replies?.length > 0) && <div className="order-comment-thread">
+                        {order.comment && <p className="order-comment"><strong>Commentaire client :</strong> {order.comment}</p>}
+                        <OrderReplyHistory replies={order.replies} />
+                      </div>}
                       <div className="history-order-footer">
                         <strong>{currency.format(order.total)}</strong>
                         {order.status === "validated" && <Link className="history-delivery-note-button no-print" href={`/admin/bon-livraison?orderId=${encodeURIComponent(order.id)}`} target="_blank">

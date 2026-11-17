@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const requestedDeliveryDate = req.query.deliveryDate;
   const deliveryDate = requestedDeliveryDate || getNextDelivery().deliveryDate;
   const [orders, partners, catalogProducts] = await Promise.all([
-    getOrders({ deliveryDate: requestedDeliveryDate || undefined }),
+    getOrders({ deliveryDate: requestedDeliveryDate || undefined, includeReplies: true }),
     getPartners(),
     getProducts({ includeHidden: true })
   ]);
